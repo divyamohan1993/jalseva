@@ -454,6 +454,8 @@ export default function HistoryPage() {
   // --- Fetch orders ---
   const fetchOrders = useCallback(
     async (isRefresh = false) => {
+      if (!user) return;
+
       if (isRefresh) {
         setRefreshing(true);
       } else {
@@ -461,7 +463,8 @@ export default function HistoryPage() {
       }
 
       try {
-        const res = await fetch('/api/orders');
+        const param = user.role === 'supplier' ? 'supplierId' : 'customerId';
+        const res = await fetch(`/api/orders?${param}=${encodeURIComponent(user.id)}`);
         if (res.ok) {
           const data = await res.json();
           setOrders(data.orders || data || []);
@@ -473,12 +476,12 @@ export default function HistoryPage() {
         setRefreshing(false);
       }
     },
-    [setOrders]
+    [user, setOrders]
   );
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (user) fetchOrders();
+  }, [user, fetchOrders]);
 
   // --- Filtered orders ---
   const filteredOrders = useMemo(() => {

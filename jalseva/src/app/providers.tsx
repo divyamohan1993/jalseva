@@ -10,9 +10,9 @@ import type { User } from '@/types';
 // ---------------------------------------------------------------------------
 // AuthProvider
 // ---------------------------------------------------------------------------
-// Initializes a Firebase onAuthStateChanged listener when the app mounts.
-// On every auth state change it fetches the Firestore user document and
-// updates the global Zustand auth store so every component stays in sync.
+// Initializes auth state. First checks for a demo user in localStorage
+// (used when SMS OTP is bypassed for demo). If none, falls back to the
+// standard Firebase onAuthStateChanged listener.
 // ---------------------------------------------------------------------------
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -21,10 +21,31 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setLoading(true);
 
+    // ------------------------------------------------------------------
+    // Check for demo user in localStorage first
+    // ------------------------------------------------------------------
+    try {
+      const stored = localStorage.getItem('jalseva_demo_user');
+      if (stored) {
+        const demoUser: User = JSON.parse(stored);
+        // Rehydrate Date objects
+        demoUser.createdAt = new Date(demoUser.createdAt);
+        demoUser.updatedAt = new Date(demoUser.updatedAt);
+        setUser(demoUser);
+        setLoading(false);
+        setInitialized(true);
+        return; // Skip Firebase listener — demo mode active
+      }
+    } catch {
+      // localStorage unavailable or corrupt — fall through to Firebase
+    }
+
+    // ------------------------------------------------------------------
+    // Standard Firebase auth listener
+    // ------------------------------------------------------------------
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          // Fetch the full user profile from Firestore
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const userSnap = await getDoc(userDocRef);
 
@@ -44,7 +65,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
             };
             setUser(user);
           } else {
-            // Firebase user exists but no Firestore doc yet (new user)
             setUser({
               id: firebaseUser.uid,
               phone: firebaseUser.phoneNumber || '',
@@ -76,9 +96,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
 // ---------------------------------------------------------------------------
 // Providers (root wrapper)
-// ---------------------------------------------------------------------------
-// Wraps the application in all required context providers.
-// Add more providers here as needed (e.g. theme, i18n).
 // ---------------------------------------------------------------------------
 
 export function Providers({ children }: { children: React.ReactNode }) {

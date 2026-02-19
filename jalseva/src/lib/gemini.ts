@@ -3,7 +3,7 @@
 // =============================================================================
 // Provides AI-powered features: voice command processing, demand prediction,
 // text translation (replaces Bhashini API), and WhatsApp chatbot responses.
-// Uses gemini-3.0-flash for all AI tasks including multilingual translation
+// Uses gemini-2.0-flash for all AI tasks including multilingual translation
 // that would otherwise require Bhashini API credentials.
 // =============================================================================
 
@@ -66,12 +66,12 @@ const safetySettings = [
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a configured GenerativeModel instance for the gemini-3.0-flash model.
+ * Returns a configured GenerativeModel instance for the gemini-2.0-flash model.
  * Callers can use this for custom / ad-hoc prompts beyond the helpers below.
  */
 export function getGeminiModel(): GenerativeModel {
   return genAI.getGenerativeModel({
-    model: 'gemini-3.0-flash',
+    model: 'gemini-2.0-flash',
     safetySettings,
   });
 }

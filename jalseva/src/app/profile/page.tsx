@@ -458,12 +458,26 @@ export default function ProfilePage() {
   // --- Handle logout ---
   const handleLogout = async () => {
     try {
+      // Clear demo user from localStorage if present
+      try {
+        localStorage.removeItem('jalseva_demo_user');
+      } catch {
+        // localStorage might be unavailable
+      }
       await signOut(auth);
       authLogout();
       toast.success('Logged out successfully.\nलॉगआउट हो गया।');
       router.push('/');
     } catch {
-      toast.error('Logout failed.\nलॉगआउट नहीं हो पाया।');
+      // Even if Firebase signOut fails (e.g. demo user), still clear state
+      try {
+        localStorage.removeItem('jalseva_demo_user');
+      } catch {
+        // ignore
+      }
+      authLogout();
+      toast.success('Logged out successfully.\nलॉगआउट हो गया।');
+      router.push('/');
     }
   };
 

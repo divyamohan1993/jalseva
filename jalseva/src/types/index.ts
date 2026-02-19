@@ -197,6 +197,7 @@ export interface DemandPrediction {
 }
 
 export interface CreateOrderRequest {
+  customerId: string;
   waterType: WaterType;
   quantityLitres: number;
   deliveryLocation: GeoLocation;
