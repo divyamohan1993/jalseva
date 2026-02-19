@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JalSeva - Investor Pitch Deck</title>
+
+<!-- Reveal.js from CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- GSAP for animations -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<style>
+  :root {
+    --cyan: #00D4FF;
+    --blue: #0066FF;
+    --dark: #0a0a0f;
+    --card: rgba(255,255,255,0.05);
+    --border: rgba(0,212,255,0.15);
+    --green: #10B981;
+    --amber: #F59E0B;
+    --red: #EF4444;
+  }
+
+  /* ===== RESET REVEAL DEFAULTS ===== */
+  .reveal { font-family: 'Inter', sans-serif; font-size: 18px; color: #d0d0d8; background: #0a0a0f; }
+  .reveal .slides { text-align: left; }
+  .reveal .slides section { padding: 32px 48px; height: 100%; box-sizing: border-box; }
+  .reveal h1,.reveal h2,.reveal h3,.reveal h4,.reveal h5,.reveal h6 {
+    font-family: 'Space Grotesk', sans-serif; text-transform: none; text-shadow: none; margin: 0; line-height: 1.2;
+  }
+  .reveal p { margin: 0; }
+  .reveal ul, .reveal ol { margin: 0; }
+  .reveal .slide-number { font-family: 'Space Grotesk', sans-serif; font-size: 12px; color: #444; background: none; }
+  .reveal .progress span { background: var(--cyan); }
+  .reveal .controls { color: var(--cyan); }
+  .reveal section { overflow: hidden; }
+
+  /* ===== COMMON ===== */
+  .st { font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 36px; color: var(--cyan); text-transform: uppercase; letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 2px; }
+  .line { width: 100%; height: 2px; background: linear-gradient(90deg, var(--cyan), var(--blue), transparent); margin-bottom: 16px; border: none; }
+  .body { font-size: 15px; line-height: 1.55; color: #b0b0bb; }
+  .body strong { color: #fff; font-weight: 600; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .card h4 { font-family: 'Space Grotesk', sans-serif; color: #fff; font-size: 13px; font-weight: 600; margin: 0 0 4px 0; }
+  .card p { font-size: 11.5px; color: #888; margin: 0; line-height: 1.45; }
+  .card-icon { font-size: 18px; margin-bottom: 6px; display: block; }
+
+  .stat-card { text-align: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; }
+  .stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: var(--cyan); line-height: 1; }
+  .stat-lbl { font-size: 9px; color: #777; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .tag { display: inline-block; background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.25); color: var(--cyan); font-size: 10px; padding: 2px 8px; border-radius: 20px; margin: 1px 2px; font-weight: 500; }
+  .tag.g { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.25); color: var(--green); }
+  .tag.a { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); color: var(--amber); }
+
+  .cyan { color: var(--cyan); }
+  .green { color: var(--green); }
+  .amber { color: var(--amber); }
+  .white { color: #fff; }
+  .sm { font-size: 10px; color: #666; }
+
+  /* ===== COMPARISON TABLE ===== */
+  .ctbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .ctbl th { background: rgba(0,212,255,0.06); color: var(--cyan); font-weight: 600; padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border); font-family: 'Space Grotesk', sans-serif; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .ctbl td { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #999; }
+  .ctbl .ck { color: var(--green); font-weight: 700; }
+  .ctbl .cx { color: #444; }
+  .ctbl .hl td { background: rgba(0,212,255,0.03); color: #ddd; }
+
+  /* ===== FLOW ===== */
+  .flow { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .flow-s { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 10px; text-align: center; min-width: 72px; color: #ccc; }
+  .flow-s .si { font-size: 16px; display: block; margin-bottom: 2px; }
+  .flow-a { color: var(--cyan); font-size: 12px; }
+
+  /* ===== TIMELINE ===== */
+  .tl { position: relative; padding-left: 20px; }
+  .tl::before { content: ''; position: absolute; left: 5px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, var(--cyan), var(--blue), transparent); }
+  .tl-i { position: relative; margin-bottom: 10px; padding-left: 14px; }
+  .tl-i::before { content: ''; position: absolute; left: -18px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); border: 2px solid var(--dark); }
+  .tl-i.done::before { background: var(--green); }
+  .tl-i.future::before { background: transparent; border: 2px solid var(--cyan); }
+  .tl-d { font-size: 9px; color: var(--cyan); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+  .tl-t { font-size: 11.5px; color: #aaa; }
+
+  /* ===== PROGRESS BAR ===== */
+  .pr { margin-bottom: 6px; }
+  .pr-l { display: flex; justify-content: space-between; font-size: 10.5px; margin-bottom: 2px; color: #888; }
+  .pr-b { height: 5px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; }
+  .pr-f { height: 100%; border-radius: 6px; }
+
+  /* ===== CHART ===== */
+  .chart-c { position: relative; width: 100%; max-height: 170px; }
+
+  /* ===== ARCH DIAGRAM ===== */
+  .arch { display: grid; grid-template-columns: 1fr 50px 1fr 50px 1fr; align-items: center; gap: 0; }
+  .arch-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+  .arch-box h5 { font-size: 11px; color: var(--cyan); margin: 0 0 4px 0; font-weight: 600; }
+  .arch-box .ai { font-size: 9.5px; color: #777; line-height: 1.5; }
+  .arch-con { text-align: center; color: var(--cyan); font-size: 16px; }
+
+  /* ===== TEAM ===== */
+  .team { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .team-av { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--blue)); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 18px; color: #fff; }
+  .team-n { font-family: 'Space Grotesk', sans-serif; color: #fff; font-weight: 600; font-size: 13px; }
+  .team-r { color: var(--cyan); font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 2px 0 4px; }
+  .team-b { color: #777; font-size: 10.5px; line-height: 1.4; }
+
+  .mr { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 11px; }
+  .mr:last-child { border-bottom: none; }
+
+  .fund-bar { display: flex; height: 22px; border-radius: 8px; overflow: hidden; margin: 8px 0; }
+  .fund-bar div { display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #000; }
+
+  /* ===== HERO ===== */
+  .hero { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+  .hero-logo { font-family: 'Space Grotesk', sans-serif; font-size: 72px; font-weight: 900; background: linear-gradient(135deg, #00D4FF, #0066FF, #00D4FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+  .hero-hi { font-size: 24px; color: rgba(0,212,255,0.4); font-weight: 300; margin-top: -2px; margin-bottom: 14px; }
+  .hero-tag { font-size: 22px; color: #e0e0e8; font-weight: 300; margin-bottom: 18px; max-width: 600px; line-height: 1.35; }
+  .hero-tag em { color: var(--cyan); font-style: normal; font-weight: 600; }
+  .hero-info { font-size: 12.5px; color: #555; line-height: 1.8; }
+  .hero-info span { color: #888; }
+
+  /* Water BG */
+  .wbg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; }
+  .wbg .d { position: absolute; width: 3px; height: 3px; background: rgba(0,212,255,0.06); border-radius: 50%; animation: fd 8s infinite ease-in-out; }
+  @keyframes fd { 0%,100%{transform:translateY(0) scale(1);opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(-100vh) scale(.3);opacity:0;} }
+
+  .sec-h { font-size: 10px; color: var(--cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+  .sec-h.g { color: var(--green); }
+  .sec-h.a { color: var(--amber); }
+</style>
+</head>
+<body>
+
+<div class="wbg" id="wbg"></div>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- SLIDE 1: TITLE -->
+<section>
+  <div class="hero">
+    <div class="hero-logo">JalSeva</div>
+    <div class="hero-hi">&#2332;&#2354;&#2360;&#2375;&#2357;&#2366;</div>
+    <div class="hero-tag"><em>Uber for Water Tankers.</em><br>On-demand drinking water delivery across India &mdash; in 3 taps or 1 voice command.</div>
+    <div style="margin-bottom:16px;">
+      <span class="tag">AI-Powered</span>
+      <span class="tag g">ONDC Ready</span>
+      <span class="tag a">22 Languages</span>
+      <span class="tag">PWA</span>
+      <span class="tag g">UPI Payments</span>
+    </div>
+    <div class="hero-info">
+      <span><i class="fa-solid fa-users" style="width:14px;"></i> <strong style="color:#fff;">Team Dhurandhar</strong></span><br>
+      <span><i class="fa-solid fa-user" style="width:14px;"></i> Jatin &middot; Anshuman &middot; Ashutosh &middot; Kaustuv</span>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 2: PROBLEM / OPPORTUNITY -->
+<section>
+  <div class="st">Problem / Opportunity</div>
+  <hr class="line">
+  <div class="body" style="margin-bottom:10px;">
+    <strong>India is running out of clean water.</strong> 600 million people face extreme water stress.
+    Millions of households depend on private water tankers every day &mdash; yet the experience is completely broken.
+  </div>
+  <div class="grid-2" style="margin-bottom:10px;">
+    <div class="card" style="border-left:3px solid var(--red);">
+      <span class="card-icon"><i class="fa-solid fa-phone-slash" style="color:var(--red);"></i></span>
+      <h4>No Discoverability</h4>
+      <p>Customers rely on word-of-mouth or pamphlets. No platform to search, compare, or book.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <span class="card-icon"><i class="fa-solid fa-money-bill-wave" style="color:var(--amber);"></i></span>
+      <h4>Opaque Pricing</h4>
+      <p>Prices vary wildly. Suppliers exploit scarcity. Zero transparency or standardisation.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--amber);">
+      <span class="card-icon"><i class="fa-solid fa-clock" style="color:var(--amber);"></i></span>
+      <h4>No ETA, No Tracking</h4>
+      <p>After calling, customers just wait. No confirmation, no ETA, no live tracking. 30 min to 3 hours late.</p>
+    </div>
+    <div class="card" style="border-left:3px solid var(--red);">
+      <span class="card-icon"><i class="fa-solid fa-shield-halved" style="color:var(--red);"></i></span>
+      <h4>No Quality Assurance</h4>
+      <p>No verification of water quality, vehicle hygiene, or FSSAI compliance. Health risks unchecked.</p>
+    </div>
+  </div>
+  <div class="grid-4">
+    <div class="stat-card"><div class="stat-num">600M</div><div class="stat-lbl">Indians face water stress</div></div>
+    <div class="stat-card"><div class="stat-num">$8.4B</div><div class="stat-lbl">Water tanker market 2026</div></div>
+    <div class="stat-card"><div class="stat-num">70%</div><div class="stat-lbl">Unorganised market</div></div>
+    <div class="stat-card"><div class="stat-num">21%</div><div class="stat-lbl">CAGR growth rate</div></div>
+  </div>
+</section>
+
+<!-- SLIDE 3: VALUE PROPOSITION -->
+<section>
+  <div class="st">Value Proposition</div>
+  <hr class="line">
+  <div class="body" style="margin-bottom:10px;">
+    JalSeva is the <strong>first full-stack marketplace</strong> for water delivery in India &mdash; connecting customers with verified tanker suppliers through a <strong>voice-first, AI-powered PWA</strong> that works for users with low literacy.
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <span class="card-icon"><i class="fa-solid fa-microphone" style="color:var(--cyan);"></i></span>
+      <h4>Voice-First Ordering</h4>
+      <p>Say "20 litre RO paani chahiye" in Hindi, Tamil, or 20+ languages. AI extracts intent instantly.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon"><i class="fa-solid fa-location-dot" style="color:var(--green);"></i></span>
+      <h4>Real-Time Tracking</h4>
+      <p>Live GPS tracking on Google Maps. See the truck, get ETA, call the driver &mdash; like Uber for water.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon"><i class="fa-solid fa-hand-holding-dollar" style="color:var(--amber);"></i></span>
+      <h4>Transparent Pricing</h4>
+      <p>See base + delivery + surge breakdown before booking. No hidden charges. UPI, card &amp; cash.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon"><i class="fa-solid fa-certificate" style="color:var(--cyan);"></i></span>
+      <h4>Verified Suppliers</h4>
+      <p>Every supplier is ID-verified (Aadhaar + FSSAI + water quality). Admin approves before going live.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon"><i class="fa-brands fa-whatsapp" style="color:var(--green);"></i></span>
+      <h4>WhatsApp Ordering</h4>
+      <p>No app download needed. Message JalSeva on WhatsApp &mdash; Gemini AI handles the conversation.</p>
+    </div>
+    <div class="card">
+      <span class="card-icon"><i class="fa-solid fa-network-wired" style="color:var(--amber);"></i></span>
+      <h4>ONDC Integrated</h4>
+      <p>Connected to India's Open Network. Paytm, PhonePe, Google can discover JalSeva suppliers.</p>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:10px;">
+    <span class="tag" style="font-size:11px; padding:3px 14px;">
+      <i class="fa-solid fa-hand-pointer"></i>&ensp;3 taps to order &nbsp;&middot;&nbsp; 1 voice command &nbsp;&middot;&nbsp; 0 downloads via WhatsApp
+    </span>
+  </div>
+</section>
+
+<!-- SLIDE 4: UNDERLYING MAGIC -->
+<section>
+  <div class="st">Underlying Magic</div>
+  <hr class="line">
+  <div class="body" style="font-size:13px; margin-bottom:8px;">
+    Full-stack serverless architecture on <strong>Google Cloud</strong> with <strong>Gemini AI</strong> at its core.
+  </div>
+  <div class="arch">
+    <div class="arch-box">
+      <h5><i class="fa-solid fa-mobile-screen"></i> Frontend</h5>
+      <div class="ai">Next.js 14 + React 18<br>TailwindCSS + Framer Motion<br>PWA (offline ready)<br>Web Speech API<br>Google Maps JS API</div>
+    </div>
+    <div class="arch-con"><i class="fa-solid fa-arrows-left-right"></i></div>
+    <div class="arch-box" style="border-color: var(--cyan);">
+      <h5><i class="fa-solid fa-brain"></i> AI + API Layer</h5>
+      <div class="ai"><strong style="color:#fff;">Gemini 2.0 Flash</strong><br>Voice Intent Parsing<br>Demand Prediction<br>22-Language Translation<br>WhatsApp Chatbot<br>Dynamic Surge Pricing</div>
+    </div>
+    <div class="arch-con"><i class="fa-solid fa-arrows-left-right"></i></div>
+    <div class="arch-box">
+      <h5><i class="fa-solid fa-database"></i> Backend</h5>
+      <div class="ai">Cloud Firestore (real-time)<br>Upstash Redis (caching)<br>Firebase Auth (Phone OTP)<br>Razorpay (UPI/Cards)<br>Beckn/ONDC Protocol</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="sec-h"><i class="fa-solid fa-route"></i>&ensp;Customer Journey &mdash; 90 Seconds End-to-End</div>
+    <div class="flow">
+      <div class="flow-s"><span class="si"><i class="fa-solid fa-microphone"></i></span>Voice / Tap</div>
+      <span class="flow-a"><i class="fa-solid fa-chevron-right"></i></span>
+      <div class="flow-s"><span class="si"><i class="fa-solid fa-brain"></i></span>Gemini AI<br>Parses Intent</div>
+      <span class="flow-a"><i class="fa-solid fa-chevron-right"></i></span>
+      <div class="flow-s"><span class="si"><i class="fa-solid fa-magnifying-glass"></i></span>Supplier<br>Match</div>
+      <span class="flow-a"><i class="fa-solid fa-chevron-right"></i></span>
+      <div class="flow-s"><span class="si"><i class="fa-solid fa-indian-rupee-sign"></i></span>UPI<br>Payment</div>
+      <span class="flow-a"><i class="fa-solid fa-chevron-right"></i></span>
+      <div class="flow-s"><span class="si"><i class="fa-solid fa-truck-fast"></i></span>Live GPS<br>Tracking</div>
+      <span class="flow-a"><i class="fa-solid fa-chevron-right"></i></span>
+      <div class="flow-s"><span class="si"><i class="fa-solid fa-droplet"></i></span>Water<br>Delivered</div>
+    </div>
+  </div>
+  <div class="grid-4" style="margin-top:10px;">
+    <div class="stat-card"><div style="font-size:18px; color:var(--cyan);"><i class="fa-solid fa-bolt"></i></div><div class="stat-lbl">Serverless</div><div class="sm">Cloud Run auto-scale</div></div>
+    <div class="stat-card"><div style="font-size:18px; color:var(--cyan);"><i class="fa-solid fa-language"></i></div><div class="stat-lbl">22 Languages</div><div class="sm">Gemini translation</div></div>
+    <div class="stat-card"><div style="font-size:18px; color:var(--cyan);"><i class="fa-solid fa-wifi"></i></div><div class="stat-lbl">Offline PWA</div><div class="sm">Works on 2G</div></div>
+    <div class="stat-card"><div style="font-size:18px; color:var(--cyan);"><i class="fa-solid fa-shield-halved"></i></div><div class="stat-lbl">ONDC Compliant</div><div class="sm">Beckn v1.1</div></div>
+  </div>
+</section>
+
+<!-- SLIDE 5: BUSINESS MODEL -->
+<section>
+  <div class="st">Business Model</div>
+  <hr class="line">
+  <div class="body" style="font-size:13px; margin-bottom:10px;">
+    <strong>Marketplace commission model</strong> &mdash; 15% of every transaction. Suppliers get 85% via instant IMPS payout. Multiple stacking revenue streams.
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="card" style="margin-bottom:10px;">
+        <h4><i class="fa-solid fa-percent cyan"></i>&ensp;Transaction Commission (Primary)</h4>
+        <p>15% auto-deducted. Suppliers receive 85% instantly.</p>
+        <div style="margin-top:6px;">
+          <div class="pr"><div class="pr-l"><span>RO Water (&#8377;150)</span><span class="cyan">&#8377;22.50</span></div><div class="pr-b"><div class="pr-f" style="width:30%;background:var(--cyan);"></div></div></div>
+          <div class="pr"><div class="pr-l"><span>Mineral (&#8377;200)</span><span class="cyan">&#8377;30</span></div><div class="pr-b"><div class="pr-f" style="width:40%;background:var(--blue);"></div></div></div>
+          <div class="pr"><div class="pr-l"><span>Tanker (&#8377;500)</span><span class="cyan">&#8377;75</span></div><div class="pr-b"><div class="pr-f" style="width:100%;background:linear-gradient(90deg,var(--cyan),var(--blue));"></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h4><i class="fa-solid fa-chart-line amber"></i>&ensp;Surge Pricing</h4>
+        <p>AI demand prediction drives dynamic pricing. Summer peaks = 1.8x multiplier. Platform captures incremental margin.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px;">
+        <h4><i class="fa-solid fa-crown green"></i>&ensp;Supplier Subscriptions</h4>
+        <p>Premium plans with reduced commission rates &amp; priority listing.</p>
+        <div style="margin-top:6px;">
+          <div class="mr"><span style="color:#777;">Basic (Free)</span> <span class="white">15% commission</span></div>
+          <div class="mr"><span style="color:#777;">Silver (&#8377;999/mo)</span> <span class="green">12% commission</span></div>
+          <div class="mr"><span style="color:#777;">Gold (&#8377;2,499/mo)</span> <span class="cyan">8% commission</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h4><i class="fa-solid fa-rectangle-ad cyan"></i>&ensp;Premium Listings</h4>
+        <p>Top placement in search, featured badges, promoted visibility during peak hours.</p>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center; margin-top:10px;">
+    <span class="tag" style="font-size:11px; padding:3px 14px;">
+      <i class="fa-solid fa-indian-rupee-sign"></i>&ensp;Avg. order: &#8377;350 &nbsp;&middot;&nbsp; Commission: &#8377;52.50 &nbsp;&middot;&nbsp; Target: 500 orders/day by Month 12
+    </span>
+  </div>
+</section>
+
+<!-- SLIDE 6: GO-TO-MARKET PLAN -->
+<section>
+  <div class="st">Go-to-Market Plan</div>
+  <hr class="line">
+  <div class="body" style="font-size:13px; margin-bottom:10px;">
+    <strong>City-by-city expansion</strong> starting from most water-stressed metros. Supply-first &mdash; onboard suppliers before launching consumer demand.
+  </div>
+  <div class="grid-2">
+    <div>
+      <div class="sec-h"><i class="fa-solid fa-rocket"></i>&ensp;Phase 1: Launch Cities (Month 1&ndash;6)</div>
+      <div class="card" style="margin-bottom:10px;">
+        <h4><i class="fa-solid fa-city"></i>&ensp;Delhi NCR &rarr; Hyderabad &rarr; Chennai</h4>
+        <p>3 highest water-stress cities. 50+ suppliers each. Ground team + WhatsApp onboarding.</p>
+      </div>
+      <div class="sec-h g"><i class="fa-solid fa-layer-group"></i>&ensp;Acquisition Channels</div>
+      <div class="card">
+        <div style="font-size:11px; line-height:1.85; color:#999;">
+          <i class="fa-brands fa-whatsapp green" style="width:14px;"></i> <strong class="white">WhatsApp</strong> &mdash; Zero-install, share with neighbors<br>
+          <i class="fa-solid fa-building cyan" style="width:14px;"></i> <strong class="white">Housing societies</strong> &mdash; Bulk deals with RWAs<br>
+          <i class="fa-solid fa-truck amber" style="width:14px;"></i> <strong class="white">Supplier referrals</strong> &mdash; Bring existing customers<br>
+          <i class="fa-solid fa-network-wired cyan" style="width:14px;"></i> <strong class="white">ONDC network</strong> &mdash; Paytm, PhonePe, Google<br>
+          <i class="fa-solid fa-bullhorn amber" style="width:14px;"></i> <strong class="white">Hyper-local ads</strong> &mdash; Google Maps by pincode
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec-h a"><i class="fa-solid fa-road"></i>&ensp;Expansion Roadmap</div>
+      <div class="tl">
+        <div class="tl-i done"><div class="tl-d">Q1 2026 &mdash; Launch</div><div class="tl-t">Delhi NCR &middot; 50 suppliers &middot; 1,000 customers</div></div>
+        <div class="tl-i done"><div class="tl-d">Q2 2026 &mdash; Expand</div><div class="tl-t">Hyderabad + Chennai &middot; 200 suppliers &middot; WhatsApp</div></div>
+        <div class="tl-i"><div class="tl-d">Q3 2026 &mdash; Scale</div><div class="tl-t">Bangalore + Pune &middot; ONDC live &middot; 500 orders/day</div></div>
+        <div class="tl-i future"><div class="tl-d">Q4 2026 &mdash; Dominate</div><div class="tl-t">8 cities &middot; Subscriptions &middot; 1,500 orders/day</div></div>
+        <div class="tl-i future"><div class="tl-d">2027 &mdash; National</div><div class="tl-t">20+ cities &middot; B2B contracts &middot; 5,000 orders/day</div></div>
+      </div>
+      <div class="card" style="margin-top:10px; border-color:var(--green);">
+        <h4 class="green"><i class="fa-solid fa-arrow-trend-up"></i>&ensp;Key Insight</h4>
+        <p>Water is a <strong>repeat purchase</strong>. 3&ndash;4x/month. CAC recovered in first order. LTV/CAC &gt; 10x.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7: COMPETITIVE ANALYSIS -->
+<section>
+  <div class="st">Competitive Analysis</div>
+  <hr class="line">
+  <div class="body" style="font-size:13px; margin-bottom:8px;">
+    The water tanker market is <strong>massively fragmented</strong> with no national player. Existing alternatives are offline-only or limited to a single city.
+  </div>
+  <table class="ctbl">
+    <thead>
+      <tr>
+        <th style="width:17%;">Feature</th>
+        <th style="width:15%;"><span class="cyan">JalSeva</span></th>
+        <th style="width:14%;">Phone Calls<br><span style="font-weight:400;color:#555;">Status Quo</span></th>
+        <th style="width:14%;">TankerApp<br><span style="font-weight:400;color:#555;">Local</span></th>
+        <th style="width:14%;">BookMyTanker<br><span style="font-weight:400;color:#555;">Regional</span></th>
+        <th style="width:14%;">WaterCan<br><span style="font-weight:400;color:#555;">Jar Water</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="hl"><td>AI Voice Ordering</td><td class="ck"><i class="fa-solid fa-check"></i> Gemini</td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td></tr>
+      <tr><td>Live GPS Tracking</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="amber">Partial</td><td class="ck"><i class="fa-solid fa-check"></i></td></tr>
+      <tr class="hl"><td>22+ Languages</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td></tr>
+      <tr><td>ONDC Network</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td></tr>
+      <tr class="hl"><td>WhatsApp Orders</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td></tr>
+      <tr><td>Surge Pricing AI</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="cx"><i class="fa-solid fa-xmark"></i></td></tr>
+      <tr class="hl"><td>UPI Payments</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="cx">Cash only</td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="ck"><i class="fa-solid fa-check"></i></td><td class="ck"><i class="fa-solid fa-check"></i></td></tr>
+      <tr><td>National Coverage</td><td class="ck"><i class="fa-solid fa-check"></i> Planned</td><td class="amber">Local</td><td class="amber">1 city</td><td class="amber">3 cities</td><td class="amber">5 cities</td></tr>
+      <tr class="hl"><td>Supplier Verify</td><td class="ck"><i class="fa-solid fa-check"></i> FSSAI</td><td class="cx"><i class="fa-solid fa-xmark"></i></td><td class="amber">Basic</td><td class="amber">Basic</td><td class="ck"><i class="fa-solid fa-check"></i></td></tr>
+    </tbody>
+  </table>
+  <div style="text-align:center; margin-top:10px;">
+    <span class="tag g" style="font-size:11px; padding:3px 14px;">
+      <i class="fa-solid fa-trophy"></i>&ensp;Only platform combining AI + ONDC + Voice + Multilingual + National scale
+    </span>
+  </div>
+</section>
+
+<!-- SLIDE 8: MANAGEMENT TEAM -->
+<section>
+  <div class="st">Management Team</div>
+  <hr class="line">
+  <div class="body" style="font-size:13px; margin-bottom:12px;">
+    A lean, technical founding team with deep expertise in <strong>AI, marketplaces, and India's water sector</strong>.
+  </div>
+  <div class="grid-3" style="margin-bottom:14px;">
+    <div class="team">
+      <div class="team-av"><i class="fa-solid fa-user"></i></div>
+      <div class="team-n">Divya Mohan</div>
+      <div class="team-r">Founder &amp; CEO</div>
+      <div class="team-b">Full-stack architect. Built the entire JalSeva platform solo. Deep expertise in Firebase, GCP, ONDC, and AI-first product design.</div>
+    </div>
+    <div class="team">
+      <div class="team-av" style="background:linear-gradient(135deg,var(--green),#059669);"><i class="fa-solid fa-chart-pie"></i></div>
+      <div class="team-n">Operations Lead</div>
+      <div class="team-r">COO (Hiring)</div>
+      <div class="team-b">Seeking ops leader with last-mile logistics experience. Dunzo, Swiggy, or Porter alumni ideal.</div>
+    </div>
+    <div class="team">
+      <div class="team-av" style="background:linear-gradient(135deg,var(--amber),#D97706);"><i class="fa-solid fa-handshake"></i></div>
+      <div class="team-n">City Launch Manager</div>
+      <div class="team-r">Growth (Hiring)</div>
+      <div class="team-b">Ground-ops specialist to onboard water tanker suppliers. RWA connections and local market knowledge critical.</div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h4><i class="fa-solid fa-users cyan"></i>&ensp;Advisory Board (Planned)</h4>
+      <div style="font-size:11px; line-height:1.85; color:#888;">
+        <i class="fa-solid fa-droplet" style="width:14px; color:var(--cyan);"></i> Water sector expert (CGWB / municipal)<br>
+        <i class="fa-solid fa-robot" style="width:14px; color:var(--cyan);"></i> AI/ML advisor (Google / Gemini ecosystem)<br>
+        <i class="fa-solid fa-network-wired" style="width:14px; color:var(--cyan);"></i> ONDC protocol technical advisor
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--green);">
+      <h4><i class="fa-solid fa-code green"></i>&ensp;Built Solo &mdash; Why That Matters</h4>
+      <p>20+ API routes, 15+ pages, AI pipeline, ONDC, payments &mdash; all by one developer. Extreme capital efficiency. Every rupee raised goes to growth, not engineering overhead.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 9: FINANCIAL PROJECTIONS -->
+<section>
+  <div class="st">Financial Projections</div>
+  <hr class="line">
+  <div class="grid-2">
+    <div>
+      <div class="sec-h"><i class="fa-solid fa-chart-column"></i>&ensp;3-Year Revenue (Bottom-Up)</div>
+      <div class="chart-c"><canvas id="revenueChart"></canvas></div>
+      <div style="margin-top:10px;">
+        <div class="sec-h"><i class="fa-solid fa-bullseye"></i>&ensp;Revenue by Stream (Year 3)</div>
+        <div class="pr"><div class="pr-l"><span>Commission (15%)</span><span class="cyan">&#8377;9.9 Cr</span></div><div class="pr-b"><div class="pr-f" style="width:65%;background:var(--cyan);"></div></div></div>
+        <div class="pr"><div class="pr-l"><span>Surge Pricing</span><span class="amber">&#8377;2.4 Cr</span></div><div class="pr-b"><div class="pr-f" style="width:16%;background:var(--amber);"></div></div></div>
+        <div class="pr"><div class="pr-l"><span>Subscriptions</span><span class="green">&#8377;1.8 Cr</span></div><div class="pr-b"><div class="pr-f" style="width:12%;background:var(--green);"></div></div></div>
+        <div class="pr"><div class="pr-l"><span>Premium Listings</span><span style="color:#a78bfa;">&#8377;1.0 Cr</span></div><div class="pr-b"><div class="pr-f" style="width:7%;background:#a78bfa;"></div></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="sec-h g"><i class="fa-solid fa-chart-line"></i>&ensp;Key Metrics</div>
+      <table class="ctbl" style="font-size:11px;">
+        <thead><tr><th>Metric</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr></thead>
+        <tbody>
+          <tr><td>Cities</td><td class="white">5</td><td class="white">12</td><td class="white">25</td></tr>
+          <tr><td>Active Suppliers</td><td class="white">500</td><td class="white">2,000</td><td class="white">6,000</td></tr>
+          <tr><td>Monthly Customers</td><td class="white">15K</td><td class="white">80K</td><td class="white">3L</td></tr>
+          <tr><td>Orders / Day</td><td class="white">500</td><td class="white">3,000</td><td class="white">12,000</td></tr>
+          <tr><td>Avg Order Value</td><td class="white">&#8377;350</td><td class="white">&#8377;400</td><td class="white">&#8377;450</td></tr>
+          <tr><td>GMV (Annual)</td><td class="cyan">&#8377;6.4 Cr</td><td class="cyan">&#8377;43.8 Cr</td><td class="cyan">&#8377;197 Cr</td></tr>
+          <tr><td><strong>Net Revenue</strong></td><td class="green"><strong>&#8377;0.96 Cr</strong></td><td class="green"><strong>&#8377;6.6 Cr</strong></td><td class="green"><strong>&#8377;15.1 Cr</strong></td></tr>
+          <tr><td>Repeat Rate</td><td class="white">60%</td><td class="white">72%</td><td class="white">80%</td></tr>
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:8px; border-color:var(--green);">
+        <h4 class="green"><i class="fa-solid fa-circle-check"></i>&ensp;Unit Economics</h4>
+        <div style="font-size:10.5px; color:#888;">
+          CAC: <strong class="white">&#8377;80</strong> (WhatsApp) &nbsp;&middot;&nbsp;
+          LTV: <strong class="white">&#8377;1,890</strong> (18mo) &nbsp;&middot;&nbsp;
+          LTV/CAC: <strong class="green">23.6x</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 10: STATUS & USE OF FUNDS -->
+<section>
+  <div class="st">Status &amp; Use of Funds</div>
+  <hr class="line">
+  <div class="grid-2">
+    <div>
+      <div class="sec-h g"><i class="fa-solid fa-circle-check"></i>&ensp;Accomplishments to Date</div>
+      <div class="card" style="margin-bottom:8px; border-left:3px solid var(--green);">
+        <h4 class="green"><i class="fa-solid fa-code"></i>&ensp;Product Built</h4>
+        <p>Full platform &mdash; 20+ API routes, 15+ screens, PWA, voice ordering, real-time tracking, admin dashboard. Production-ready on GCP.</p>
+      </div>
+      <div class="card" style="margin-bottom:8px; border-left:3px solid var(--green);">
+        <h4 class="green"><i class="fa-solid fa-brain"></i>&ensp;AI Pipeline Live</h4>
+        <p>Gemini voice commands, demand prediction, 22-language translation, WhatsApp chatbot &mdash; all functional.</p>
+      </div>
+      <div class="card" style="margin-bottom:8px; border-left:3px solid var(--green);">
+        <h4 class="green"><i class="fa-solid fa-network-wired"></i>&ensp;ONDC Ready</h4>
+        <p>Full Beckn protocol (BAP + BPP). Ready for ONDC staging certification.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green);">
+        <h4 class="green"><i class="fa-solid fa-indian-rupee-sign"></i>&ensp;Payments Complete</h4>
+        <p>Razorpay UPI/card/wallet. Automated supplier payouts via IMPS. GST-compliant.</p>
+      </div>
+    </div>
+    <div>
+      <div class="sec-h"><i class="fa-solid fa-bullseye"></i>&ensp;Raising: &#8377;1.5 Crore (Pre-Seed)</div>
+      <div class="card" style="margin-bottom:10px;">
+        <h4><i class="fa-solid fa-chart-pie cyan"></i>&ensp;Use of Funds</h4>
+        <div class="fund-bar">
+          <div style="width:35%;background:var(--cyan);">35%</div>
+          <div style="width:25%;background:var(--green);">25%</div>
+          <div style="width:20%;background:var(--amber);">20%</div>
+          <div style="width:12%;background:#a78bfa;color:#fff;">12%</div>
+          <div style="width:8%;background:#555;color:#fff;">8%</div>
+        </div>
+        <div style="font-size:10.5px; line-height:1.85; margin-top:4px;">
+          <span style="color:var(--cyan);">&#9632;</span> <strong class="white">35%</strong> Supplier Onboarding &amp; City Ops<br>
+          <span style="color:var(--green);">&#9632;</span> <strong class="white">25%</strong> Engineering Hires (2 devs)<br>
+          <span style="color:var(--amber);">&#9632;</span> <strong class="white">20%</strong> Marketing &amp; Acquisition<br>
+          <span style="color:#a78bfa;">&#9632;</span> <strong class="white">12%</strong> ONDC Certification<br>
+          <span style="color:#555;">&#9632;</span> <strong class="white">8%</strong> Cloud Infrastructure
+        </div>
+      </div>
+      <div class="sec-h a"><i class="fa-solid fa-flag-checkered"></i>&ensp;12-Month Milestones</div>
+      <div class="tl">
+        <div class="tl-i done"><div class="tl-d">Month 0 &mdash; Now</div><div class="tl-t">Product built. Seeking pre-seed.</div></div>
+        <div class="tl-i future"><div class="tl-d">Month 1&ndash;3</div><div class="tl-t">Delhi NCR launch. 50 suppliers. 500/day.</div></div>
+        <div class="tl-i future"><div class="tl-d">Month 4&ndash;6</div><div class="tl-t">Hyderabad + Chennai. ONDC cert.</div></div>
+        <div class="tl-i future"><div class="tl-d">Month 7&ndash;9</div><div class="tl-t">5 cities. Subscriptions launch.</div></div>
+        <div class="tl-i future"><div class="tl-d">Month 10&ndash;12</div><div class="tl-t">1,500 orders/day. Series A ready.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  width: 1280,
+  height: 720,
+  margin: 0,
+  minScale: 0.2,
+  maxScale: 2.0,
+  transition: 'slide',
+  transitionSpeed: 'default',
+  backgroundTransition: 'fade',
+  center: false,
+  controls: true,
+  controlsLayout: 'bottom-right',
+  progress: true,
+  keyboard: true,
+  overview: true,
+  touch: true,
+});
+
+// Revenue chart
+Reveal.on('slidechanged', function(e) { if(e.indexh===8) renderChart(); });
+Reveal.on('ready', function() { if(Reveal.getState().indexh===8) renderChart(); genDrops(); });
+
+let cr = false;
+function renderChart() {
+  if(cr) return; cr = true;
+  new Chart(document.getElementById('revenueChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Year 1','Year 2','Year 3'],
+      datasets: [
+        { label: 'GMV (Cr)', data: [6.4,43.8,197], backgroundColor: 'rgba(0,212,255,0.12)', borderColor: 'rgba(0,212,255,0.5)', borderWidth: 2, borderRadius: 4, order: 2 },
+        { label: 'Net Revenue (Cr)', data: [0.96,6.6,15.1], backgroundColor: 'rgba(16,185,129,0.5)', borderColor: 'rgba(16,185,129,1)', borderWidth: 2, borderRadius: 4, order: 1 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { color: '#777', font: { family:'Inter', size:10 }, padding:10, usePointStyle:true, pointStyleWidth:8 } }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: \u20B9${c.parsed.y} Cr` } } },
+      scales: { x: { ticks: { color:'#555', font:{family:'Space Grotesk',size:11,weight:'600'} }, grid:{display:false} }, y: { ticks: { color:'#444', font:{family:'Inter',size:9}, callback: v=>'\u20B9'+v+'Cr' }, grid:{color:'rgba(255,255,255,0.03)'} } },
+    },
+  });
+}
+
+function genDrops() {
+  var bg = document.getElementById('wbg');
+  for(var i=0;i<25;i++) {
+    var d = document.createElement('div'); d.className='d';
+    d.style.left=Math.random()*100+'%'; d.style.bottom='-10px';
+    var s=(2+Math.random()*3)+'px'; d.style.width=s; d.style.height=s;
+    d.style.animationDelay=(Math.random()*8)+'s';
+    d.style.animationDuration=(6+Math.random()*6)+'s';
+    bg.appendChild(d);
+  }
+}
+
+// GSAP animations on slide change
+Reveal.on('slidechanged', function(e) {
+  var s = e.currentSlide;
+  gsap.from(s.querySelectorAll('.card,.stat-card,.team,.flow-s'), { duration:0.4, y:20, opacity:0, stagger:0.04, ease:'power2.out', clearProps:'all' });
+  gsap.from(s.querySelectorAll('.tl-i'), { duration:0.3, x:-15, opacity:0, stagger:0.08, ease:'power2.out', clearProps:'all' });
+  s.querySelectorAll('.pr-f').forEach(function(f) { var w=f.style.width; f.style.width='0%'; gsap.to(f, {width:w, duration:1, ease:'power2.out', delay:0.2}); });
+  var fb = s.querySelectorAll('.fund-bar div');
+  fb.forEach(function(f) { var w=f.style.width; f.style.width='0%'; gsap.to(f, {width:w, duration:0.8, ease:'power2.out', delay:0.3}); });
+});
+</script>
+</body>
+</html>

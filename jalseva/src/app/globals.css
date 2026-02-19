@@ -1,0 +1,457 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CSS Custom Properties ===== */
+:root {
+  --color-primary: #0066FF;
+  --color-primary-light: #3385FF;
+  --color-primary-dark: #0052CC;
+  --color-secondary: #10B981;
+  --color-accent: #F59E0B;
+  --color-danger: #EF4444;
+  --color-water-light: #E0F2FE;
+  --color-water: #0EA5E9;
+  --color-water-dark: #0369A1;
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-text: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-border: #E2E8F0;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --radius: 0.75rem;
+  --header-height: 4rem;
+  --bottom-nav-height: 4.5rem;
+}
+
+/* ===== Base Styles ===== */
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    min-height: 100dvh;
+  }
+
+  /* Prevent overscroll bounce on iOS for PWA feel */
+  body.pwa-mode {
+    overscroll-behavior-y: none;
+  }
+
+  /* Selection color */
+  ::selection {
+    background-color: rgba(0, 102, 255, 0.2);
+    color: #0F172A;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary-500;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+
+  /* Input styles */
+  input,
+  textarea,
+  select {
+    @apply text-base;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* ===== Component Styles ===== */
+@layer components {
+  /* Primary Button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-primary-500 text-white font-semibold rounded-xl
+           transition-all duration-200 ease-out
+           hover:bg-primary-600 hover:shadow-water
+           active:scale-[0.97] active:bg-primary-700
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-white text-primary-500 font-semibold rounded-xl
+           border-2 border-primary-500
+           transition-all duration-200 ease-out
+           hover:bg-primary-50
+           active:scale-[0.97]
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-accent-500 text-white font-semibold rounded-xl
+           transition-all duration-200 ease-out
+           hover:bg-accent-600
+           active:scale-[0.97]
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-danger-500 text-white font-semibold rounded-xl
+           transition-all duration-200 ease-out
+           hover:bg-danger-600
+           active:scale-[0.97]
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-6 py-3
+           text-slate-600 font-medium rounded-xl
+           transition-all duration-200 ease-out
+           hover:bg-slate-100
+           active:scale-[0.97];
+  }
+
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-2xl shadow-card p-4
+           transition-all duration-200 ease-out;
+  }
+
+  .card-interactive {
+    @apply card cursor-pointer
+           hover:shadow-card-hover hover:-translate-y-0.5
+           active:scale-[0.99];
+  }
+
+  /* Input styles */
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-slate-200 rounded-xl
+           text-slate-900 placeholder:text-slate-400
+           transition-all duration-200
+           focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none;
+  }
+
+  .input-label {
+    @apply block text-sm font-medium text-slate-700 mb-1.5;
+  }
+
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700;
+  }
+
+  .badge-success {
+    @apply badge bg-secondary-100 text-secondary-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-accent-100 text-accent-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-danger-100 text-danger-700;
+  }
+
+  /* Bottom Navigation (mobile PWA) */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100
+           flex items-center justify-around
+           px-2 pb-[env(safe-area-inset-bottom)]
+           z-50;
+    height: var(--bottom-nav-height);
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center justify-center gap-0.5
+           py-1.5 px-3 rounded-xl
+           text-slate-400 transition-colors duration-200;
+  }
+
+  .bottom-nav-item.active {
+    @apply text-primary-500;
+  }
+
+  /* Water gradient backgrounds */
+  .bg-water {
+    background: linear-gradient(135deg, #0066FF 0%, #0EA5E9 50%, #38BDF8 100%);
+  }
+
+  .bg-water-dark {
+    background: linear-gradient(135deg, #003D99 0%, #0369A1 50%, #0284C7 100%);
+  }
+
+  /* Status indicators */
+  .status-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+  }
+
+  .status-online {
+    @apply status-dot bg-secondary-500;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+
+  .status-offline {
+    @apply status-dot bg-slate-300;
+  }
+
+  .status-busy {
+    @apply status-dot bg-accent-500;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+  }
+
+  /* Map container */
+  .map-container {
+    @apply w-full rounded-2xl overflow-hidden;
+    height: 300px;
+  }
+
+  .map-container-full {
+    @apply w-full;
+    height: calc(100dvh - var(--header-height) - var(--bottom-nav-height));
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply bg-slate-200 rounded-lg animate-pulse;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-slate-100 my-4;
+  }
+
+  /* Safe area padding for PWA */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ===== Utility Styles ===== */
+@layer utilities {
+  /* Text gradient */
+  .text-gradient-water {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #0066FF 0%, #0EA5E9 100%);
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    @apply animate-fade-in;
+  }
+
+  /* Truncate to N lines */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Touch-friendly tap targets */
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* ===== Animations ===== */
+
+/* Water ripple effect on button press */
+@keyframes water-ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ripple-effect:active::after {
+  animation: water-ripple 0.6s ease-out;
+}
+
+/* Water wave animation for loading states */
+@keyframes water-loading {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.water-loading {
+  background: linear-gradient(
+    90deg,
+    #E0F2FE 0%,
+    #BAE6FD 25%,
+    #7DD3FC 50%,
+    #BAE6FD 75%,
+    #E0F2FE 100%
+  );
+  background-size: 200% 100%;
+  animation: water-loading 2s ease-in-out infinite;
+}
+
+/* Floating animation for water drops */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+  75% {
+    transform: translateY(4px) rotate(-1deg);
+  }
+}
+
+.float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Slide-in from bottom for mobile sheets */
+@keyframes slide-in-bottom {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-bottom {
+  animation: slide-in-bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Overlay fade */
+@keyframes overlay-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.overlay {
+  @apply fixed inset-0 bg-black/40 z-40;
+  animation: overlay-fade 0.2s ease-out;
+  backdrop-filter: blur(2px);
+}
+
+/* Pull to refresh indicator */
+.pull-indicator {
+  @apply flex items-center justify-center text-primary-500;
+  transition: transform 0.2s ease-out;
+}
+
+/* Toast notification styles */
+.toast-container {
+  @apply fixed top-4 left-4 right-4 z-[100];
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Google Maps custom styles override */
+.gm-style .gm-style-iw-c {
+  @apply rounded-xl shadow-lg p-0 !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: auto !important;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+  }
+}
