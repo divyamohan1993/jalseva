@@ -20,7 +20,7 @@
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 15 · React 19 · Tailwind CSS 4 · PWA (@ducanh2912/next-pwa) |
+| Frontend | Next.js 16 · React 19 · Tailwind CSS 4 · PWA (@ducanh2912/next-pwa) |
 | Animation | Motion (formerly Framer Motion) |
 | AI | Google Gemini 2.0 Flash (@google/genai SDK) — voice, translation, demand prediction |
 | Maps | Google Maps JavaScript API |
@@ -114,7 +114,7 @@ This project is licensed under the [ISC License](LICENSE).
 
 ## Acknowledgements
 
-- [Next.js 15](https://nextjs.org/) — React framework (App Router)
+- [Next.js 16](https://nextjs.org/) — React framework (App Router, Turbopack)
 - [React 19](https://react.dev/) — UI library
 - [Tailwind CSS 4](https://tailwindcss.com/) — Utility-first CSS (CSS-first configuration)
 - [Motion](https://motion.dev/) — Animation library (formerly Framer Motion)

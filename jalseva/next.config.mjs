@@ -67,6 +67,7 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   serverExternalPackages: ['firebase-admin'],
+  turbopack: {},
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
