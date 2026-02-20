@@ -1,79 +1,85 @@
 // =============================================================================
-// JalSeva - Google Generative AI (Gemini) Client
+// JalSeva - Google Gemini AI Client (@google/genai SDK)
 // =============================================================================
 // Provides AI-powered features: voice command processing, demand prediction,
 // text translation (replaces Bhashini API), and WhatsApp chatbot responses.
 // Uses gemini-2.0-flash for all AI tasks including multilingual translation
 // that would otherwise require Bhashini API credentials.
+//
+// Uses the @google/genai SDK (the successor to the deprecated
+// @google/generative-ai package). Key differences from the old SDK:
+//   - GoogleGenAI constructor takes { apiKey } (object, not bare string).
+//   - No separate model object; call ai.models.generateContent() directly.
+//   - Safety settings are passed in each request's `config`, not at model init.
+//   - response.text is a property, not a method.
+//   - HarmCategory / HarmBlockThreshold enums replaced by string literals.
 // =============================================================================
 
-import {
-  GoogleGenerativeAI,
-  GenerativeModel,
-  HarmCategory,
-  HarmBlockThreshold,
-} from '@google/generative-ai';
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import type { VoiceCommandIntent, DemandPrediction } from '@/types';
 
 // ---------------------------------------------------------------------------
-// Client Initialization
+// Client Initialization (lazy)
 // ---------------------------------------------------------------------------
 
 const apiKey = process.env.GOOGLE_GEMINI_API_KEY || '';
 
-let _genAI: GoogleGenerativeAI | null = null;
+/** Singleton client instance, created on first use. */
+let _ai: GoogleGenAI | null = null;
 
-function getGenAI(): GoogleGenerativeAI {
-  if (!_genAI) {
+/**
+ * Returns (and lazily creates) the GoogleGenAI client singleton.
+ * Separated from module-level execution so that a missing API key during
+ * build or test does not throw at import time.
+ */
+function getAI(): GoogleGenAI {
+  if (!_ai) {
     if (!apiKey) {
       console.warn('GOOGLE_GEMINI_API_KEY not configured. AI features disabled.');
     }
-    _genAI = new GoogleGenerativeAI(apiKey);
+    _ai = new GoogleGenAI({ apiKey });
   }
-  return _genAI;
+  return _ai;
 }
 
-const genAI = new Proxy({} as GoogleGenerativeAI, {
-  get: (_target, prop) => {
-    const instance = getGenAI();
-    const value = (instance as any)[prop];
-    return typeof value === 'function' ? value.bind(instance) : value;
-  },
-});
+// ---------------------------------------------------------------------------
+// Shared safety settings -- block only high-probability harmful content.
+// ---------------------------------------------------------------------------
 
-// Shared safety settings — block only high-probability harmful content.
 const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-  },
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
 ];
 
 // ---------------------------------------------------------------------------
-// getGeminiModel
+// generateContent helper
 // ---------------------------------------------------------------------------
 
+/** The model used for all AI tasks. */
+const MODEL = 'gemini-2.0-flash';
+
 /**
- * Returns a configured GenerativeModel instance for the gemini-2.0-flash model.
- * Callers can use this for custom / ad-hoc prompts beyond the helpers below.
+ * Sends a prompt to the Gemini model and returns the raw text response.
+ *
+ * This helper centralises the model name, safety settings, and error surface
+ * so that every exported function can stay focused on prompt construction.
+ * It lazily initialises the client on first call (via getAI()).
  */
-export function getGeminiModel(): GenerativeModel {
-  return genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
-    safetySettings,
+async function generateContent(prompt: string): Promise<string> {
+  const ai = getAI();
+
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: prompt,
+    config: {
+      safetySettings,
+    },
   });
+
+  // response.text is a property (not a method) in the @google/genai SDK.
+  return response.text ?? '';
 }
 
 // ---------------------------------------------------------------------------
@@ -91,8 +97,6 @@ export async function processVoiceCommand(
   audioText: string,
   language: string
 ): Promise<VoiceCommandIntent> {
-  const model = getGeminiModel();
-
   const prompt = `You are a voice assistant for JalSeva, an Indian water tanker delivery service.
 
 Analyze the following transcribed voice command and extract the user's intent.
@@ -115,9 +119,7 @@ Rules for extraction:
 - Quantities mentioned in gallons should be converted to litres (1 gallon = 3.785 litres).
 - Common Hindi terms: "paani" = water, "gaadi" = tanker, "liter" = litres.`;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text().trim();
+  const text = (await generateContent(prompt)).trim();
 
   // Strip potential markdown code fences that the model may include.
   const jsonString = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -167,8 +169,6 @@ export async function getDemandPrediction(
   zone: string,
   historicalData: any
 ): Promise<DemandPrediction> {
-  const model = getGeminiModel();
-
   const prompt = `You are a demand prediction engine for JalSeva, an Indian water tanker delivery platform.
 
 Analyze the following data and predict water demand for the specified zone.
@@ -192,9 +192,7 @@ Consider the following factors:
 - Historical order volume trends.
 - Any anomalies in the data.`;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  const text = response.text().trim();
+  const text = (await generateContent(prompt)).trim();
 
   const jsonString = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
@@ -255,16 +253,12 @@ export async function translateText(
   text: string,
   targetLang: string
 ): Promise<string> {
-  const model = getGeminiModel();
-
   const prompt = `Translate the following text into ${targetLang}.
 Return ONLY the translated text, nothing else. No explanations, no quotes.
 
 Text: "${text}"`;
 
-  const result = await model.generateContent(prompt);
-  const response = result.response;
-  return response.text().trim();
+  return (await generateContent(prompt)).trim();
 }
 
 // ---------------------------------------------------------------------------
@@ -282,8 +276,6 @@ export async function generateChatResponse(
   message: string,
   context: any
 ): Promise<string> {
-  const model = getGeminiModel();
-
   const systemPrompt = `You are JalSeva's friendly WhatsApp assistant. You help customers order water tankers in India.
 
 Context about the user:
@@ -301,13 +293,5 @@ Guidelines:
 
 Respond to the following message:`;
 
-  const result = await model.generateContent(`${systemPrompt}\n\nUser: ${message}`);
-  const response = result.response;
-  return response.text().trim();
+  return (await generateContent(`${systemPrompt}\n\nUser: ${message}`)).trim();
 }
-
-// ---------------------------------------------------------------------------
-// Default Export
-// ---------------------------------------------------------------------------
-
-export default genAI;

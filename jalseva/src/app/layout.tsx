@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { Providers } from './providers';
 import './globals.css';
@@ -7,15 +6,6 @@ import './globals.css';
 // Force all pages to be dynamically rendered (not statically prerendered)
 // since the entire app depends on Firebase client SDK at runtime
 export const dynamic = 'force-dynamic';
-
-// ---------------------------------------------------------------------------
-// Font
-// ---------------------------------------------------------------------------
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-});
 
 // ---------------------------------------------------------------------------
 // Metadata
@@ -53,13 +43,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${inter.className} antialiased`}>
+      <body className="font-sans antialiased">
         <Providers>
           {children}
           <Toaster

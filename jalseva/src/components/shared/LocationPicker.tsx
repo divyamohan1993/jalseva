@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';

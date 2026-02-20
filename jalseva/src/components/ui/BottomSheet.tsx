@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence, PanInfo, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo, useAnimation } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

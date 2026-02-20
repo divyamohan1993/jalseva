@@ -39,10 +39,10 @@ async function getAdminDb() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await params;
 
     if (!orderId) {
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function GET(
       { status: 404 }
     );
   } catch (error) {
-    console.error(`[GET /api/orders/${params?.orderId}] Error:`, error);
+    console.error(`[GET /api/orders/unknown] Error:`, error);
     return NextResponse.json(
       { error: 'Internal server error while fetching order.' },
       { status: 500 }
@@ -93,10 +93,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await params;
 
     if (!orderId) {
       return NextResponse.json(
@@ -240,7 +240,7 @@ export async function PUT(
       demo: true,
     });
   } catch (error) {
-    console.error(`[PUT /api/orders/${params?.orderId}] Error:`, error);
+    console.error(`[PUT /api/orders/unknown] Error:`, error);
     return NextResponse.json(
       { error: 'Internal server error while updating order.' },
       { status: 500 }

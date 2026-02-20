@@ -1,4 +1,6 @@
-const withPWA = require('next-pwa')({
+import withPWAInit from '@ducanh2912/next-pwa';
+
+const withPWA = withPWAInit({
   dest: 'public',
   register: true,
   skipWaiting: true,
@@ -55,19 +57,16 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
-  swcMinify: true,
   images: {
-    domains: [
-      'maps.googleapis.com',
-      'maps.gstatic.com',
-      'firebasestorage.googleapis.com',
-      'lh3.googleusercontent.com',
+    remotePatterns: [
+      { protocol: 'https', hostname: 'maps.googleapis.com' },
+      { protocol: 'https', hostname: 'maps.gstatic.com' },
+      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
     formats: ['image/avif', 'image/webp'],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['firebase-admin'],
-  },
+  serverExternalPackages: ['firebase-admin'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -81,4 +80,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+export default withPWA(nextConfig);

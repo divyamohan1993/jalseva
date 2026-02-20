@@ -16,10 +16,10 @@ import type { VerificationStatus } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { supplierId: string } }
+  { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {
-    const { supplierId } = params;
+    const { supplierId } = await params;
 
     if (!supplierId) {
       return NextResponse.json(
@@ -54,7 +54,7 @@ export async function GET(
       userProfile,
     });
   } catch (error) {
-    console.error(`[GET /api/suppliers/${params?.supplierId}] Error:`, error);
+    console.error(`[GET /api/suppliers/unknown] Error:`, error);
     return NextResponse.json(
       { error: 'Internal server error while fetching supplier.' },
       { status: 500 }
@@ -68,10 +68,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { supplierId: string } }
+  { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {
-    const { supplierId } = params;
+    const { supplierId } = await params;
 
     if (!supplierId) {
       return NextResponse.json(
@@ -173,7 +173,7 @@ export async function PUT(
       supplier: { id: updatedDoc.id, ...updatedDoc.data() },
     });
   } catch (error) {
-    console.error(`[PUT /api/suppliers/${params?.supplierId}] Error:`, error);
+    console.error(`[PUT /api/suppliers/unknown] Error:`, error);
     return NextResponse.json(
       { error: 'Internal server error while updating supplier.' },
       { status: 500 }
@@ -187,10 +187,10 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { supplierId: string } }
+  { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {
-    const { supplierId } = params;
+    const { supplierId } = await params;
 
     if (!supplierId) {
       return NextResponse.json(
@@ -268,7 +268,7 @@ export async function PATCH(
       message: `Supplier verification status updated to '${verificationStatus}'.`,
     });
   } catch (error) {
-    console.error(`[PATCH /api/suppliers/${params?.supplierId}] Error:`, error);
+    console.error(`[PATCH /api/suppliers/unknown] Error:`, error);
     return NextResponse.json(
       { error: 'Internal server error while updating verification status.' },
       { status: 500 }
