@@ -18,9 +18,9 @@ setlocal enabledelayedexpansion
 
 REM ---------- Default Configuration (edit these) ----------
 set "VM_ZONE=asia-south2-a"
-set "VM_NAME=power-vm-spot-2h-20260219-094900"
+set "VM_NAME=jalsetu"
 set "GCP_PROJECT=dmjone"
-set "DOMAIN=jalseva.dmj.one"
+set "DOMAIN=jalsetu.dmj.one"
 
 REM ---------- Parse optional CLI arguments ----------
 :parse_args
