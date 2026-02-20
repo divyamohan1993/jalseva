@@ -20,7 +20,7 @@ JalSeva is a digital marketplace connecting water tanker suppliers with customer
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16, React 19, Tailwind CSS 4, PWA (@ducanh2912/next-pwa) |
+| Frontend | Next.js 16, React 19, Tailwind CSS 4, PWA (Serwist) |
 | Animation | Motion 12 (formerly Framer Motion) |
 | Backend | Next.js 16 API Routes (Turbopack) deployed on Cloud Run |
 | Database | Cloud Firestore (real-time) |

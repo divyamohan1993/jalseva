@@ -20,7 +20,7 @@
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16 · React 19 · Tailwind CSS 4 · PWA (@ducanh2912/next-pwa) |
+| Frontend | Next.js 16 · React 19 · Tailwind CSS 4 · PWA (Serwist) |
 | Animation | Motion (formerly Framer Motion) |
 | AI | Google Gemini 2.0 Flash (@google/genai SDK) — voice, translation, demand prediction |
 | Maps | Google Maps JavaScript API |
