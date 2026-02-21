@@ -34,7 +34,23 @@ If applicable, add screenshots to help explain your problem.
 - **Device:** [e.g., iPhone 14, Samsung Galaxy S23, Desktop]
 - **OS:** [e.g., iOS 17, Android 14, Windows 11]
 - **Browser:** [e.g., Chrome 120, Safari 17]
-- **App Version:** [e.g., 1.0.0]
+- **Network:** [e.g., WiFi, 4G, 2G/3G]
+- **Language Setting:** [e.g., Hindi, English, Tamil]
+
+## Deployment Context
+
+- [ ] Local development (`npm run dev`)
+- [ ] Docker single container (`docker compose up`)
+- [ ] Docker scaled mode (`docker compose --profile scaled up`)
+- [ ] Production VM
+
+## Logs
+
+<!-- If applicable, paste relevant console/server logs (remove any sensitive data): -->
+
+```
+Paste logs here
+```
 
 ## Additional Context
 

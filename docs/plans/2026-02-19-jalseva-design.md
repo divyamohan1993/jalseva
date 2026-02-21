@@ -1,68 +1,98 @@
-# JalSeva - Uber for Water Tankers in India
+# JalSeva — Design Document
 
-## Design Document | February 19, 2026
+**Version:** 2.0 | **Date:** February 19, 2026 | **Status:** Implemented
 
 ---
 
 ## 1. Overview
 
-JalSeva is a digital marketplace connecting water tanker suppliers with customers across India. Like Uber for ride-hailing, JalSeva provides real-time booking, live tracking, dynamic pricing, and UPI payments for water delivery.
+JalSeva (जलसेवा — "Water Service") is an open-source digital marketplace connecting water tanker suppliers with customers across India. Like Uber for ride-hailing, JalSeva provides real-time booking, live tracking, dynamic pricing, and UPI payments for water delivery.
 
-**Target Users:** Indian households relying on bottled water tankers for drinking water, especially in areas with poor groundwater quality.
+**Target Users:** Indian households relying on water tankers for drinking water, especially in areas with poor groundwater quality.
 
-**App Name:** JalSeva (जलसेवा) - meaning "Water Service"
+**Design Principles:**
+- Voice-first, icon-heavy UI for users with limited literacy
+- 3-tap maximum to complete any booking
+- Works on low-end Android devices and 2G/3G networks (PWA)
+- Hindi-first with 22 Indian language support via Gemini AI
 
 ---
 
 ## 2. Architecture
 
-### Tech Stack
+### 2.1 Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16, React 19, Tailwind CSS 4, PWA (Serwist) |
 | Animation | Motion 12 (formerly Framer Motion) |
-| Backend | Next.js 16 API Routes (Turbopack) deployed on Cloud Run |
+| Backend | Next.js 16 API Routes (standalone mode) |
 | Database | Cloud Firestore (real-time) |
 | Auth | Firebase Auth (Phone OTP) |
 | Maps | Google Maps JavaScript API, Routes API, Geocoding |
-| Payments | Razorpay (UPI, Cards, Wallets) |
-| AI | Gemini 2.0 Flash (@google/genai SDK) — voice, translation, demand prediction |
+| Payments | Razorpay (UPI, Cards, Wallets) — simulated in dev |
+| AI | Gemini 2.0 Flash — voice, translation, demand prediction |
 | WhatsApp | Meta Cloud API (WhatsApp Business) |
-| Real-time | Firestore real-time listeners + Cloud Pub/Sub |
-| Storage | Firebase Storage (documents, photos) |
 | State | Zustand 5 |
-| Cache | Upstash Redis (serverless) |
+| Cache | Upstash Redis (serverless) + L1 in-process cache |
 | ONDC | Beckn Protocol (staging sandbox) |
 | Runtime | Node.js 22, TypeScript 5.9 |
-| Monitoring | Cloud Operations Suite |
-| Deploy | Docker, Cloud Run (GCP) / npm run dev (local) |
+| Linting | Biome |
+| Testing | Vitest, Testing Library |
+| Deploy | Docker, Nginx, Cluster mode |
 
-### System Diagram
+### 2.2 System Diagram
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
 │  Customer   │  │  Supplier   │  │   Admin     │  │  WhatsApp   │
-│  PWA (/)    │  │  PWA (/sup) │  │  (/admin)   │  │  Bot        │
+│  PWA (/)    │  │ (/supplier) │  │  (/admin)   │  │  Bot        │
 └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
        │                │                │                │
        └────────────────┴────────────────┴────────────────┘
                                 │
                     ┌───────────▼───────────┐
-                    │  Next.js API Routes   │
-                    │  (Cloud Run)          │
+                    │    Nginx (optional)   │  Rate limiting, gzip,
+                    │    Load Balancer      │  static cache, WebSocket
                     └───────────┬───────────┘
                                 │
-    ┌──────┬──────┬─────────────┼─────────┬──────┬──────┐
-    │      │      │             │         │      │      │
-Firebase  Firestore  Cloud    Pub/Sub  Google  Gemini    Razorpay
-Auth              Storage            Maps    2.0 Flash
-                                │
-                    ┌───────────▼───────────┐
-                    │  ONDC/Beckn Protocol  │
-                    │  Layer (BAP + BPP)    │
-                    └───────────────────────┘
+              ┌─────────────────┼─────────────────┐
+              ▼                 ▼                  ▼
+        ┌──────────┐    ┌──────────┐       ┌──────────┐
+        │ Worker 1 │    │ Worker 2 │  ...  │ Worker N │
+        │ (Next.js)│    │ (Next.js)│       │ (Next.js)│
+        └────┬─────┘    └────┬─────┘       └────┬─────┘
+             └───────────────┼────────────────────┘
+                             │
+         ┌─────────┬─────────┼─────────┬─────────┐
+         ▼         ▼         ▼         ▼         ▼
+    Firestore   Firebase   Redis    Gemini    Razorpay
+    (DB)        Auth       (Cache)  2.0       (Pay)
+                                      │
+                          ┌───────────▼───────────┐
+                          │  ONDC/Beckn Protocol  │
+                          │  Layer (BAP + BPP)    │
+                          └───────────────────────┘
 ```
+
+### 2.3 Resilience Architecture
+
+```
+Request → Nginx rate limit → Circuit breaker → L1 cache → Redis → Firestore
+                                    │               │         │
+                                    │ (open)        │ (hit)   │ (miss)
+                                    ▼               ▼         ▼
+                              Return 503     Return cached   Query + cache
+```
+
+| Layer | Implementation | Purpose |
+|---|---|---|
+| **Circuit Breaker** | `src/lib/circuit-breaker.ts` | Exponential backoff, 1-probe HALF_OPEN recovery |
+| **L1 Cache** | `src/lib/cache.ts` | In-process cache (1-120s TTL) to bypass Redis/Firestore |
+| **Batch Writer** | `src/lib/batch-writer.ts` | Coalesce Firestore writes, 50K buffer cap, backpressure |
+| **Rate Limiter** | `src/lib/rate-limiter.ts` | Redis-backed per-IP rate limiting |
+| **Graceful Shutdown** | `src/lib/shutdown.ts` | 30s drain, parallel flushes, zero-downtime deploys |
+| **Cluster Mode** | `server.cluster.js` | One worker per CPU core, auto-restart with backoff |
 
 ---
 
@@ -70,7 +100,7 @@ Auth              Storage            Maps    2.0 Flash
 
 ### 3.1 Customer App (/)
 
-**Voice-First, Icon-Heavy Design for near-illiterate users:**
+Voice-first, icon-heavy design for near-illiterate users:
 
 - Big microphone button on home screen for voice ordering
 - Visual water type selection with icons (RO/Mineral/Tanker)
@@ -155,24 +185,51 @@ pricing/{zoneId}
 
 ---
 
-## 5. ONDC/Beckn Integration
+## 5. API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/send-otp` | Send phone OTP (L1 cached user lookup) |
+| GET/PUT | `/api/auth/profile` | User profile CRUD |
+| GET | `/api/pricing` | Dynamic pricing (L1 + Nginx cached) |
+| POST | `/api/orders` | Create order |
+| GET | `/api/orders` | List orders (bounded `.limit(500)`) |
+| GET/PUT | `/api/orders/[orderId]` | Order detail/update |
+| GET | `/api/suppliers` | List suppliers (bounded `.limit(500)`) |
+| GET/PUT | `/api/suppliers/[supplierId]` | Supplier detail/update |
+| GET | `/api/suppliers/nearby` | Geospatial nearby search |
+| GET/PUT | `/api/tracking` | GPS tracking (Haversine + async Maps) |
+| POST | `/api/payments/create-order` | Razorpay order creation (L1 cached) |
+| POST | `/api/payments/verify` | Payment verification (L1 cached) |
+| POST | `/api/ratings` | Submit rating |
+| GET | `/api/admin/analytics` | Analytics (parallel queries, bounded) |
+| POST | `/api/ai/chat` | Gemini AI chat |
+| POST | `/api/ai/voice` | Voice-to-text + intent |
+| POST | `/api/beckn/search` | ONDC search (BAP) |
+| POST | `/api/beckn/confirm` | ONDC confirm (BAP) |
+| POST | `/api/whatsapp/webhook` | WhatsApp Bot |
+| GET | `/api/health` | Health check |
+
+---
+
+## 6. ONDC/Beckn Integration
 
 Implements both BAP (Buyer App) and BPP (Seller App):
 
-- /search → /on_search (find available tankers)
-- /select → /on_select (get quote)
-- /init → /on_init (initialize order)
-- /confirm → /on_confirm (confirm order)
-- /track → /on_track (GPS + ETA)
-- /status → /on_status (order status)
-- /cancel → /on_cancel (cancel order)
-- /rating → /on_rating (rate service)
+- `/search` → `/on_search` (find available tankers)
+- `/select` → `/on_select` (get quote)
+- `/init` → `/on_init` (initialize order)
+- `/confirm` → `/on_confirm` (confirm order)
+- `/track` → `/on_track` (GPS + ETA)
+- `/status` → `/on_status` (order status)
+- `/cancel` → `/on_cancel` (cancel order)
+- `/rating` → `/on_rating` (rate service)
 
 Connected to ONDC Staging sandbox for demo. Production-ready architecture.
 
 ---
 
-## 6. Revenue Model
+## 7. Revenue Model
 
 | Stream | Implementation |
 |---|---|
@@ -183,8 +240,50 @@ Connected to ONDC Staging sandbox for demo. Production-ready architecture.
 
 ---
 
-## 7. Deployment
+## 8. Deployment & Scaling
 
-- **GCP:** Docker → Cloud Run, Firestore, Cloud Storage
-- **Local:** npm run dev (full functionality with Firebase emulators)
-- **Environment:** All API keys in .env file
+### Deployment Modes
+
+| Mode | Command | Throughput |
+|---|---|---|
+| Development | `npm run dev` | N/A |
+| Single container | `docker compose up` | 5-20K RPS |
+| Scaled (Nginx + 4 containers) | `docker compose --profile scaled up` | 20K+ RPS |
+| Multi-VM | Scaled mode x N VMs + LB | 50K+ RPS |
+
+### Scaling Path
+
+| Stage | Infrastructure | RPS | Cost |
+|---|---|---|---|
+| MVP (1 city) | e2-medium, single container | 5-10K | ~$25/mo |
+| 1 state | e2-standard-4, single container | 15-25K | ~$100/mo |
+| Multi-state | 2x e2-standard-4 + GCP LB | 40-60K | ~$250/mo |
+| National | GKE Autopilot + Memorystore | 50K+ | Pay per use |
+
+**Key insight:** Zero code changes between any scaling stage. Every step is an infrastructure dial.
+
+### Performance Optimizations
+
+| Optimization | Before | After |
+|---|---|---|
+| Cluster mode | Only worker 0 received traffic | All CPU cores serve requests |
+| Tracking API | 50-300ms (blocking Maps API) | <1ms (Haversine fallback) |
+| Auth lookup | Firestore hit every request | L1 cached (120s TTL) |
+| Pricing | Firestore + Redis per request | L1 (5s) + Nginx cache (30s) |
+| Firestore queries | Unbounded `.get()` | Bounded `.limit()` on all paths |
+| Circuit breaker | Thundering herd on recovery | 1-probe HALF_OPEN + backoff |
+| Batch writer | Unbounded buffer | 50K cap + backpressure |
+
+---
+
+## 9. Accessibility
+
+| Feature | Implementation |
+|---|---|
+| Language | `lang="hi-IN"` default, 22 languages via Gemini AI |
+| Screen readers | ARIA labels, `role` attributes, `sr-only` text |
+| Keyboard | Skip-to-content link, logical tab order |
+| Motion | Respects `prefers-reduced-motion` |
+| RTL | Ready for Urdu and other RTL scripts |
+| Voice | Microphone-based ordering for low-literacy users |
+| Visual | Large icons, color-coded status indicators |
