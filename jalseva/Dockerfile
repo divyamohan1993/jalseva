@@ -59,6 +59,9 @@ RUN mkdir .next && chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy cluster server for multi-core mode
+COPY --from=builder --chown=nextjs:nodejs /app/server.cluster.js ./server.cluster.js
+
 # Switch to non-root user
 USER nextjs
 
@@ -69,5 +72,10 @@ EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 ENV PORT=3000
 
-# Start the application
-CMD ["node", "server.js"]
+# CLUSTER_WORKERS=0 means use all CPU cores
+# CLUSTER_WORKERS=1 means single process (original behavior)
+# Set CLUSTER_WORKERS=1 or omit for backwards compatibility
+ENV CLUSTER_WORKERS=1
+
+# Start: use cluster mode if CLUSTER_WORKERS != 1, else single process
+CMD ["sh", "-c", "if [ \"$CLUSTER_WORKERS\" = \"1\" ]; then node server.js; else node server.cluster.js; fi"]

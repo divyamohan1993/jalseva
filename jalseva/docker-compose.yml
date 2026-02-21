@@ -1,4 +1,25 @@
+# =============================================================================
+# JalSeva - Production Docker Compose
+# =============================================================================
+# Two deployment modes:
+#
+# 1. SINGLE VM (default): `docker compose up`
+#    - Nginx + 4 app workers via cluster mode in one container
+#    - Handles ~10-20K RPS on a 4-core VM
+#
+# 2. SCALED: `docker compose --profile scaled up --scale app-worker=N`
+#    - Nginx + N separate app containers
+#    - Handles ~5K RPS per container
+#    - Use for 50K+ RPS across multiple VMs
+#
+# Both modes keep the existing single-container workflow working:
+#    `docker compose up app` still works as before.
+# =============================================================================
+
 services:
+  # ---------------------------------------------------------------------------
+  # Single-container mode (backwards compatible)
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
@@ -6,14 +27,166 @@ services:
     container_name: jalseva-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
+      - CLUSTER_WORKERS=${CLUSTER_WORKERS:-0}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "${APP_CPUS:-0}"
+        reservations:
+          memory: 512m
+
+  # ---------------------------------------------------------------------------
+  # Nginx Load Balancer (for scaled mode)
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: jalseva-nginx
+    restart: unless-stopped
+    profiles:
+      - scaled
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx-cache:/var/cache/nginx/jalseva
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      app-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "2"
+
+  # ---------------------------------------------------------------------------
+  # App Replicas (for scaled mode behind Nginx)
+  # ---------------------------------------------------------------------------
+  app-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jalseva-app-1
+    restart: unless-stopped
+    profiles:
+      - scaled
+    expose:
+      - "3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - INSTANCE_ID=app-1
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  app-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jalseva-app-2
+    restart: unless-stopped
+    profiles:
+      - scaled
+    expose:
+      - "3001"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - INSTANCE_ID=app-2
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  app-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jalseva-app-3
+    restart: unless-stopped
+    profiles:
+      - scaled
+    expose:
+      - "3002"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - INSTANCE_ID=app-3
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  app-4:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jalseva-app-4
+    restart: unless-stopped
+    profiles:
+      - scaled
+    expose:
+      - "3003"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - INSTANCE_ID=app-4
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+volumes:
+  nginx-cache:
+  nginx-logs:

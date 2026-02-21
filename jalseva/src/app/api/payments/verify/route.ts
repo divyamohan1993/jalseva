@@ -10,6 +10,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/razorpay';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // POST - Verify Razorpay payment signature
