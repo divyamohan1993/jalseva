@@ -1229,7 +1229,7 @@ export default function SubscriptionsPage() {
       </main>
 
       {/* ============== Bottom Navigation ============== */}
-      <BottomNav active="home" />
+      <BottomNav active="" />
 
       {/* ============== Modals ============== */}
       <CreateSubscriptionModal
