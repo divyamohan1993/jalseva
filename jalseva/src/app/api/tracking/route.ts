@@ -157,7 +157,11 @@ export async function POST(request: NextRequest) {
     hotCache.set(`tracking:${orderId}`, trackingInfo, 30);
 
     // --- Update geohash spatial index ---
+    // Merge with existing indexed data to preserve metadata (verificationStatus,
+    // waterTypes, etc.) that geohash lookup filters depend on.
+    const existingEntry = supplierIndex.get(supplierId);
     supplierIndex.upsert(supplierId, location.lat, location.lng, {
+      ...existingEntry?.data,
       isOnline: true,
       lastTrackingUpdate: Date.now(),
     });

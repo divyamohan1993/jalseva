@@ -106,6 +106,10 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date().toISOString(),
     });
 
+    // Invalidate cached order so payment verification reads fresh data
+    // from Firestore instead of seeing a stale entry without razorpayOrderId
+    hotCache.delete(orderCacheKey);
+
     return NextResponse.json({
       success: true,
       simulated: true,

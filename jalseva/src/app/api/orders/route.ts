@@ -189,7 +189,10 @@ export async function POST(request: NextRequest) {
               nearbySuppliers.push({ id: c.id, distance: distanceKm });
             }
           }
-        } else {
+        }
+
+        // Fallback: Firestore scan when index is empty or has no nearby matches
+        if (nearbySuppliers.length === 0) {
           // Fallback: Firestore scan (cold start) - capped to prevent unbounded reads
           const suppliersSnapshot = await adminDb
             .collection('suppliers')
