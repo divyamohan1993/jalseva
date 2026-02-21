@@ -107,4 +107,4 @@ If you're writing code for JalSeva, these are non-negotiable:
 - Wrap external service calls with the circuit breaker
 - Follow the [OWASP Top 10](https://owasp.org/www-project-top-ten/) guidelines
 
-Security is everyone's job. Thank you for helping keep JalSeva safe.
+Security is everyone's responsibility. Thank you for helping keep JalSeva safe.

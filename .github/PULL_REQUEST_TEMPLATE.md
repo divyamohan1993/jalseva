@@ -57,4 +57,4 @@
 
 ## Screenshots
 
-<!-- Before/after screenshots if this is a UI change. -->
+<!-- Before/after screenshots for UI changes. -->

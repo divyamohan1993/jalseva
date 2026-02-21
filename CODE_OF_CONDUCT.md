@@ -52,4 +52,4 @@ We're building technology that serves people who are often overlooked — low-li
 
 ## Attribution
 
-Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/) v2.1.
+Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.
