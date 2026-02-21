@@ -3,7 +3,7 @@
 // Covers: Test plan items #6 (order flow), #12 (throughput)
 // =============================================================================
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { WriteQueue } from '../queue';
 
 describe('WriteQueue', () => {
