@@ -7,6 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
 import { I18nProvider, useT } from '@/lib/i18n';
+import { AccessibilityProvider } from '@/components/shared/AccessibilityProvider';
 import type { User } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -145,8 +146,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <I18nProvider initialLocale="en">
-        <LanguageBridge />
-        {children}
+        <AccessibilityProvider>
+          <LanguageBridge />
+          {children}
+        </AccessibilityProvider>
       </I18nProvider>
     </AuthProvider>
   );

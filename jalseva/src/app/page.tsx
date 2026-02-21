@@ -34,6 +34,8 @@ import { formatCurrency } from '@/lib/utils';
 import type { WaterType, GeoLocation, CreateOrderRequest } from '@/types';
 import { LANGUAGES, getLanguage, getSpeechLocale } from '@/lib/languages';
 import { useT } from '@/lib/i18n';
+import { VoiceConversation } from '@/components/shared/VoiceConversation';
+import { useAccessibility } from '@/components/shared/AccessibilityProvider';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -352,6 +354,7 @@ export default function HomePage() {
   const { user } = useAuthStore();
   const { setCurrentOrder, addOrder } = useOrderStore();
   const { locale, setLocale, t } = useT();
+  const { announce, haptic } = useAccessibility();
 
   // --- Booking state ---
   const [waterType, setWaterType] = useState<WaterType>('ro');
@@ -365,6 +368,7 @@ export default function HomePage() {
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
   const [isBooking, startBookingTransition] = useTransition();
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [showVoiceConversation, setShowVoiceConversation] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
   // --- Calculated price ---
@@ -389,16 +393,19 @@ export default function HomePage() {
 
         if (response.ok) {
           const data = await response.json();
-          if (data.waterType) {
-            setWaterType(data.waterType);
+          const intent = data.intent || data;
+          if (intent.waterType) {
+            setWaterType(intent.waterType);
           }
-          if (data.quantity) {
-            setQuantity(data.quantity);
+          if (intent.quantity) {
+            setQuantity(intent.quantity);
             const idx = QUANTITY_OPTIONS.findIndex(
-              (q) => q.litres === data.quantity
+              (q) => q.litres === intent.quantity
             );
             if (idx >= 0) setQuantityIndex(idx);
           }
+          announce(t('toast.voiceUnderstood'), 'assertive');
+          haptic([50, 30, 50]);
           toast.success(t('toast.voiceUnderstood'), {
             id: 'voice-processing',
           });
@@ -561,6 +568,21 @@ export default function HomePage() {
     });
   };
 
+  // --- Conversational voice order handler ---
+  const handleVoiceOrderConfirmed = useCallback(
+    (order: { waterType: WaterType; quantity: number }) => {
+      setWaterType(order.waterType);
+      setQuantity(order.quantity);
+      const idx = QUANTITY_OPTIONS.findIndex((q) => q.litres === order.quantity);
+      if (idx >= 0) setQuantityIndex(idx);
+      setShowVoiceConversation(false);
+      haptic([100, 50, 100]);
+      announce(t('voice.orderConfirmed'), 'assertive');
+      toast.success(t('voice.orderConfirmed'));
+    },
+    [t, haptic, announce]
+  );
+
   // --- Close language dropdown on outside click ---
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -710,81 +732,81 @@ export default function HomePage() {
           </Card>
         </motion.div>
 
-        {/* --- Voice Order Button --- */}
+        {/* --- Conversational Voice Order Button --- */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          {isSupported && (
+          <button
+            onClick={() => setShowVoiceConversation(true)}
+            className="w-full rounded-2xl p-6 transition-all duration-300 active:scale-[0.98] bg-water shadow-lg shadow-blue-200"
+            aria-label={t('voice.startConversation')}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <motion.div
+                animate={{
+                  scale: [1, 1.08, 1],
+                  transition: { repeat: Infinity, duration: 2, ease: 'easeInOut' },
+                }}
+                className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center"
+              >
+                <Mic className="w-8 h-8 text-white" />
+              </motion.div>
+
+              <div className="text-center">
+                <p className="text-white font-bold text-lg">
+                  {t('voice.startConversation')}
+                </p>
+                <p className="text-white/80 text-sm mt-1">
+                  {t('voice.startConversationDesc')}
+                </p>
+              </div>
+            </div>
+          </button>
+        </motion.div>
+
+        {/* --- Quick Voice (legacy single-shot) --- */}
+        {isSupported && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
             <button
               onClick={isListening ? stopListening : startListening}
-              className={`w-full rounded-2xl p-6 transition-all duration-300 active:scale-[0.98] ${
+              className={`w-full rounded-2xl p-4 transition-all duration-300 active:scale-[0.98] ${
                 isListening
-                  ? 'bg-red-500 shadow-lg shadow-red-200'
-                  : 'bg-water shadow-lg shadow-blue-200'
+                  ? 'bg-red-500 shadow-md shadow-red-200'
+                  : 'bg-white border-2 border-dashed border-blue-200'
               }`}
+              aria-label={isListening ? t('home.voiceListening') : t('home.voiceOrder')}
             >
-              <div className="flex flex-col items-center gap-3">
-                <motion.div
-                  animate={
-                    isListening
-                      ? {
-                          scale: [1, 1.2, 1],
-                          transition: { repeat: Infinity, duration: 1 },
-                        }
-                      : {}
-                  }
-                  className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                    isListening ? 'bg-white/20' : 'bg-white/20'
-                  }`}
-                >
-                  {isListening ? (
-                    <MicOff className="w-8 h-8 text-white" />
-                  ) : (
-                    <Mic className="w-8 h-8 text-white" />
-                  )}
-                </motion.div>
-
-                <div className="text-center">
-                  <p className="text-white font-bold text-lg">
-                    {isListening
-                      ? t('home.voiceListening')
-                      : t('home.voiceOrder')}
-                  </p>
-                  <p className="text-white/80 text-sm mt-1">
-                    {isListening
-                      ? t('home.voiceSayWhat')
-                      : t('home.voiceExample')}
-                  </p>
-                </div>
-
+              <div className="flex items-center justify-center gap-3">
+                {isListening ? (
+                  <MicOff className="w-5 h-5 text-white" />
+                ) : (
+                  <Mic className="w-5 h-5 text-blue-500" />
+                )}
+                <span className={`font-semibold text-sm ${isListening ? 'text-white' : 'text-blue-600'}`}>
+                  {isListening ? t('home.voiceListening') : t('home.voiceOrder')}
+                </span>
                 {isListening && (
-                  <motion.div
-                    className="flex gap-1"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
+                  <div className="flex gap-0.5">
                     {[0, 1, 2, 3, 4].map((i) => (
                       <motion.div
                         key={i}
-                        animate={{
-                          scaleY: [1, 2.5, 1],
-                        }}
-                        transition={{
-                          repeat: Infinity,
-                          duration: 0.5,
-                          delay: i * 0.1,
-                        }}
-                        className="w-1 h-4 bg-white/70 rounded-full"
+                        animate={{ scaleY: [1, 2.5, 1] }}
+                        transition={{ repeat: Infinity, duration: 0.5, delay: i * 0.1 }}
+                        className="w-0.5 h-3 bg-white/70 rounded-full"
                       />
                     ))}
-                  </motion.div>
+                  </div>
                 )}
               </div>
             </button>
-          )}
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* --- Divider --- */}
         <div className="flex items-center gap-3">
@@ -1005,6 +1027,14 @@ export default function HomePage() {
           surge: surgeAmount,
           total: totalPrice,
         }}
+      />
+
+      {/* ============== Conversational Voice Ordering ============== */}
+      <VoiceConversation
+        isOpen={showVoiceConversation}
+        onClose={() => setShowVoiceConversation(false)}
+        onOrderConfirmed={handleVoiceOrderConfirmed}
+        locale={locale}
       />
     </div>
   );

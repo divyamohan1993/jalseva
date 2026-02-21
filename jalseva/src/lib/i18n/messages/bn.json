@@ -110,5 +110,39 @@
     "pushEnabled": "অর্ডার আপডেটের জন্য পুশ নোটিফিকেশন চালু আছে।",
     "dataSecured": "আপনার ডেটা এনক্রিপ্ট করে সুরক্ষিত রাখা হয়েছে।",
     "openingEmail": "সাপোর্টে ইমেল খোলা হচ্ছে"
+  },
+  "voice": {
+    "conversationTitle": "Order by Voice",
+    "conversationSubtitle": "Speak naturally in any language",
+    "tapToSpeak": "TAP & SPEAK",
+    "tapToStop": "TAP TO STOP",
+    "listeningNow": "Listening...",
+    "thinking": "Thinking...",
+    "speaking": "Speaking...",
+    "typeMessage": "Type your message...",
+    "send": "Send",
+    "muteAudio": "Mute voice responses",
+    "enableAudio": "Enable voice responses",
+    "messageHistory": "Conversation messages",
+    "startConversation": "TALK TO ORDER",
+    "startConversationDesc": "Speak in any language, mix them freely",
+    "orderConfirmed": "Order confirmed via voice!"
+  },
+  "accessibility": {
+    "fontSizeLabel": "Text Size",
+    "increase": "Increase text size",
+    "decrease": "Decrease text size",
+    "reset": "Reset text size",
+    "highContrast": "High contrast mode active",
+    "reducedMotion": "Reduced motion mode active",
+    "screenReader": "Screen reader detected"
+  },
+  "tracking": {
+    "mapLabel": "Live delivery tracking map",
+    "yourLocation": "Your delivery location",
+    "supplierVehicle": "Water tanker vehicle",
+    "etaAway": "{minutes} minutes away",
+    "delivered": "Water delivered!",
+    "mapUnavailable": "Map unavailable. Your delivery is being tracked."
   }
 }

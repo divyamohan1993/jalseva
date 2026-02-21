@@ -18,6 +18,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { LiveTrackingMap } from '@/components/shared/LiveTrackingMap';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { useOrderStore } from '@/store/orderStore';
@@ -686,12 +687,14 @@ export default function TrackingPage() {
         </div>
       </div>
 
-      {/* --- Map --- */}
+      {/* --- Map with real-time tracking --- */}
       <div className="flex-1 relative">
-        <TrackingMap
-          supplierLocation={order.tracking?.supplierLocation}
+        <LiveTrackingMap
           customerLocation={order.deliveryLocation}
+          supplierLocation={order.tracking?.supplierLocation}
           className="w-full h-full"
+          etaMinutes={etaMinutes}
+          distanceMeters={order.tracking?.distance}
         />
 
         {/* ETA overlay */}
@@ -700,6 +703,8 @@ export default function TrackingPage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             className="absolute top-20 left-1/2 -translate-x-1/2 bg-blue-600 text-white rounded-2xl px-5 py-3 shadow-water text-center z-20"
+            role="status"
+            aria-live="polite"
           >
             <p className="text-2xl font-bold">{etaMinutes} min</p>
             <p className="text-xs text-blue-200">
