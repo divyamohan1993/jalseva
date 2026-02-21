@@ -113,6 +113,7 @@ export default function SuppliersPage() {
           waterTypes: data.waterTypes || [],
           rating: data.rating || { average: 0, count: 0 },
           bankDetails: data.bankDetails || undefined,
+          supportsSubscription: data.supportsSubscription ?? false,
           userName: data.userName || data.name || '',
           userPhone: data.userPhone || data.phone || '',
         };
