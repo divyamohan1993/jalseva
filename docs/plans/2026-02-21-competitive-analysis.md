@@ -146,9 +146,9 @@ JalSeva runs from **$25/mo** (MVP, one city) to **$250/mo** (multi-state) with *
 
 ---
 
-## What We Should Learn From
+## What We Should Steal
 
-Here's what competitors got right — the best ideas worth adopting:
+Good artists borrow. Great artists steal. Here's what competitors got right that we should learn from:
 
 ### Water Quality Verification (from BookWater + GoWatr + BWSSB)
 
