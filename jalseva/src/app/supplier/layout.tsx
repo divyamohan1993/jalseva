@@ -128,7 +128,7 @@ export default function SupplierLayout({
             <button
               onClick={handleToggleOnline}
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300',
+                'flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-full text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-green-500',
                 isOnline
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-gray-100 text-gray-500 border border-gray-200'

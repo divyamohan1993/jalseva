@@ -210,7 +210,7 @@ export default function AdminLayout({
             <div className="absolute right-3 top-4 z-10">
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -236,7 +236,7 @@ export default function AdminLayout({
           <div className="flex items-center justify-between px-4 h-14">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-600"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 rounded-lg hover:bg-gray-100 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <Menu className="w-5 h-5" />
             </button>

@@ -324,7 +324,7 @@ export default function OrdersPage() {
                 key={sf.key}
                 onClick={() => setStatusFilter(sf.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0',
+                  'px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-all whitespace-nowrap shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500',
                   statusFilter === sf.key
                     ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-200'
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
@@ -354,7 +354,7 @@ export default function OrdersPage() {
             <div className="relative">
               <button
                 onClick={() => setShowDateDropdown(!showDateDropdown)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors w-full sm:w-auto"
+                className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <Calendar className="w-4 h-4 text-gray-400" />
                 {DATE_RANGES.find((d) => d.key === dateRange)?.label}
@@ -467,7 +467,7 @@ export default function OrdersPage() {
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => openOrderDetail(order)}
-                        className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -506,7 +506,7 @@ export default function OrdersPage() {
               </div>
               <button
                 onClick={() => setDetailOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <X className="w-5 h-5" />
               </button>

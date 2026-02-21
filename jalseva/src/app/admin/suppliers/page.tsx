@@ -267,7 +267,7 @@ export default function SuppliersPage() {
                 key={tab.key}
                 onClick={() => setActiveFilter(tab.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                  'px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500',
                   activeFilter === tab.key
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -402,14 +402,14 @@ export default function SuppliersPage() {
                           <>
                             <button
                               onClick={() => handleApproveReject(supplier.id, 'approve')}
-                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition-colors"
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-green-600 hover:bg-green-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
                               title="Approve"
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleApproveReject(supplier.id, 'reject')}
-                              className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
                               title="Reject"
                             >
                               <XCircle className="w-4 h-4" />
@@ -418,7 +418,7 @@ export default function SuppliersPage() {
                         )}
                         <button
                           onClick={() => openDetails(supplier)}
-                          className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
@@ -450,7 +450,7 @@ export default function SuppliersPage() {
               <h3 className="text-lg font-semibold text-gray-900">Supplier Details</h3>
               <button
                 onClick={() => setSidePanelOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <X className="w-5 h-5" />
               </button>

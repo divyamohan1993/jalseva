@@ -361,7 +361,7 @@ export default function ComplaintsPage() {
                 key={tab.key}
                 onClick={() => setActiveFilter(tab.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                  'px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500',
                   activeFilter === tab.key
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
@@ -528,7 +528,7 @@ export default function ComplaintsPage() {
               </div>
               <button
                 onClick={() => setDetailOpen(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <X className="w-5 h-5" />
               </button>

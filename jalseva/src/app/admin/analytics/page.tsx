@@ -410,7 +410,7 @@ export default function AnalyticsPage() {
                 key={dr.key}
                 onClick={() => setDateRangeKey(dr.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap',
+                  'px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium transition-all whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-blue-500',
                   dateRangeKey === dr.key
                     ? 'bg-white text-gray-900 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'

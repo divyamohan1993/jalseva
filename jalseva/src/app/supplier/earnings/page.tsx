@@ -442,7 +442,7 @@ export default function SupplierEarningsPage() {
             key={p}
             onClick={() => setPeriod(p)}
             className={cn(
-              'flex-1 relative py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200',
+              'flex-1 relative py-2 px-3 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500',
               period === p
                 ? 'text-green-700'
                 : 'text-gray-500 hover:text-gray-700'

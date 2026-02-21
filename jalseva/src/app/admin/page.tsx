@@ -505,7 +505,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-2 ml-3">
                       <button
                         onClick={() => router.push('/admin/suppliers')}
-                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                         title="Review"
                       >
                         <ChevronRight className="w-4 h-4" />
