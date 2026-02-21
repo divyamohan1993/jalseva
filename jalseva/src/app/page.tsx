@@ -369,7 +369,7 @@ function BottomNav({ active }: { active: string }) {
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, initialized } = useAuthStore();
+  const { user } = useAuthStore();
   const { setCurrentOrder, addOrder } = useOrderStore();
 
   // --- Booking state ---
@@ -438,7 +438,7 @@ export default function HomePage() {
   const { isListening, isSupported, startListening, stopListening } =
     useVoiceRecognition(handleVoiceResult);
 
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     setLocationLoading(true);
     try {
       if (!navigator.geolocation) {
@@ -490,7 +490,7 @@ export default function HomePage() {
     } catch {
       setLocationLoading(false);
     }
-  };
+  }, []);
 
   // --- Get user location on mount ---
   useEffect(() => {

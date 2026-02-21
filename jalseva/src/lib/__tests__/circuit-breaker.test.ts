@@ -3,7 +3,7 @@
 // Covers: Test plan item #11 (circuit breaker opens on timeout simulation)
 // =============================================================================
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { CircuitBreaker } from '../circuit-breaker';
 
 describe('CircuitBreaker', () => {

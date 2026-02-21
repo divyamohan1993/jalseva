@@ -88,7 +88,13 @@ class FirestoreBatchWriter {
     try {
       while (this.buffer.length > 0) {
         const batch = this.buffer.splice(0, this.maxBatchSize);
-        await this.executeBatch(batch);
+        const ok = await this.executeBatch(batch);
+        if (!ok) {
+          // Re-add failed ops for next auto-flush cycle, then stop
+          // to prevent an infinite retry loop on persistent failures.
+          this.buffer.unshift(...batch);
+          break;
+        }
       }
     } finally {
       this.flushing = false;
@@ -103,7 +109,7 @@ class FirestoreBatchWriter {
     }
   }
 
-  private async executeBatch(ops: BatchOperation[]): Promise<void> {
+  private async executeBatch(ops: BatchOperation[]): Promise<boolean> {
     try {
       await firestoreBreaker.execute(async () => {
         const batch = adminDb.batch();
@@ -131,10 +137,10 @@ class FirestoreBatchWriter {
         await batch.commit();
         this.flushedOps += ops.length;
       });
+      return true;
     } catch {
       this.failedFlushes++;
-      // Re-buffer failed operations for retry (add back to front)
-      this.buffer.unshift(...ops);
+      return false;
     }
   }
 

@@ -427,12 +427,13 @@ export default function SupplierRegisterPage() {
               <div className="space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Full Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-name"
                       type="text"
                       value={personal.name}
                       onChange={(e) =>
@@ -446,12 +447,13 @@ export default function SupplierRegisterPage() {
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-phone" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Phone Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-phone"
                       type="tel"
                       value={personal.phone}
                       onChange={(e) =>
@@ -493,12 +495,13 @@ export default function SupplierRegisterPage() {
               <div className="space-y-4">
                 {/* Vehicle Type */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-vehicle" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Vehicle Type <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <select
+                      id="reg-vehicle"
                       value={vehicle.type}
                       onChange={(e) =>
                         setVehicle((v) => ({ ...v, type: e.target.value }))
@@ -518,12 +521,13 @@ export default function SupplierRegisterPage() {
 
                 {/* Capacity */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-capacity" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Tank Capacity (Litres) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Gauge className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-capacity"
                       type="number"
                       value={vehicle.capacity}
                       onChange={(e) =>
@@ -542,12 +546,13 @@ export default function SupplierRegisterPage() {
 
                 {/* Vehicle Number */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-vehicle-number" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Vehicle Registration Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-vehicle-number"
                       type="text"
                       value={vehicle.number}
                       onChange={(e) =>
@@ -674,12 +679,13 @@ export default function SupplierRegisterPage() {
               <div className="space-y-4">
                 {/* Pincode */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-pincode" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Pincode <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-pincode"
                       type="text"
                       value={serviceArea.pincode}
                       onChange={(e) => {
@@ -695,12 +701,13 @@ export default function SupplierRegisterPage() {
 
                 {/* Area Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-area" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Area / Locality <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-area"
                       type="text"
                       value={serviceArea.area}
                       onChange={(e) =>
@@ -714,11 +721,12 @@ export default function SupplierRegisterPage() {
 
                 {/* Radius */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-radius" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Service Radius (km)
                   </label>
                   <div className="flex items-center gap-3">
                     <input
+                      id="reg-radius"
                       type="range"
                       min="5"
                       max="30"
@@ -775,12 +783,13 @@ export default function SupplierRegisterPage() {
               <div className="space-y-4">
                 {/* Account Number */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-account" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Account Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-account"
                       type="text"
                       value={bank.accountNumber}
                       onChange={(e) =>
@@ -797,12 +806,13 @@ export default function SupplierRegisterPage() {
 
                 {/* Confirm Account Number */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-confirm-account" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Confirm Account Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-confirm-account"
                       type="text"
                       value={bank.confirmAccountNumber}
                       onChange={(e) =>
@@ -831,12 +841,13 @@ export default function SupplierRegisterPage() {
 
                 {/* IFSC */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-ifsc" className="block text-sm font-medium text-gray-700 mb-1.5">
                     IFSC Code <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-ifsc"
                       type="text"
                       value={bank.ifsc}
                       onChange={(e) =>
@@ -854,12 +865,13 @@ export default function SupplierRegisterPage() {
 
                 {/* Account Holder Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label htmlFor="reg-holder-name" className="block text-sm font-medium text-gray-700 mb-1.5">
                     Account Holder Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
+                      id="reg-holder-name"
                       type="text"
                       value={bank.holderName}
                       onChange={(e) =>

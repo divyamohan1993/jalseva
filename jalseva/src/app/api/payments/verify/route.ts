@@ -10,7 +10,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/razorpay';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
-import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // POST - Verify Razorpay payment signature
@@ -104,28 +103,35 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Update order payment status ---
+    // Payment is critical: write directly to Firestore and await persistence
+    // before returning success to the client.
     const now = new Date().toISOString();
-
-    batchWriter.update('orders', orderId, {
-      'payment.status': 'paid',
-      'payment.razorpayPaymentId': razorpay_payment_id,
-      'payment.transactionId': razorpay_payment_id,
-      'payment.paidAt': now,
-      updatedAt: now,
-    });
-
-    // --- Record payment in payments collection for auditing ---
     const paymentDocId = `pay_${orderId}_${Date.now()}`;
-    batchWriter.set('payments', paymentDocId, {
-      orderId,
-      customerId: order.customerId,
-      supplierId: order.supplierId || null,
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      amount: order.payment?.amount || 0,
-      currency: 'INR',
-      status: 'paid',
-      createdAt: now,
+
+    await firestoreBreaker.execute(async () => {
+      const batch = adminDb.batch();
+
+      batch.update(orderRef, {
+        'payment.status': 'paid',
+        'payment.razorpayPaymentId': razorpay_payment_id,
+        'payment.transactionId': razorpay_payment_id,
+        'payment.paidAt': now,
+        updatedAt: now,
+      });
+
+      batch.set(adminDb.collection('payments').doc(paymentDocId), {
+        orderId,
+        customerId: order.customerId,
+        supplierId: order.supplierId || null,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        amount: order.payment?.amount || 0,
+        currency: 'INR',
+        status: 'paid',
+        createdAt: now,
+      });
+
+      await batch.commit();
     });
 
     return NextResponse.json({

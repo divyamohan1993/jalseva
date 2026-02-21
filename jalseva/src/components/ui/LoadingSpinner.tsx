@@ -23,12 +23,11 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   const config = sizeConfig[size];
 
   return (
-    <div
+    <output
       className={cn(
         'flex flex-col items-center justify-center gap-3',
         className
       )}
-      role="status"
       aria-label={text || 'Loading'}
     >
       <div className={cn('relative', config.drop)}>
@@ -103,7 +102,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           animation: water-ripple 1.5s ease-in-out infinite 0.3s;
         }
       `}</style>
-    </div>
+    </output>
   );
 };
 

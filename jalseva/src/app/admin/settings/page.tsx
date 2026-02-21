@@ -507,10 +507,11 @@ export default function SettingsPage() {
             size="md"
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">
+            <label htmlFor="default-language" className="text-sm font-medium text-gray-700">
               Default Language
             </label>
             <select
+              id="default-language"
               value={settings.defaultLanguage}
               onChange={(e) =>
                 setSettings({ ...settings, defaultLanguage: e.target.value })
@@ -801,9 +802,9 @@ export default function SettingsPage() {
 
           {/* Demand Level */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            <span className="text-sm font-medium text-gray-700 mb-1.5 block">
               Current Demand Level
-            </label>
+            </span>
             <div className="flex gap-2">
               {(['low', 'normal', 'high', 'surge'] as const).map((level) => (
                 <button

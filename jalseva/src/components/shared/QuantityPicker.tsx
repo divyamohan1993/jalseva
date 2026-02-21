@@ -181,6 +181,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
         <div className="flex flex-wrap gap-2 justify-center">
           <AnimatePresence>
             {Array.from({ length: jarCount }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed visual jar elements
               <WaterJar key={i} index={i} filled={true} />
             ))}
           </AnimatePresence>

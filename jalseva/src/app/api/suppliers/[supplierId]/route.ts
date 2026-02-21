@@ -51,7 +51,7 @@ export async function GET(
         () => adminDb.collection('users').doc(supplierData.userId as string).get(),
         () => null
       );
-      if (userDoc && userDoc.exists) {
+      if (userDoc?.exists) {
         userProfile = { id: userDoc.id, ...userDoc.data() };
       }
     }

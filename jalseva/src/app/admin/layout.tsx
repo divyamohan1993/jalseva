@@ -74,6 +74,7 @@ export default function AdminLayout({
   // --------------------------------------------------------------------------
   // Close sidebar on route change (mobile)
   // --------------------------------------------------------------------------
+  // biome-ignore lint/correctness/useExhaustiveDependencies: sidebar must close on route changes
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);

@@ -10,7 +10,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { cacheGet, cacheSet } from '@/lib/redis';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
-import { hotCache, cacheAside } from '@/lib/cache';
+import { hotCache } from '@/lib/cache';
 
 // ---------------------------------------------------------------------------
 // Date Helpers

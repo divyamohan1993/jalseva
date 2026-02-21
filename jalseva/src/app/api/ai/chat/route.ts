@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         () => adminDb.collection('users').doc(userId).get(),
         () => null
       );
-      if (userDoc && userDoc.exists) {
+      if (userDoc?.exists) {
         const userData = userDoc.data()!;
         context.user = {
           name: userData.name,
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         () => null
       );
 
-      if (sessionDoc && sessionDoc.exists) {
+      if (sessionDoc?.exists) {
         const sessionData = sessionDoc.data()!;
         context.conversationHistory = sessionData.messages?.slice(-5) || [];
       }
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString(),
       };
 
-      if (sessionDoc && sessionDoc.exists) {
+      if (sessionDoc?.exists) {
         const existing = sessionDoc.data()!;
         const messages = existing.messages || [];
         messages.push(messageEntry, responseEntry);

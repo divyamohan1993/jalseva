@@ -54,7 +54,7 @@ describe('Middleware: Auth Guard Logic', () => {
 
 describe('Middleware: Rate Limiting (429 enforcement)', () => {
   let apiLimiter: TokenBucketLimiter;
-  let globalLimiter: TokenBucketLimiter;
+  let _globalLimiter: TokenBucketLimiter;
 
   beforeEach(() => {
     apiLimiter = new TokenBucketLimiter({
@@ -62,7 +62,7 @@ describe('Middleware: Rate Limiting (429 enforcement)', () => {
       refillRate: 50,
       maxClients: 200_000,
     });
-    globalLimiter = new TokenBucketLimiter({
+    _globalLimiter = new TokenBucketLimiter({
       maxTokens: 60_000,
       refillRate: 50_000,
       maxClients: 1,

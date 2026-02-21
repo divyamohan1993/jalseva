@@ -148,7 +148,7 @@ export function useOrders() {
     );
 
     return () => unsubscribe();
-  }, [user?.id, user?.role, currentOrder?.id, setOrders, setLoading, setCurrentOrder, getOrderById]);
+  }, [user, currentOrder, setOrders, setLoading, setCurrentOrder, getOrderById]);
 
   return { orders, currentOrder, loading };
 }

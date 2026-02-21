@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 // =============================================================================
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import {
   collection,
   query,
@@ -706,10 +707,13 @@ export default function SuppliersPage() {
           <div className="space-y-4">
             <div className="bg-gray-100 rounded-xl p-2 min-h-[300px] flex items-center justify-center">
               {previewDoc.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <img
+                <Image
                   src={previewDoc.url}
                   alt={previewDoc.name}
+                  width={400}
+                  height={400}
                   className="max-w-full max-h-[400px] rounded-lg object-contain"
+                  unoptimized
                 />
               ) : previewDoc.url.match(/\.pdf$/i) ? (
                 <iframe

@@ -3,6 +3,7 @@
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ArrowLeft, ChevronDown, User, Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -140,10 +141,13 @@ const Navbar: React.FC<NavbarProps> = ({
           aria-label="Profile"
         >
           {userAvatar ? (
-            <img
+            <Image
               src={userAvatar}
               alt={userName || 'User'}
+              width={36}
+              height={36}
               className="w-full h-full object-cover"
+              unoptimized
             />
           ) : (
             <User size={18} className="text-gray-600" />

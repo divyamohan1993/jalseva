@@ -216,9 +216,9 @@ export default function LoginPage() {
       {/* --- Water-themed header decoration --- */}
       <div className="relative bg-water h-48 overflow-hidden">
         {/* Water bubbles */}
-        {[...Array(6)].map((_, i) => (
+        {[0, 1, 2, 3, 4, 5].map((n) => (
           <motion.div
-            key={i}
+            key={n}
             className="absolute rounded-full bg-white/10"
             style={{
               width: 20 + Math.random() * 40,
@@ -305,7 +305,7 @@ export default function LoginPage() {
 
               {/* Phone input */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label htmlFor="phone-number" className="text-sm font-medium text-gray-700">
                   Mobile Number / मोबाइल नंबर
                 </label>
                 <div className="flex items-center gap-2">
@@ -314,6 +314,7 @@ export default function LoginPage() {
                     <span>+91</span>
                   </div>
                   <input
+                    id="phone-number"
                     type="tel"
                     inputMode="numeric"
                     maxLength={10}
@@ -381,12 +382,12 @@ export default function LoginPage() {
                   </p>
                 </div>
                 <div className="flex justify-center gap-2">
-                  {generatedOtp.split('').map((digit, i) => (
+                  {Array.from(generatedOtp, (digit, pos) => ({ digit, pos })).map(({ digit, pos }) => (
                     <motion.span
-                      key={i}
+                      key={pos}
                       initial={{ y: -10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.1 * i }}
+                      transition={{ delay: 0.1 * pos }}
                       className="w-11 h-14 bg-white rounded-xl border-2 border-blue-200 flex items-center justify-center text-2xl font-bold text-blue-700 shadow-sm"
                     >
                       {digit}
@@ -405,18 +406,18 @@ export default function LoginPage() {
 
               {/* OTP inputs */}
               <div className="flex justify-center gap-3">
-                {otp.map((digit, index) => (
+                {Array.from(otp, (digit, pos) => ({ digit, pos })).map(({ digit, pos }) => (
                   <input
-                    key={index}
+                    key={pos}
                     ref={(el) => {
-                      otpRefs.current[index] = el;
+                      otpRefs.current[pos] = el;
                     }}
                     type="tel"
                     inputMode="numeric"
                     maxLength={6}
                     value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onChange={(e) => handleOtpChange(pos, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(pos, e)}
                     className={`w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all focus:outline-none ${
                       digit
                         ? 'border-blue-500 bg-blue-50 text-blue-700'

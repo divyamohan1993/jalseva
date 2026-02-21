@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // date range, search by order ID, full order details view, cancel and refund.
 // =============================================================================
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   collection,
   query,
@@ -112,7 +112,7 @@ export default function OrdersPage() {
   // --------------------------------------------------------------------------
   // Date range calculation
   // --------------------------------------------------------------------------
-  const getDateThreshold = (range: DateRange): Date | null => {
+  const getDateThreshold = useCallback((range: DateRange): Date | null => {
     const now = new Date();
     switch (range) {
       case 'today': {
@@ -135,7 +135,7 @@ export default function OrdersPage() {
       default:
         return null;
     }
-  };
+  }, []);
 
   // --------------------------------------------------------------------------
   // Firestore listener

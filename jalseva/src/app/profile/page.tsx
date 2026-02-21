@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import type React from 'react';
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { signOut } from 'firebase/auth';
@@ -31,6 +31,7 @@ import {
   Droplets,
   Check,
 } from 'lucide-react';
+import Image from 'next/image';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -157,10 +158,11 @@ function EditProfileModal({
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="profile-name" className="text-sm font-medium text-gray-700 mb-1.5 block">
               Name / नाम
             </label>
             <input
+              id="profile-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -228,6 +230,7 @@ function SavedAddresses({
       ) : (
         <div className="space-y-2">
           {addresses.map((addr, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: addresses lack unique IDs
             <Card key={index} shadow="sm">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
@@ -507,10 +510,13 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="w-18 h-18 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt={user.name}
+                  width={72}
+                  height={72}
                   className="w-full h-full object-cover rounded-2xl"
+                  unoptimized
                 />
               ) : (
                 <span className="text-2xl font-bold text-white">

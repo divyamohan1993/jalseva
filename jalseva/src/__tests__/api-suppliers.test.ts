@@ -40,7 +40,8 @@ describe('Suppliers API: Input validation', () => {
 
   it('validates radius range (0-50 km)', () => {
     expect(0 < 10 && 10 <= 50).toBe(true);
-    expect(0 < 0).toBe(false); // 0 is invalid
+    const zero = 0;
+    expect(zero < 0).toBe(false); // 0 is invalid
     expect(51 <= 50).toBe(false); // 51 is invalid
   });
 

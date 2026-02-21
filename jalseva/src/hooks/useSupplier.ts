@@ -130,7 +130,6 @@ export function useSupplier() {
     setPendingOrders,
     setActiveOrder,
     setTodayEarnings,
-    addPendingOrder,
     removePendingOrder,
   } = useSupplierStore();
 

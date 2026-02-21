@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
       () => null
     );
 
-    if (sessionDoc && sessionDoc.exists) {
+    if (sessionDoc?.exists) {
       context.conversationHistory = sessionDoc.data()?.messages?.slice(-5) || [];
     }
 
@@ -303,7 +303,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    if (sessionDoc && sessionDoc.exists) {
+    if (sessionDoc?.exists) {
       const existing = sessionDoc.data()!;
       const messages = [...(existing.messages || []), messageEntry, responseEntry].slice(-50);
       batchWriter.update('chat_sessions', sessionId, { messages, updatedAt: new Date().toISOString() });

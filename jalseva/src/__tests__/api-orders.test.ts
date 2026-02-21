@@ -61,8 +61,10 @@ describe('Orders API: Validation rules', () => {
   it('validates quantity range (20-20000 litres)', () => {
     expect(19 < 20).toBe(true); // Too low
     expect(20001 > 20000).toBe(true); // Too high
-    expect(20 >= 20 && 20 <= 20000).toBe(true); // Min valid
-    expect(20000 >= 20 && 20000 <= 20000).toBe(true); // Max valid
+    const minValid = 20;
+    expect(minValid >= 20 && minValid <= 20000).toBe(true); // Min valid
+    const maxValid = 20000;
+    expect(maxValid >= 20 && maxValid <= 20000).toBe(true); // Max valid
   });
 
   it('validates delivery location', () => {

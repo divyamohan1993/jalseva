@@ -299,11 +299,11 @@ function OrderDetailModal({
             <div className="flex justify-between text-sm items-center">
               <span className="text-gray-500">Your Rating / रेटिंग</span>
               <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
+                {[1, 2, 3, 4, 5].map((star) => (
                   <Star
-                    key={i}
+                    key={star}
                     className={`w-4 h-4 ${
-                      i < (order.rating?.customerRating || 0)
+                      star <= (order.rating?.customerRating || 0)
                         ? 'text-yellow-400 fill-yellow-400'
                         : 'text-gray-200'
                     }`}

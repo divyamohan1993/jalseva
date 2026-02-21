@@ -4,8 +4,8 @@
 // =============================================================================
 
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 describe('PWA: Service Worker configuration', () => {
   const swPath = resolve(__dirname, '../app/sw.ts');

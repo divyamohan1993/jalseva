@@ -126,6 +126,7 @@ export function useTracking(orderId?: string): UseTrackingReturn {
   // server update, so the UI appears responsive between Firestore pushes.
   // --------------------------------------------------------------------------
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: timer restarts on location update
   useEffect(() => {
     if (serverEtaRef.current === null || serverEtaRef.current <= 0) return;
 

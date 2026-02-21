@@ -9,7 +9,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getDemandLevel } from '@/lib/redis';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
-import { hotCache, cacheAside, LRUCache } from '@/lib/cache';
+import { hotCache, cacheAside, type LRUCache } from '@/lib/cache';
 import type { WaterType, DemandLevel } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
           () => adminDb.collection('pricing_zones').doc(zone).get(),
           () => null
         );
-        if (zoneDoc && zoneDoc.exists) return zoneDoc.data() as Record<string, unknown>;
+        if (zoneDoc?.exists) return zoneDoc.data() as Record<string, unknown>;
         return null;
       },
       120 // 2 minute TTL for zone pricing

@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
-import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
 import { cancelOrder } from '@/actions/orders';
 import { submitRating } from '@/actions/ratings';
@@ -284,6 +283,7 @@ function TrackingMap({
             {/* Grid lines to simulate map */}
             <div className="absolute inset-0 opacity-10">
               {[...Array(10)].map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: fixed visual grid lines
                 <React.Fragment key={i}>
                   <div
                     className="absolute h-px bg-gray-400 w-full"
@@ -437,7 +437,6 @@ export default function TrackingPage() {
   const params = useParams();
   const orderId = params.orderId as string;
 
-  const { user } = useAuthStore();
   const { currentOrder, setCurrentOrder, updateOrderStatus, updateTracking } =
     useOrderStore();
 

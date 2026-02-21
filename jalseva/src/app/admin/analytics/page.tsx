@@ -503,11 +503,11 @@ export default function AnalyticsPage() {
 
               {/* Bar chart */}
               <div className="flex items-end gap-1.5 sm:gap-2 h-48 px-1">
-                {ordersOverTime.map((d, i) => {
+                {ordersOverTime.map((d) => {
                   const heightPct = (d.count / maxBarValue) * 100;
                   return (
                     <div
-                      key={i}
+                      key={d.label}
                       className="flex-1 flex flex-col items-center gap-1 min-w-0"
                     >
                       {/* Count label */}
@@ -754,11 +754,11 @@ export default function AnalyticsPage() {
                 No location data for this period
               </div>
             ) : (
-              topAreas.map((area, i) => {
+              topAreas.map((area) => {
                 const maxCount = topAreas[0]?.count || 1;
                 const widthPct = (area.count / maxCount) * 100;
                 return (
-                  <div key={i}>
+                  <div key={area.area}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />

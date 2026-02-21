@@ -403,7 +403,7 @@ export default function SupplierDashboard() {
   const _router = useRouter();
   const { isOnline, todayEarnings, pendingOrders, activeOrder, supplier } =
     useSupplierStore();
-  const { removePendingOrder, setActiveOrder, setPendingOrders } =
+  const { removePendingOrder, setActiveOrder } =
     useSupplierStore();
 
   // Demo state - in production these come from the store / API
