@@ -11,7 +11,6 @@ import {
   MapPin,
   Landmark,
   Camera,
-  Upload,
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
@@ -22,8 +21,6 @@ import {
   CreditCard,
   Building,
   X,
-  Image,
-  Eye,
   Shield,
 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
@@ -317,7 +314,7 @@ export default function SupplierRegisterPage() {
         return (
           vehicle.type !== '' &&
           vehicle.capacity !== '' &&
-          parseInt(vehicle.capacity) > 0 &&
+          parseInt(vehicle.capacity, 10) > 0 &&
           vehicle.number.trim().length >= 4
         );
       case 3:
@@ -961,7 +958,7 @@ export default function SupplierRegisterPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Capacity</span>
                   <span className="text-gray-900 font-medium">
-                    {parseInt(vehicle.capacity).toLocaleString()}L
+                    {parseInt(vehicle.capacity, 10).toLocaleString()}L
                   </span>
                 </div>
                 <div className="flex justify-between">

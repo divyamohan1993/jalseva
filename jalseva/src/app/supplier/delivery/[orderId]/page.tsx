@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, } from 'motion/react';
 import {
   ArrowLeft,
   Navigation,
@@ -11,16 +11,11 @@ import {
   MapPin,
   Droplets,
   CheckCircle2,
-  Circle,
   Camera,
-  Upload,
   X,
   Clock,
   User,
-  ChevronUp,
-  Shield,
   ExternalLink,
-  Truck,
   Flag,
   PackageCheck,
 } from 'lucide-react';
@@ -350,10 +345,10 @@ export default function ActiveDeliveryPage() {
     router.back();
   };
 
-  const etaMinutes = order.tracking?.eta
+  const _etaMinutes = order.tracking?.eta
     ? Math.ceil(order.tracking.eta / 60)
     : null;
-  const distanceKm = order.tracking?.distance
+  const _distanceKm = order.tracking?.distance
     ? (order.tracking.distance / 1000).toFixed(1)
     : null;
 

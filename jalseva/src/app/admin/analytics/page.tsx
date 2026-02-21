@@ -8,7 +8,8 @@
 // top suppliers table, top areas by demand, and customer retention rate.
 // =============================================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import type React from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   collection,
   query,
@@ -18,14 +19,11 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import {
-  BarChart3,
-  TrendingUp,
   DollarSign,
   Clock,
   Star,
   Calendar,
   Package,
-  Users,
   MapPin,
   ArrowUpRight,
   ArrowDownRight,

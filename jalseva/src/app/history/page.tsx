@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import type React from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft,
   Droplets,
   Mountain,
   Truck,
   Star,
   Calendar,
-  Filter,
   ChevronRight,
   Package,
   X,
@@ -21,10 +20,8 @@ import {
   ClipboardList,
   ScrollText,
   User,
-  Loader2,
   RefreshCw,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/authStore';

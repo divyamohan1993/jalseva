@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -13,7 +14,6 @@ import {
   Minus,
   Plus,
   ChevronDown,
-  ChevronUp,
   Home,
   ClipboardList,
   ScrollText,
@@ -436,13 +436,6 @@ export default function HomePage() {
   const { isListening, isSupported, startListening, stopListening } =
     useVoiceRecognition(handleVoiceResult);
 
-  // --- Get user location on mount ---
-  useEffect(() => {
-    getCurrentLocation();
-    // Simulate nearby suppliers count
-    setNearbySuppliers(Math.floor(Math.random() * 8) + 3);
-  }, []);
-
   const getCurrentLocation = async () => {
     setLocationLoading(true);
     try {
@@ -496,6 +489,13 @@ export default function HomePage() {
       setLocationLoading(false);
     }
   };
+
+  // --- Get user location on mount ---
+  useEffect(() => {
+    getCurrentLocation();
+    // Simulate nearby suppliers count
+    setNearbySuppliers(Math.floor(Math.random() * 8) + 3);
+  }, [getCurrentLocation]);
 
   // --- Quantity controls ---
   const decreaseQuantity = () => {

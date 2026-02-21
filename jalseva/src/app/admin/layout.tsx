@@ -7,7 +7,8 @@
 // Verifies admin role and redirects non-admins to /.
 // =============================================================================
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -75,7 +76,7 @@ export default function AdminLayout({
   // --------------------------------------------------------------------------
   useEffect(() => {
     setSidebarOpen(false);
-  }, [pathname]);
+  }, []);
 
   // --------------------------------------------------------------------------
   // Loading state

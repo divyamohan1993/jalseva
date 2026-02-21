@@ -203,7 +203,7 @@ export function useLocation(options: UseLocationOptions = {}): UseLocationReturn
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watch, highAccuracy, maxAge, timeout]);
+  }, [watch, geoOptions, handleError, handleSuccess]);
 
   // --------------------------------------------------------------------------
   // Effect: mount / unmount
@@ -240,7 +240,7 @@ export function useLocation(options: UseLocationOptions = {}): UseLocationReturn
     setError(null);
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleSuccess, handleError]);
+  }, [handleSuccess, handleError, geoOptions]);
 
   // --------------------------------------------------------------------------
   // Public API

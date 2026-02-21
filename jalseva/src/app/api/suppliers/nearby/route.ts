@@ -5,7 +5,7 @@
 // Returns online, verified suppliers sorted by distance.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { haversineDistance } from '@/lib/maps';
 import type { GeoLocation, WaterType } from '@/types';
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
 
     // --- Validation ---
-    if (isNaN(lat) || isNaN(lng)) {
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
       return NextResponse.json(
         { error: 'Missing or invalid lat/lng query parameters.' },
         { status: 400 }

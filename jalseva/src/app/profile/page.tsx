@@ -1,17 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import {
-  ArrowLeft,
   User,
   Phone,
   MapPin,
-  Globe,
   CreditCard,
   Star,
   LogOut,
@@ -165,7 +164,6 @@ function EditProfileModal({
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name / अपना नाम डालें"
               className="input-field"
-              autoFocus
             />
           </div>
         </div>
@@ -389,8 +387,8 @@ export default function ProfilePage() {
   const { user, setUser, logout: authLogout } = useAuthStore();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showLanguage, setShowLanguage] = useState(false);
-  const [showAddresses, setShowAddresses] = useState(false);
+  const [_showLanguage, _setShowLanguage] = useState(false);
+  const [_showAddresses, _setShowAddresses] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<
     { label: string; address: string; location?: GeoLocation }[]
   >([]);

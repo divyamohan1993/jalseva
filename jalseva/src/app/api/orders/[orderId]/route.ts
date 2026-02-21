@@ -5,7 +5,7 @@
 // PUT /api/orders/[orderId]  - Update order (status changes, accept, reject, etc.)
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import type { OrderStatus } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ async function getAdminDb() {
 // ---------------------------------------------------------------------------
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {

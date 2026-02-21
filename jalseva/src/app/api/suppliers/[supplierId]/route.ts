@@ -6,7 +6,7 @@
 // PATCH /api/suppliers/[supplierId]  - Admin-only: update verification status
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import type { VerificationStatus } from '@/types';
 
@@ -15,7 +15,7 @@ import type { VerificationStatus } from '@/types';
 // ---------------------------------------------------------------------------
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {

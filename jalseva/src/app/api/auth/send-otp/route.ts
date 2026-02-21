@@ -7,7 +7,7 @@
 // ensures the user document exists server-side.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import type { User, UserRole } from '@/types';
 

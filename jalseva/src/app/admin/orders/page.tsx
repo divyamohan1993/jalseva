@@ -7,7 +7,7 @@
 // date range, search by order ID, full order details view, cancel and refund.
 // =============================================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   collection,
   query,
@@ -16,22 +16,15 @@ import {
   doc,
   updateDoc,
   limit,
-  where,
   Timestamp,
 } from 'firebase/firestore';
 import {
   Search,
-  Filter,
   Calendar,
-  ChevronRight,
   X,
   Package,
   MapPin,
-  Phone,
-  Clock,
-  CreditCard,
   AlertTriangle,
-  DollarSign,
   Eye,
   XCircle,
   RefreshCcw,
@@ -44,7 +37,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import type { Order, OrderStatus, PaymentStatus } from '@/types';
+import type { Order, OrderStatus, } from '@/types';
 
 // =============================================================================
 // Constants
@@ -222,7 +215,7 @@ export default function OrdersPage() {
     }
 
     return result;
-  }, [orders, statusFilter, dateRange, searchQuery]);
+  }, [orders, statusFilter, dateRange, searchQuery, getDateThreshold]);
 
   // Status counts
   const statusCounts = useMemo(() => {

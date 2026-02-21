@@ -5,7 +5,7 @@
 // POST /api/whatsapp/webhook  - Handle incoming WhatsApp messages
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { generateChatResponse } from '@/lib/gemini';
 
@@ -184,14 +184,14 @@ export async function POST(request: NextRequest) {
 
     // --- Process different message types ---
     let userMessage = '';
-    let messageType = messageData.type;
+    const messageType = messageData.type;
 
     switch (messageType) {
       case 'text':
         userMessage = messageData.text?.body || '';
         break;
 
-      case 'location':
+      case 'location': {
         // User shared location
         const lat = messageData.location?.latitude;
         const lng = messageData.location?.longitude;
@@ -207,6 +207,7 @@ export async function POST(request: NextRequest) {
           userMessage = `I'm sharing my location: ${address || `${lat}, ${lng}`}. I want to order water here.`;
         }
         break;
+      }
 
       case 'interactive':
         // Button response

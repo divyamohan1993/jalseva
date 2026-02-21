@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -10,19 +10,15 @@ import {
   Star,
   Truck,
   MapPin,
-  Navigation,
-  Clock,
   CheckCircle2,
   Package,
   ChevronUp,
   ChevronDown,
-  Droplets,
   Loader2,
   AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
 import { formatCurrency } from '@/lib/utils';
@@ -548,7 +544,7 @@ export default function TrackingPage() {
     // Auto-progress every 15s for demo
     const timeout = setTimeout(simulateProgress, 15000);
     return () => clearTimeout(timeout);
-  }, [order?.status]);
+  }, [order?.status, order]);
 
   // --- ETA countdown ---
   useEffect(() => {

@@ -5,7 +5,7 @@
 // GET  /api/orders        - Fetch orders by customerId or supplierId
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { haversineDistance } from '@/lib/maps';
 import type {
   WaterType,

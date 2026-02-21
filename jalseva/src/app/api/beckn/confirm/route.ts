@@ -7,7 +7,7 @@
 // a Beckn on_confirm response.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import type { GeoLocation, WaterType, PaymentMethod, OrderPrice } from '@/types';
 
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // If items have a quoted price, use it
     if (orderRequest.quote?.price?.value) {
       const quotedPrice = parseFloat(orderRequest.quote.price.value);
-      if (!isNaN(quotedPrice) && quotedPrice > 0) {
+      if (!Number.isNaN(quotedPrice) && quotedPrice > 0) {
         price.total = Math.round(quotedPrice);
         price.commission = Math.round(quotedPrice * 0.15);
         price.supplierEarning = Math.round(quotedPrice * 0.85);

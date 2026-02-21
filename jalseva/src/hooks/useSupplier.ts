@@ -167,7 +167,7 @@ export function useSupplier() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, setOnline, setSupplier, user]);
 
   // --------------------------------------------------------------------------
   // Listen for incoming (pending) order requests
@@ -204,7 +204,7 @@ export function useSupplier() {
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.role, isOnline]);
+  }, [user?.id, user?.role, isOnline, setPendingOrders, user]);
 
   // --------------------------------------------------------------------------
   // Listen for the supplier's active (accepted / en_route / arriving) order
@@ -241,7 +241,7 @@ export function useSupplier() {
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, setActiveOrder, user]);
 
   // --------------------------------------------------------------------------
   // Calculate today's earnings from delivered orders
@@ -284,7 +284,7 @@ export function useSupplier() {
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.role]);
+  }, [user?.id, user?.role, setTodayEarnings, user]);
 
   // --------------------------------------------------------------------------
   // Toggle online/offline

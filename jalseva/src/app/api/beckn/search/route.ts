@@ -7,7 +7,7 @@
 // simulated demo suppliers if none exist in the database.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { haversineDistance } from '@/lib/maps';
 import type { GeoLocation, WaterType } from '@/types';
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     let userLocation: GeoLocation | null = null;
     if (gps) {
       const parts = gps.split(',').map(Number);
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      if (parts.length === 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1])) {
         userLocation = { lat: parts[0], lng: parts[1] };
       }
     }
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     }> = [];
 
     try {
-      let query = adminDb
+      const query = adminDb
         .collection('suppliers')
         .where('isOnline', '==', true)
         .where('verificationStatus', '==', 'verified')

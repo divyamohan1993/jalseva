@@ -7,7 +7,7 @@
 // side-panel details, approve/reject with confirmation modal, document viewing.
 // =============================================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   collection,
   query,
@@ -15,13 +15,10 @@ import {
   onSnapshot,
   doc,
   updateDoc,
-  where,
   getDoc,
 } from 'firebase/firestore';
 import {
   Search,
-  Filter,
-  ChevronRight,
   CheckCircle,
   XCircle,
   X,
@@ -31,7 +28,6 @@ import {
   FileText,
   Truck,
   Eye,
-  Shield,
   Users,
   AlertTriangle,
 } from 'lucide-react';
@@ -42,7 +38,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import type { Supplier, VerificationStatus, User } from '@/types';
+import type { Supplier, VerificationStatus, } from '@/types';
 
 // =============================================================================
 // Types

@@ -5,7 +5,7 @@
 // PUT  /api/auth/profile             - Update user profile
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
 // ---------------------------------------------------------------------------

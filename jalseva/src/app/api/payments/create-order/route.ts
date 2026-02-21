@@ -6,7 +6,7 @@
 // Returns a simulated checkout result so the client can auto-complete payment.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { createOrder as createRazorpayOrder, simulateCheckout } from '@/lib/razorpay';
 

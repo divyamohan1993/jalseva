@@ -6,7 +6,7 @@
 // with context and returns appropriate responses in the user's language.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { generateChatResponse } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/redis';

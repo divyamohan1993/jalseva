@@ -5,7 +5,7 @@
 // POST /api/pricing  - Admin: update zone pricing configuration
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getDemandLevel } from '@/lib/redis';
 import type { WaterType, DemandLevel } from '@/types';

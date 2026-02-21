@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
+import type React from 'react';
+import { useState, useCallback } from 'react';
+import { MapPin, Navigation, Search, } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';

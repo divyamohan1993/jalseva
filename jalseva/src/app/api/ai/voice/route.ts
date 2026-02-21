@@ -6,7 +6,7 @@
 // order intent. Supports Hindi, English, and regional Indian languages.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { processVoiceCommand } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/redis';
 

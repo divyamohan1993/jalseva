@@ -4,7 +4,7 @@
 // POST /api/ratings - Submit a rating for a completed order
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
 // ---------------------------------------------------------------------------
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     // --- Recalculate and update the rated party's average rating ---
     // If customer rated, update supplier's average. If supplier rated, update customer's average.
-    const ratedEntityCollection =
+    const _ratedEntityCollection =
       ratedBy === 'customer' ? 'suppliers' : 'users';
     const ratedEntityId =
       ratedBy === 'customer' ? order.supplierId : order.customerId;

@@ -5,7 +5,7 @@
 // GET  /api/tracking       - Get tracking info for an order
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getETA, haversineDistance } from '@/lib/maps';
 import { cacheSet, cacheGet } from '@/lib/redis';

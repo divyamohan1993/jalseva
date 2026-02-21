@@ -5,7 +5,7 @@
 // GET  /api/suppliers      - List suppliers (admin, with filters)
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import type { WaterType, VerificationStatus } from '@/types';
 
