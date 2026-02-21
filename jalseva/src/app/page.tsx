@@ -32,7 +32,8 @@ import { useOrderStore } from '@/store/orderStore';
 import { createOrder } from '@/actions/orders';
 import { formatCurrency } from '@/lib/utils';
 import type { WaterType, GeoLocation, CreateOrderRequest } from '@/types';
-import { LANGUAGES, getLanguage } from '@/lib/languages';
+import { LANGUAGES, getLanguage, getSpeechLocale } from '@/lib/languages';
+import { useT } from '@/lib/i18n';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -40,31 +41,27 @@ import { LANGUAGES, getLanguage } from '@/lib/languages';
 
 const WATER_TYPES: {
   key: WaterType;
-  label: string;
-  hindi: string;
+  labelKey: string;
+  descKey: string;
   icon: React.ReactNode;
-  description: string;
 }[] = [
   {
     key: 'ro',
-    label: 'RO Water',
-    hindi: 'आरओ पानी',
+    labelKey: 'water.ro',
+    descKey: 'water.roDesc',
     icon: <Droplets className="w-7 h-7" />,
-    description: 'Purified drinking water',
   },
   {
     key: 'mineral',
-    label: 'Mineral',
-    hindi: 'मिनरल पानी',
+    labelKey: 'water.mineral',
+    descKey: 'water.mineralDesc',
     icon: <Mountain className="w-7 h-7" />,
-    description: 'Natural mineral water',
   },
   {
     key: 'tanker',
-    label: 'Tanker',
-    hindi: 'टैंकर',
+    labelKey: 'water.tanker',
+    descKey: 'water.tankerDesc',
     icon: <Truck className="w-7 h-7" />,
-    description: 'Bulk water tanker',
   },
 ];
 
@@ -90,7 +87,7 @@ const BASE_PRICES: Record<WaterType, number> = {
 // Voice recognition hook
 // ---------------------------------------------------------------------------
 
-function useVoiceRecognition(onResult: (text: string) => void) {
+function useVoiceRecognition(onResult: (text: string) => void, locale: string) {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -112,7 +109,7 @@ function useVoiceRecognition(onResult: (text: string) => void) {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'hi-IN'; // Hindi primary, falls back to English
+    recognition.lang = getSpeechLocale(locale);
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;
@@ -125,7 +122,6 @@ function useVoiceRecognition(onResult: (text: string) => void) {
 
     recognition.onerror = () => {
       setIsListening(false);
-      toast.error('Could not understand. Please try again.\nसमझ नहीं पाये। कृपया फिर से बोलें।');
     };
 
     recognition.onend = () => {
@@ -135,7 +131,7 @@ function useVoiceRecognition(onResult: (text: string) => void) {
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-  }, [onResult]);
+  }, [onResult, locale]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -159,6 +155,7 @@ function LoginPromptModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { t } = useT();
 
   if (!isOpen) return null;
 
@@ -191,11 +188,8 @@ function LoginPromptModal({
               <Droplets className="w-8 h-8 text-blue-600" />
             </div>
             <h2 className="text-xl font-bold text-gray-900">
-              Login to Book Water
+              {t('home.loginToBook')}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              पानी बुक करने के लिए लॉगिन करें
-            </p>
           </div>
 
           <Button
@@ -205,11 +199,11 @@ function LoginPromptModal({
             onClick={() => router.push('/login')}
             className="mb-3"
           >
-            Login with Phone / फ़ोन से लॉगिन
+            {t('home.loginWithPhone')}
           </Button>
 
           <p className="text-xs text-center text-gray-400 mt-3">
-            By continuing you agree to our Terms of Service
+            {t('common.termsAgree')}
           </p>
         </motion.div>
       </motion.div>
@@ -234,6 +228,8 @@ function PriceBreakdownModal({
   quantity: number;
   price: { base: number; delivery: number; surge: number; total: number };
 }) {
+  const { t } = useT();
+
   if (!isOpen) return null;
 
   return (
@@ -255,7 +251,7 @@ function PriceBreakdownModal({
         >
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-bold text-gray-900">
-              Price Breakdown
+              {t('home.priceBreakdown')}
             </h3>
             <button
               onClick={onClose}
@@ -265,28 +261,26 @@ function PriceBreakdownModal({
             </button>
           </div>
 
-          <p className="text-sm text-gray-500 mb-4">मूल्य विवरण</p>
-
           <div className="space-y-3">
             <div className="flex justify-between text-gray-700">
               <span>
-                {WATER_TYPES.find((w) => w.key === waterType)?.label} x{' '}
+                {t(WATER_TYPES.find((w) => w.key === waterType)?.labelKey ?? 'water.ro')} x{' '}
                 {quantity}L
               </span>
               <span>{formatCurrency(price.base)}</span>
             </div>
             <div className="flex justify-between text-gray-700">
-              <span>Delivery Fee / डिलीवरी शुल्क</span>
+              <span>{t('home.deliveryFee')}</span>
               <span>{formatCurrency(price.delivery)}</span>
             </div>
             {price.surge > 0 && (
               <div className="flex justify-between text-amber-600">
-                <span>Surge / अधिक मांग शुल्क</span>
+                <span>{t('home.surge')}</span>
                 <span>+{formatCurrency(price.surge)}</span>
               </div>
             )}
             <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-gray-900 text-lg">
-              <span>Total / कुल</span>
+              <span>{t('home.total')}</span>
               <span>{formatCurrency(price.total)}</span>
             </div>
           </div>
@@ -298,7 +292,7 @@ function PriceBreakdownModal({
             className="mt-5"
             onClick={onClose}
           >
-            Close / बंद करें
+            {t('common.close')}
           </Button>
         </motion.div>
       </motion.div>
@@ -312,30 +306,13 @@ function PriceBreakdownModal({
 
 function BottomNav({ active }: { active: string }) {
   const router = useRouter();
+  const { t } = useT();
 
   const navItems = [
-    { key: 'home', label: 'Home', hindi: 'होम', icon: Home, path: '/' },
-    {
-      key: 'booking',
-      label: 'Booking',
-      hindi: 'बुकिंग',
-      icon: ClipboardList,
-      path: '/booking',
-    },
-    {
-      key: 'history',
-      label: 'History',
-      hindi: 'इतिहास',
-      icon: ScrollText,
-      path: '/history',
-    },
-    {
-      key: 'profile',
-      label: 'Profile',
-      hindi: 'प्रोफाइल',
-      icon: User,
-      path: '/profile',
-    },
+    { key: 'home', icon: Home, path: '/' },
+    { key: 'booking', icon: ClipboardList, path: '/booking' },
+    { key: 'history', icon: ScrollText, path: '/history' },
+    { key: 'profile', icon: User, path: '/profile' },
   ];
 
   return (
@@ -347,7 +324,7 @@ function BottomNav({ active }: { active: string }) {
           <button
             key={item.key}
             onClick={() => router.push(item.path)}
-            aria-label={`${item.label} - ${item.hindi}`}
+            aria-label={t(`nav.${item.key}`)}
             aria-current={isActive ? 'page' : undefined}
             className={`bottom-nav-item ${isActive ? 'active' : ''}`}
           >
@@ -357,7 +334,7 @@ function BottomNav({ active }: { active: string }) {
             <span
               className={`text-[10px] font-medium ${isActive ? 'text-blue-600' : 'text-gray-400'}`}
             >
-              {item.label}
+              {t(`nav.${item.key}`)}
             </span>
           </button>
         );
@@ -374,6 +351,7 @@ export default function HomePage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { setCurrentOrder, addOrder } = useOrderStore();
+  const { locale, setLocale, t } = useT();
 
   // --- Booking state ---
   const [waterType, setWaterType] = useState<WaterType>('ro');
@@ -386,7 +364,6 @@ export default function HomePage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
   const [isBooking, startBookingTransition] = useTransition();
-  const [language, setLanguage] = useState('en');
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -399,7 +376,7 @@ export default function HomePage() {
   // --- Voice recognition ---
   const handleVoiceResult = useCallback(
     async (transcript: string) => {
-      toast.loading('Processing voice command...\nआवाज़ प्रोसेस हो रही है...', {
+      toast.loading(t('toast.voiceProcessing'), {
         id: 'voice-processing',
       });
 
@@ -407,7 +384,7 @@ export default function HomePage() {
         const response = await fetch('/api/ai/voice', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: transcript, language: 'hi' }),
+          body: JSON.stringify({ text: transcript, language: locale }),
         });
 
         if (response.ok) {
@@ -422,32 +399,31 @@ export default function HomePage() {
             );
             if (idx >= 0) setQuantityIndex(idx);
           }
-          toast.success(
-            `Understood: ${data.waterType || waterType} ${data.quantity || quantity}L\nसमझ गया!`,
-            { id: 'voice-processing' }
-          );
+          toast.success(t('toast.voiceUnderstood'), {
+            id: 'voice-processing',
+          });
         } else {
-          toast.error('Could not process voice. Please try again.\nफिर से बोलें।', {
+          toast.error(t('toast.voiceFailed'), {
             id: 'voice-processing',
           });
         }
       } catch {
-        toast.error('Voice processing failed.\nआवाज़ प्रोसेस नहीं हो पायी।', {
+        toast.error(t('toast.voiceError'), {
           id: 'voice-processing',
         });
       }
     },
-    [waterType, quantity]
+    [waterType, quantity, t, locale]
   );
 
   const { isListening, isSupported, startListening, stopListening } =
-    useVoiceRecognition(handleVoiceResult);
+    useVoiceRecognition(handleVoiceResult, locale);
 
   const getCurrentLocation = useCallback(async () => {
     setLocationLoading(true);
     try {
       if (!navigator.geolocation) {
-        toast.error('Location not available on this device');
+        toast.error(t('toast.locationNotAvailable'));
         setLocationLoading(false);
         return;
       }
@@ -466,24 +442,22 @@ export default function HomePage() {
             );
             if (res.ok) {
               const data = await res.json();
-              const addr = data.results?.[0]?.formatted_address || 'Location detected';
+              const addr = data.results?.[0]?.formatted_address || t('home.locationDetected');
               setLocationAddress(addr);
               geo.address = addr;
               setLocation({ ...geo });
             } else {
-              setLocationAddress('Location detected');
+              setLocationAddress(t('home.locationDetected'));
             }
           } catch {
-            setLocationAddress('Location detected');
+            setLocationAddress(t('home.locationDetected'));
           }
 
           setLocationLoading(false);
         },
         (error) => {
           console.error('Geolocation error:', error);
-          toast.error(
-            'Cannot access location. Please enable location services.\nलोकेशन चालू करें।'
-          );
+          toast.error(t('toast.cantAccessLocation'));
           setLocationLoading(false);
         },
         {
@@ -495,7 +469,7 @@ export default function HomePage() {
     } catch {
       setLocationLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // --- Get user location on mount ---
   useEffect(() => {
@@ -529,9 +503,7 @@ export default function HomePage() {
     }
 
     if (!location) {
-      toast.error(
-        'Please enable location to book.\nकृपया अपनी लोकेशन चालू करें।'
-      );
+      toast.error(t('toast.enableLocation'));
       getCurrentLocation();
       return;
     }
@@ -581,12 +553,10 @@ export default function HomePage() {
           setCurrentOrder(order);
           addOrder(order);
         }
-        toast.success('Order placed! Finding supplier...\nऑर्डर हो गया! सप्लायर ढूंढ रहे हैं...');
+        toast.success(t('toast.orderPlaced'));
         router.push('/booking');
       } catch {
-        toast.error(
-          'Something went wrong. Please try again.\nकुछ गलत हो गया।'
-        );
+        toast.error(t('toast.somethingWrong'));
       }
     });
   };
@@ -635,7 +605,7 @@ export default function HomePage() {
               >
                 <Globe className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">
-                  {getLanguage(language).short}
+                  {getLanguage(locale).short}
                 </span>
                 <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -646,19 +616,19 @@ export default function HomePage() {
                     <button
                       key={lang.code}
                       onClick={() => {
-                        setLanguage(lang.code);
+                        setLocale(lang.code);
                         setLangDropdownOpen(false);
                       }}
                       role="option"
-                      aria-selected={lang.code === language}
+                      aria-selected={lang.code === locale}
                       className={`w-full text-left px-3 py-2 min-h-[44px] text-sm hover:bg-blue-50 transition-colors flex items-center justify-between ${
-                        lang.code === language
+                        lang.code === locale
                           ? 'bg-blue-50 text-blue-700 font-medium'
                           : 'text-gray-700'
                       }`}
                     >
                       <span>{lang.native} <span className="text-gray-400 text-xs">{lang.label}</span></span>
-                      {lang.code === language && (
+                      {lang.code === locale && (
                         <span className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" />
                       )}
                     </button>
@@ -702,15 +672,13 @@ export default function HomePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  {language === 'en' ? 'Your Location' : 'आपकी लोकेशन'}
+                  {t('home.yourLocation')}
                 </p>
                 {locationLoading ? (
                   <div className="flex items-center gap-2 mt-1">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                     <span className="text-sm text-gray-500">
-                      {language === 'en'
-                        ? 'Detecting location...'
-                        : 'लोकेशन ढूंढ रहे हैं...'}
+                      {t('home.detectingLocation')}
                     </span>
                   </div>
                 ) : locationAddress ? (
@@ -719,9 +687,7 @@ export default function HomePage() {
                   </p>
                 ) : (
                   <p className="text-sm text-gray-500 mt-0.5">
-                    {language === 'en'
-                      ? 'Tap to detect location'
-                      : 'लोकेशन के लिए टैप करें'}
+                    {t('home.tapToDetect')}
                   </p>
                 )}
               </div>
@@ -737,10 +703,7 @@ export default function HomePage() {
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <p className="text-xs text-green-600 font-medium flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  {nearbySuppliers}{' '}
-                  {language === 'en'
-                    ? 'suppliers nearby'
-                    : 'सप्लायर आपके पास उपलब्ध'}
+                  {t('home.suppliersNearby', { count: nearbySuppliers })}
                 </p>
               </div>
             )}
@@ -786,21 +749,13 @@ export default function HomePage() {
                 <div className="text-center">
                   <p className="text-white font-bold text-lg">
                     {isListening
-                      ? language === 'en'
-                        ? 'LISTENING... TAP TO STOP'
-                        : 'सुन रहे हैं... रोकने के लिए टैप करें'
-                      : language === 'en'
-                        ? 'TAP TO ORDER BY VOICE'
-                        : 'बोलकर ऑर्डर करें'}
+                      ? t('home.voiceListening')
+                      : t('home.voiceOrder')}
                   </p>
                   <p className="text-white/80 text-sm mt-1">
                     {isListening
-                      ? language === 'en'
-                        ? 'Say what you need...'
-                        : 'बताएं क्या चाहिए...'
-                      : language === 'en'
-                        ? '"20 litre RO paani chahiye"'
-                        : '"बीस लीटर आरओ पानी चाहिए"'}
+                      ? t('home.voiceSayWhat')
+                      : t('home.voiceExample')}
                   </p>
                 </div>
 
@@ -835,7 +790,7 @@ export default function HomePage() {
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-gray-200" />
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-            {language === 'en' ? 'Or select below' : 'या नीचे से चुनें'}
+            {t('home.orSelectBelow')}
           </span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
@@ -847,7 +802,7 @@ export default function HomePage() {
           transition={{ delay: 0.3 }}
         >
           <p className="text-sm font-semibold text-gray-700 mb-2">
-            {language === 'en' ? 'Water Type' : 'पानी का प्रकार'}
+            {t('home.waterType')}
           </p>
           <div className="grid grid-cols-3 gap-3">
             {WATER_TYPES.map((type) => {
@@ -871,12 +826,12 @@ export default function HomePage() {
                     <p
                       className={`text-sm font-bold ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}
                     >
-                      {type.label}
+                      {t(type.labelKey)}
                     </p>
                     <p
                       className={`text-[11px] ${isSelected ? 'text-blue-500' : 'text-gray-400'}`}
                     >
-                      {type.hindi}
+                      {t(type.descKey)}
                     </p>
                   </div>
                   {isSelected && (
@@ -912,7 +867,7 @@ export default function HomePage() {
           transition={{ delay: 0.4 }}
         >
           <p className="text-sm font-semibold text-gray-700 mb-2">
-            {language === 'en' ? 'Quantity' : 'मात्रा'}
+            {t('home.quantity')}
           </p>
           <Card shadow="sm">
             <div className="flex items-center justify-between">
@@ -934,9 +889,7 @@ export default function HomePage() {
                   {QUANTITY_OPTIONS[quantityIndex].label}
                 </motion.p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {language === 'en'
-                    ? `${quantity} litres`
-                    : `${quantity} लीटर`}
+                  {t('home.litres', { count: quantity })}
                 </p>
               </div>
 
@@ -986,7 +939,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 font-medium">
-                  {language === 'en' ? 'Estimated Price' : 'अनुमानित कीमत'}
+                  {t('home.estimatedPrice')}
                 </p>
                 <motion.p
                   key={totalPrice}
@@ -1001,7 +954,7 @@ export default function HomePage() {
                 onClick={() => setShowPriceBreakdown(true)}
                 className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/80 hover:bg-white transition-colors text-sm font-medium text-blue-600 min-h-[44px]"
               >
-                {language === 'en' ? 'View Breakdown' : 'विवरण देखें'}
+                {t('home.viewBreakdown')}
                 <ChevronDown className="w-4 h-4" />
               </button>
             </div>
@@ -1023,19 +976,11 @@ export default function HomePage() {
             onClick={handleBookNow}
             className="rounded-2xl text-lg font-bold min-h-[60px] shadow-water"
           >
-            {isBooking
-              ? language === 'en'
-                ? 'Placing Order...'
-                : 'ऑर्डर हो रहा है...'
-              : language === 'en'
-                ? 'BOOK NOW'
-                : 'अभी बुक करें'}
+            {isBooking ? t('home.placingOrder') : t('home.bookNow')}
           </Button>
           {!user && (
             <p className="text-xs text-center text-gray-400 mt-2">
-              {language === 'en'
-                ? 'You need to login first'
-                : 'पहले लॉगिन करें'}
+              {t('home.needLogin')}
             </p>
           )}
         </motion.div>

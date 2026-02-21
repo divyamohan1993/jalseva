@@ -7,12 +7,11 @@ import Image from 'next/image';
 import { ArrowLeft, ChevronDown, User, Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LANGUAGES, getLanguage } from '@/lib/languages';
+import { useT } from '@/lib/i18n';
 
 export interface NavbarProps {
   showBack?: boolean;
   title?: string;
-  language?: string;
-  onLanguageChange?: (lang: string) => void;
   userAvatar?: string;
   userName?: string;
   onProfileClick?: () => void;
@@ -22,8 +21,6 @@ export interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({
   showBack = false,
   title,
-  language = 'en',
-  onLanguageChange,
   userAvatar,
   userName,
   onProfileClick,
@@ -32,8 +29,9 @@ const Navbar: React.FC<NavbarProps> = ({
   const router = useRouter();
   const [langOpen, setLangOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { locale, setLocale } = useT();
 
-  const selectedLang = getLanguage(language);
+  const selectedLang = getLanguage(locale);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -108,19 +106,19 @@ const Navbar: React.FC<NavbarProps> = ({
                 <button
                   key={lang.code}
                   onClick={() => {
-                    onLanguageChange?.(lang.code);
+                    setLocale(lang.code);
                     setLangOpen(false);
                   }}
                   role="option"
-                  aria-selected={lang.code === language}
+                  aria-selected={lang.code === locale}
                   className={cn(
                     'w-full text-left px-3 py-2 min-h-[44px] text-sm hover:bg-blue-50 focus:outline-none focus:bg-blue-50 transition-colors flex items-center justify-between',
-                    lang.code === language &&
+                    lang.code === locale &&
                       'bg-blue-50 text-blue-700 font-medium'
                   )}
                 >
                   <span>{lang.native} <span className="text-gray-400 text-xs">{lang.label}</span></span>
-                  {lang.code === language && (
+                  {lang.code === locale && (
                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
                   )}
                 </button>
