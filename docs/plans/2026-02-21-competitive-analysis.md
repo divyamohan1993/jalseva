@@ -59,7 +59,7 @@ Swiggy, Zomato, BigBasket, and Dunzo offer water can delivery as a subcategory. 
 
 | Feature | JalSeva | Tankerwala | GoWatr | TankerTap | BringJal | BookWater | DrinkPrime | Govt Apps |
 |---|---|---|---|---|---|---|---|---|
-| **AI Voice Ordering** | Gemini 3.0 | — | — | — | — | — | — | — |
+| **AI Voice Ordering** | Gemini 3 Flash | — | — | — | — | — | — | — |
 | **22+ Languages** | Gemini AI | — | — | — | — | — | — | 5 (Bhashini) |
 | **ONDC/Beckn** | Full BAP+BPP | — | — | — | — | — | — | — |
 | **WhatsApp Bot** | Gemini-powered | WhatsApp (manual) | — | — | — | — | — | — |
