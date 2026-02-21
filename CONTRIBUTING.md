@@ -188,4 +188,4 @@ By contributing, you agree to our [Code of Conduct](CODE_OF_CONDUCT.md). Be kind
 
 ## Questions?
 
-Open a [Discussion](https://github.com/divyamohan1993/jalseva/discussions) or file an issue. We're here to help.
+Open a [Discussion](https://github.com/divyamohan1993/jalseva/discussions) or file an issue.

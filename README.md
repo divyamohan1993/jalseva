@@ -14,7 +14,7 @@
 
 163 million Indians lack access to clean water. In thousands of towns across Bharat, families depend on water tankers — but the system is broken. No transparency. No tracking. No accountability. You call a number, hope someone picks up, and wait. Sometimes for hours. Sometimes they never come.
 
-**JalSeva was built to fix this.**
+**We thought we could do better.**
 
 ---
 
@@ -26,7 +26,9 @@
 2. **A business tool** — suppliers get real-time orders, route navigation, and earnings analytics
 3. **An operations hub** — admins verify suppliers, manage commissions, and monitor every delivery live
 
-All three roles are served by **a single platform** — one codebase, one `docker compose up`.
+But here's the thing — **these are not three separate apps.** This is one platform. One codebase. One `docker compose up`.
+
+It just works.
 
 ---
 
@@ -36,11 +38,11 @@ Most apps are built for people who speak English, read well, and have fast phone
 
 JalSeva is **voice-first**. Speak in Hindi, Tamil, Bengali — any of 22 Indian languages — and Gemini AI handles the rest. The interface is icon-driven, screen-reader accessible, and works offline as a PWA.
 
-> A user who can't read English can order water with their voice — that's the accessibility standard JalSeva targets.
+> Your grandmother who can't read English? She can order water with her voice. That's the bar we set.
 
 ---
 
-## Booking Flow
+## Three Taps. That's It.
 
 **Tap one** — pick your location.
 **Tap two** — choose your tanker size.
@@ -65,7 +67,9 @@ For suppliers, it's just as simple — accept orders, follow navigation, get pai
 
 ---
 
-## Tech Stack
+## Under the Hood
+
+Great products hide their complexity. Here's what's running beneath the surface:
 
 | Layer | Technology |
 |---|---|
@@ -125,6 +129,8 @@ Resilience layers at every level:
 
 ### Performance
 
+We obsessed over every millisecond:
+
 | What We Built | Why It Matters |
 |---|---|
 | **Cluster mode** | One worker per CPU core — 2-4x throughput, automatic |
@@ -140,6 +146,8 @@ Resilience layers at every level:
 
 ## Getting Started
 
+Four commands. That's all.
+
 ```bash
 git clone https://github.com/divyamohan1993/jalseva.git
 cd jalseva/jalseva
@@ -147,7 +155,7 @@ cp .env.example .env    # Add your API keys
 npm install && npm run dev
 ```
 
-Open **http://localhost:3000** to access JalSeva.
+Open **http://localhost:3000**. You're running JalSeva.
 
 ### Prerequisites
 
@@ -163,7 +171,7 @@ cd jalseva/jalseva
 docker compose up --build
 ```
 
-Runs in a single container with cluster mode, auto-detecting available CPU cores.
+One container. Cluster mode. Auto-detects your CPU cores. Done.
 
 ### Production Scale?
 
@@ -171,7 +179,7 @@ Runs in a single container with cluster mode, auto-detecting available CPU cores
 docker compose --profile scaled up --build
 ```
 
-Deploys Nginx + 4 app containers, each running cluster mode internally, capable of **20,000+ requests per second** on a single VM.
+Nginx + 4 app containers. Each running cluster mode internally. **20,000+ requests per second** on a single VM.
 
 ---
 
@@ -270,9 +278,11 @@ All routes are under `/api/`. Authentication is via Firebase Auth token in the `
 
 ---
 
-## Scaling
+## One More Thing.
 
-JalSeva requires **zero code changes** to scale from one city to national deployment — each scaling step is an infrastructure decision:
+Scaling. The part everyone gets wrong.
+
+Most platforms need a rewrite to go from one city to national scale. JalSeva doesn't. **Zero code changes** — every scaling step is just an infrastructure decision:
 
 | Scale | Code Change? | What You Do |
 |---|---|---|
@@ -281,7 +291,7 @@ JalSeva requires **zero code changes** to scale from one city to national deploy
 | **Multi-state** | None | 2 VMs + load balancer |
 | **National** | None | GKE Autopilot + Memorystore Redis |
 
-Estimated throughput and cost at each tier:
+Here's what that looks like in practice:
 
 | Setup | Requests/sec | Cost |
 |---|---|---|
@@ -290,9 +300,11 @@ Estimated throughput and cost at each tier:
 | 2x e2-standard-4 + GCP LB | ~40-60K | ~$250/mo |
 | GKE Autopilot (auto-scales) | 50K+ | Pay per use |
 
-Starting cost is approximately **$25/month** for a single-city deployment.
+**$25 a month to serve an entire city.** That's the starting point.
 
-### Key Optimizations
+### How?
+
+Eight things, working together:
 
 - **Cluster mode** — every CPU core is used, automatically
 - **L1 caching** — 80%+ fewer calls to external services

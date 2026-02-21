@@ -8,9 +8,9 @@
 
 Every day in India, millions of families wait for water. Not from a tap — from a tanker. They call a number, hope someone picks up, and wait. Sometimes for hours. Sometimes the tanker never comes.
 
-There's no tracking. No pricing transparency. No accountability.
+There's no tracking. No pricing transparency. No accountability. And no one is building the technology to fix it.
 
-JalSeva is built to address this gap.
+**Until now.**
 
 ---
 
@@ -35,7 +35,7 @@ Think of it as three things in one:
 
 ## The Tech Stack
 
-Technology choices and rationale:
+Every technology choice was made for a reason:
 
 | Layer | Technology | Why |
 |---|---|---|
@@ -119,7 +119,7 @@ Request → Nginx rate limit → Circuit breaker → L1 cache → Redis → Fire
 
 ### Customer App (/)
 
-Designed for users with limited literacy who can order water using voice commands.
+The bar: **your grandmother who can't read English can order water with her voice.**
 
 - Big microphone button on home screen for voice ordering
 - Visual water type selection with icons (RO / Mineral / Tanker)
@@ -134,7 +134,7 @@ Designed for users with limited literacy who can order water using voice command
 
 ### Supplier App (/supplier)
 
-Suppliers receive orders, deliver water, and collect payment.
+Simple. Get orders. Deliver water. Get paid.
 
 - Phone OTP signup + document upload (Aadhaar, RC, License)
 - Dashboard: today's orders, earnings, rating score
@@ -146,7 +146,7 @@ Suppliers receive orders, deliver water, and collect payment.
 
 ### Admin Panel (/admin)
 
-Full operational visibility and management controls.
+Complete visibility. Total control.
 
 - Supplier approval workflow with document verification
 - Commission management (per region, water type, tier)
@@ -158,7 +158,7 @@ Full operational visibility and management controls.
 
 ### WhatsApp Bot
 
-Allows ordering water without downloading an app, with support for any Indian language.
+Order water without downloading an app. In any language.
 
 - Gemini 3 Flash powered conversational ordering
 - Any Indian language supported
@@ -171,7 +171,7 @@ Allows ordering water without downloading an app, with support for any Indian la
 
 ## Data Model (Firestore)
 
-Flat document structure optimized for query performance.
+Clean. Flat. Fast.
 
 ```
 users/{userId}
@@ -214,7 +214,7 @@ pricing/{zoneId}
 
 ## API Endpoints
 
-19 endpoints, all with bounded queries, caching, and circuit breakers.
+19 endpoints. Every one bounded, cached, and circuit-broken.
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -256,13 +256,15 @@ JalSeva implements both BAP (Buyer App) and BPP (Seller App) on India's Open Net
 | `/cancel` → `/on_cancel` | Cancel the order |
 | `/rating` → `/on_rating` | Rate the service |
 
-Connected to the ONDC Staging sandbox with production-ready architecture. JalSeva would be among the first water delivery platforms to integrate with ONDC.
+Connected to the ONDC Staging sandbox. Production-ready architecture.
+
+**No other water delivery platform has done this yet.** JalSeva will be the first.
 
 ---
 
 ## Revenue Model
 
-Four revenue streams, all implemented in the platform.
+Four streams. All built in.
 
 | Stream | How It Works |
 |---|---|
@@ -275,9 +277,9 @@ Four revenue streams, all implemented in the platform.
 
 ## Deployment and Scaling
 
-### Scaling Strategy
+### One More Thing.
 
-JalSeva requires **zero code changes** between scaling stages:
+Here's what most platforms get wrong: they build for one city and then spend months rewriting for scale. JalSeva doesn't need a rewrite. **Zero code changes** between any scaling stage:
 
 | Mode | Command | Throughput |
 |---|---|---|
@@ -295,7 +297,7 @@ JalSeva requires **zero code changes** between scaling stages:
 | Multi-state | 2x e2-standard-4 + GCP LB | 40-60K | ~$250/mo |
 | National | GKE Autopilot + Memorystore | 50K+ | Pay per use |
 
-Starting cost is approximately **$25/month** for a single-city MVP deployment.
+**$25 a month to serve an entire city.** Every step after that is just turning a dial.
 
 ### What We Optimized (and How Much It Mattered)
 
@@ -313,7 +315,7 @@ Starting cost is approximately **$25/month** for a single-city MVP deployment.
 
 ## Accessibility
 
-Accessibility is a core design principle, not an afterthought.
+Built for all of Bharat. Not as an afterthought — as a design principle.
 
 | What | How |
 |---|---|

@@ -41,4 +41,4 @@ assignees: ''
 
 ## Mockups or References
 
-<!-- Sketches, screenshots, links to similar features in other products — anything visual helps. -->
+<!-- Sketches, screenshots, links to similar features in other products — visual references help. -->
