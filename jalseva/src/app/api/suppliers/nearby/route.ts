@@ -5,9 +5,10 @@
 // Returns online, verified suppliers sorted by distance.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { haversineDistance } from '@/lib/maps';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
 import type { GeoLocation, WaterType } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
 
     // --- Validation ---
-    if (isNaN(lat) || isNaN(lng)) {
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
       return NextResponse.json(
         { error: 'Missing or invalid lat/lng query parameters.' },
         { status: 400 }
@@ -65,7 +66,10 @@ export async function GET(request: NextRequest) {
       query = query.where('waterTypes', 'array-contains', waterType);
     }
 
-    const snapshot = await query.get();
+    const snapshot = await firestoreBreaker.execute(
+      () => query.get(),
+      () => ({ docs: [], forEach: () => {} } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
 
     // --- Filter by distance and sort ---
     const nearbySuppliers: Array<{

@@ -1,11 +1,9 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  IndianRupee,
-  TrendingUp,
-  TrendingDown,
   Calendar,
   ArrowUpRight,
   ArrowDownRight,

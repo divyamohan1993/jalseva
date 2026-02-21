@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import type React from 'react';
+import { useState, useCallback } from 'react';
 import { Plus, Minus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import type { WaterType } from '@/types';
 
@@ -180,6 +181,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
         <div className="flex flex-wrap gap-2 justify-center">
           <AnimatePresence>
             {Array.from({ length: jarCount }).map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed visual jar elements
               <WaterJar key={i} index={i} filled={true} />
             ))}
           </AnimatePresence>

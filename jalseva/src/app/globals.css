@@ -1,26 +1,135 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-/* ===== CSS Custom Properties ===== */
-:root {
-  --color-primary: #0066FF;
-  --color-primary-light: #3385FF;
-  --color-primary-dark: #0052CC;
-  --color-secondary: #10B981;
-  --color-accent: #F59E0B;
-  --color-danger: #EF4444;
+/* ===== Tailwind CSS v4 Theme (migrated from tailwind.config.ts) ===== */
+@theme {
+  /* Primary Colors */
+  --color-primary-50: #E6F0FF;
+  --color-primary-100: #CCE0FF;
+  --color-primary-200: #99C2FF;
+  --color-primary-300: #66A3FF;
+  --color-primary-400: #3385FF;
+  --color-primary-500: #0066FF;
+  --color-primary-600: #0052CC;
+  --color-primary-700: #003D99;
+  --color-primary-800: #002966;
+  --color-primary-900: #001433;
+  --color-primary-950: #000A1A;
+
+  /* Secondary Colors */
+  --color-secondary-50: #ECFDF5;
+  --color-secondary-100: #D1FAE5;
+  --color-secondary-200: #A7F3D0;
+  --color-secondary-300: #6EE7B7;
+  --color-secondary-400: #34D399;
+  --color-secondary-500: #10B981;
+  --color-secondary-600: #059669;
+  --color-secondary-700: #047857;
+  --color-secondary-800: #065F46;
+  --color-secondary-900: #064E3B;
+  --color-secondary-950: #022C22;
+
+  /* Accent Colors */
+  --color-accent-50: #FFFBEB;
+  --color-accent-100: #FEF3C7;
+  --color-accent-200: #FDE68A;
+  --color-accent-300: #FCD34D;
+  --color-accent-400: #FBBF24;
+  --color-accent-500: #F59E0B;
+  --color-accent-600: #D97706;
+  --color-accent-700: #B45309;
+  --color-accent-800: #92400E;
+  --color-accent-900: #78350F;
+  --color-accent-950: #451A03;
+
+  /* Danger Colors */
+  --color-danger-50: #FEF2F2;
+  --color-danger-100: #FEE2E2;
+  --color-danger-200: #FECACA;
+  --color-danger-300: #FCA5A5;
+  --color-danger-400: #F87171;
+  --color-danger-500: #EF4444;
+  --color-danger-600: #DC2626;
+  --color-danger-700: #B91C1C;
+  --color-danger-800: #991B1B;
+  --color-danger-900: #7F1D1D;
+  --color-danger-950: #450A0A;
+
+  /* Water Colors */
   --color-water-light: #E0F2FE;
   --color-water: #0EA5E9;
   --color-water-dark: #0369A1;
+
+  /* Font Family */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Box Shadows */
+  --shadow-water: 0 4px 14px 0 rgba(0, 102, 255, 0.25);
+  --shadow-water-lg: 0 10px 25px -3px rgba(0, 102, 255, 0.3);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Animations */
+  --animate-water-wave: wave 3s ease-in-out infinite;
+  --animate-ripple: ripple 1s ease-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+  --animate-slide-down: slideDown 0.3s ease-out;
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-bounce-subtle: bounceSoft 2s infinite;
+  --animate-pulse-water: pulseWater 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  /* Border Radius */
+  --radius-4xl: 2rem;
+
+  /* Spacing */
+  --spacing-18: 4.5rem;
+  --spacing-88: 22rem;
+  --spacing-112: 28rem;
+  --spacing-128: 32rem;
+}
+
+/* Keyframes for custom animations */
+@keyframes wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  0% { transform: translateY(-20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(-5%); }
+  50% { transform: translateY(0); }
+}
+
+@keyframes pulseWater {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ===== CSS Custom Properties ===== */
+:root {
   --color-bg: #F8FAFC;
   --color-surface: #FFFFFF;
   --color-text: #0F172A;
   --color-text-secondary: #64748B;
   --color-border: #E2E8F0;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   --radius: 0.75rem;
   --header-height: 4rem;
   --bottom-nav-height: 4.5rem;
@@ -143,7 +252,8 @@
   }
 
   .card-interactive {
-    @apply card cursor-pointer
+    @apply bg-white rounded-2xl shadow-card p-4
+           transition-all duration-200 ease-out cursor-pointer
            hover:shadow-card-hover hover:-translate-y-0.5
            active:scale-[0.99];
   }
@@ -166,19 +276,19 @@
   }
 
   .badge-primary {
-    @apply badge bg-primary-100 text-primary-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700;
   }
 
   .badge-success {
-    @apply badge bg-secondary-100 text-secondary-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary-100 text-secondary-700;
   }
 
   .badge-warning {
-    @apply badge bg-accent-100 text-accent-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent-100 text-accent-700;
   }
 
   .badge-danger {
-    @apply badge bg-danger-100 text-danger-700;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-danger-100 text-danger-700;
   }
 
   /* Bottom Navigation (mobile PWA) */
@@ -215,16 +325,16 @@
   }
 
   .status-online {
-    @apply status-dot bg-secondary-500;
+    @apply w-2.5 h-2.5 rounded-full bg-secondary-500;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
   }
 
   .status-offline {
-    @apply status-dot bg-slate-300;
+    @apply w-2.5 h-2.5 rounded-full bg-slate-300;
   }
 
   .status-busy {
-    @apply status-dot bg-accent-500;
+    @apply w-2.5 h-2.5 rounded-full bg-accent-500;
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
   }
 
@@ -288,28 +398,6 @@
   /* Smooth page transitions */
   .page-transition {
     @apply animate-fade-in;
-  }
-
-  /* Truncate to N lines */
-  .line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
   }
 
   /* Touch-friendly tap targets */
@@ -438,7 +526,9 @@
 
 /* Google Maps custom styles override */
 .gm-style .gm-style-iw-c {
-  @apply rounded-xl shadow-lg p-0 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)) !important;
+  padding: 0 !important;
 }
 
 .gm-style .gm-style-iw-d {

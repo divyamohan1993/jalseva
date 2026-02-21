@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { MapPin, Navigation, Search, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import type React from 'react';
+import { useState, useCallback } from 'react';
+import { MapPin, Navigation, Search, } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -10,7 +11,7 @@ import type { GeoLocation } from '@/types';
 
 export interface LocationPickerProps {
   value?: GeoLocation;
-  onChange?: (location: GeoLocation) => void;
+  onChange?: (location: GeoLocation | undefined) => void;
   placeholder?: string;
   className?: string;
 }
@@ -119,7 +120,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
           </div>
           <button
             onClick={() => {
-              onChange?.(undefined as unknown as GeoLocation);
+              onChange?.(undefined);
               setManualInput('');
             }}
             className="text-xs text-blue-600 font-medium hover:underline shrink-0"

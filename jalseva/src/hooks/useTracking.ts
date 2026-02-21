@@ -8,8 +8,8 @@
 // route polyline. Recalculates a client-side ETA countdown every second.
 // =============================================================================
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { doc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { useState, useEffect, useRef, } from 'react';
+import { doc, onSnapshot, } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useOrderStore } from '@/store/orderStore';
 import type { GeoLocation, OrderStatus, TrackingInfo } from '@/types';
@@ -117,8 +117,7 @@ export function useTracking(orderId?: string): UseTrackingReturn {
     );
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetOrderId]);
+  }, [targetOrderId, updateTracking]);
 
   // --------------------------------------------------------------------------
   // Client-side ETA countdown
@@ -127,6 +126,7 @@ export function useTracking(orderId?: string): UseTrackingReturn {
   // server update, so the UI appears responsive between Firestore pushes.
   // --------------------------------------------------------------------------
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: timer restarts on location update
   useEffect(() => {
     if (serverEtaRef.current === null || serverEtaRef.current <= 0) return;
 
@@ -145,7 +145,7 @@ export function useTracking(orderId?: string): UseTrackingReturn {
     }, ETA_TICK_INTERVAL);
 
     return () => clearInterval(timer);
-  }, [supplierLocation]); // restart when location updates
+  }, [supplierLocation]);
 
   // --------------------------------------------------------------------------
   // Public API

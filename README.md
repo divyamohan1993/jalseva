@@ -20,20 +20,23 @@
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14 · Tailwind CSS · PWA |
-| AI | Google Gemini Flash (voice, translation, demand prediction) |
+| Frontend | Next.js 16 · React 19 · Tailwind CSS 4 · PWA (Serwist) |
+| Animation | Motion (formerly Framer Motion) |
+| AI | Google Gemini 2.0 Flash (@google/genai SDK) — voice, translation, demand prediction |
 | Maps | Google Maps JavaScript API |
 | Auth | Firebase Auth (Phone OTP) |
 | Database | Cloud Firestore (real-time) |
 | Payments | Razorpay (UPI, Cards, Wallets) — _simulated in dev_ |
+| State | Zustand |
 | Cache | Upstash Redis (serverless) |
+| Runtime | Node.js 22 · TypeScript 5.9 |
 | Deploy | Docker · Google Cloud Run |
 
 ## Quick Start
 
 ### Prerequisites
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20 (22 recommended)
 - **npm** ≥ 9
 - A Firebase project with Firestore & Auth enabled
 - Google Maps & Gemini API keys
@@ -111,11 +114,13 @@ This project is licensed under the [ISC License](LICENSE).
 
 ## Acknowledgements
 
-- [Next.js](https://nextjs.org/) — React framework
-- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS
+- [Next.js 16](https://nextjs.org/) — React framework (App Router, Turbopack)
+- [React 19](https://react.dev/) — UI library
+- [Tailwind CSS 4](https://tailwindcss.com/) — Utility-first CSS (CSS-first configuration)
+- [Motion](https://motion.dev/) — Animation library (formerly Framer Motion)
 - [Firebase](https://firebase.google.com/) — Auth & real-time database
 - [Google Maps Platform](https://developers.google.com/maps) — Maps & geocoding
-- [Gemini AI](https://ai.google.dev/) — Voice & language AI
+- [Google Gemini AI](https://ai.google.dev/) — Voice, translation & demand prediction (@google/genai SDK)
 - [ONDC](https://ondc.org/) — Open Network for Digital Commerce
 
 ---

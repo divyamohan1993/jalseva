@@ -20,21 +20,23 @@ JalSeva is a digital marketplace connecting water tanker suppliers with customer
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14, TailwindCSS, PWA (next-pwa) |
-| Backend | Next.js API Routes deployed on Cloud Run |
+| Frontend | Next.js 16, React 19, Tailwind CSS 4, PWA (Serwist) |
+| Animation | Motion 12 (formerly Framer Motion) |
+| Backend | Next.js 16 API Routes (Turbopack) deployed on Cloud Run |
 | Database | Cloud Firestore (real-time) |
 | Auth | Firebase Auth (Phone OTP) |
 | Maps | Google Maps JavaScript API, Routes API, Geocoding |
 | Payments | Razorpay (UPI, Cards, Wallets) |
-| AI | Gemini 3 Flash (voice, multilingual, demand prediction) |
+| AI | Gemini 2.0 Flash (@google/genai SDK) — voice, translation, demand prediction |
 | WhatsApp | Meta Cloud API (WhatsApp Business) |
-| Translation | Bhashini API (22 Indian languages) |
 | Real-time | Firestore real-time listeners + Cloud Pub/Sub |
 | Storage | Firebase Storage (documents, photos) |
+| State | Zustand 5 |
 | Cache | Upstash Redis (serverless) |
 | ONDC | Beckn Protocol (staging sandbox) |
+| Runtime | Node.js 22, TypeScript 5.9 |
 | Monitoring | Cloud Operations Suite |
-| Deploy | Cloud Run (GCP) / npm run dev (local) |
+| Deploy | Docker, Cloud Run (GCP) / npm run dev (local) |
 
 ### System Diagram
 
@@ -53,8 +55,8 @@ JalSeva is a digital marketplace connecting water tanker suppliers with customer
                                 │
     ┌──────┬──────┬─────────────┼─────────┬──────┬──────┐
     │      │      │             │         │      │      │
-Firebase  Firestore  Cloud    Pub/Sub  Google  Gemini  Razorpay
-Auth              Storage            Maps    3 Flash
+Firebase  Firestore  Cloud    Pub/Sub  Google  Gemini    Razorpay
+Auth              Storage            Maps    2.0 Flash
                                 │
                     ┌───────────▼───────────┐
                     │  ONDC/Beckn Protocol  │
@@ -79,7 +81,7 @@ Auth              Storage            Maps    3 Flash
 - UPI payment via deep-link (GPay/PhonePe)
 - Star rating + voice feedback after delivery
 - Color-coded status: green=delivered, yellow=on way, red=cancelled
-- Hindi + English + regional languages via Bhashini
+- Hindi + English + regional languages via Gemini AI translation
 
 ### 3.2 Supplier App (/supplier)
 
@@ -103,7 +105,7 @@ Auth              Storage            Maps    3 Flash
 
 ### 3.4 WhatsApp Bot
 
-- Gemini 3 Flash powered conversational ordering
+- Gemini 2.0 Flash powered conversational ordering
 - Any Indian language supported
 - Water type selection via buttons
 - Location via WhatsApp location share
@@ -176,7 +178,7 @@ Connected to ONDC Staging sandbox for demo. Production-ready architecture.
 |---|---|
 | Commission (5-15%) | Auto-deducted via Razorpay Route |
 | Premium listing | Razorpay Subscriptions API |
-| Surge pricing | Gemini demand prediction |
+| Surge pricing | Gemini 2.0 Flash demand prediction |
 | Supplier subscription | Monthly plans, reduced commission |
 
 ---

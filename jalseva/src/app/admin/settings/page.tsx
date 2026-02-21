@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Admin Settings Page
@@ -7,7 +8,8 @@
 // delivery radius, default language, zone pricing management, platform fees.
 // =============================================================================
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import {
   doc,
   getDoc,
@@ -18,26 +20,22 @@ import {
   addDoc,
   deleteDoc,
 } from 'firebase/firestore';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import {
-  Settings,
   DollarSign,
-  TrendingUp,
   MapPin,
   Globe,
   Save,
   Plus,
   Trash2,
   Edit3,
-  X,
-  Check,
   AlertTriangle,
   Percent,
   Zap,
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card, } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -399,7 +397,7 @@ export default function SettingsPage() {
                     ...settings,
                     surgeThresholds: {
                       ...settings.surgeThresholds,
-                      high: parseInt(e.target.value) || 0,
+                      high: parseInt(e.target.value, 10) || 0,
                     },
                   })
                 }
@@ -419,7 +417,7 @@ export default function SettingsPage() {
                     ...settings,
                     surgeThresholds: {
                       ...settings.surgeThresholds,
-                      surge: parseInt(e.target.value) || 0,
+                      surge: parseInt(e.target.value, 10) || 0,
                     },
                   })
                 }
@@ -502,17 +500,18 @@ export default function SettingsPage() {
             onChange={(e) =>
               setSettings({
                 ...settings,
-                maxDeliveryRadius: parseInt(e.target.value) || 1,
+                maxDeliveryRadius: parseInt(e.target.value, 10) || 1,
               })
             }
             hint="Maximum distance a supplier can deliver"
             size="md"
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700">
+            <label htmlFor="default-language" className="text-sm font-medium text-gray-700">
               Default Language
             </label>
             <select
+              id="default-language"
               value={settings.defaultLanguage}
               onChange={(e) =>
                 setSettings({ ...settings, defaultLanguage: e.target.value })
@@ -559,7 +558,7 @@ export default function SettingsPage() {
               min={0}
               max={500}
               value={platformFee}
-              onChange={(e) => setPlatformFee(parseInt(e.target.value) || 0)}
+              onChange={(e) => setPlatformFee(parseInt(e.target.value, 10) || 0)}
               hint={`Currently ${formatCurrency(platformFee)} per order`}
               size="md"
             />
@@ -733,7 +732,7 @@ export default function SettingsPage() {
                   setZoneForm({
                     basePrice: {
                       ...zoneForm.basePrice!,
-                      ro: parseInt(e.target.value) || 0,
+                      ro: parseInt(e.target.value, 10) || 0,
                     } as Record<WaterType, number>,
                   })
                 }
@@ -748,7 +747,7 @@ export default function SettingsPage() {
                   setZoneForm({
                     basePrice: {
                       ...zoneForm.basePrice!,
-                      mineral: parseInt(e.target.value) || 0,
+                      mineral: parseInt(e.target.value, 10) || 0,
                     } as Record<WaterType, number>,
                   })
                 }
@@ -763,7 +762,7 @@ export default function SettingsPage() {
                   setZoneForm({
                     basePrice: {
                       ...zoneForm.basePrice!,
-                      tanker: parseInt(e.target.value) || 0,
+                      tanker: parseInt(e.target.value, 10) || 0,
                     } as Record<WaterType, number>,
                   })
                 }
@@ -803,9 +802,9 @@ export default function SettingsPage() {
 
           {/* Demand Level */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            <span className="text-sm font-medium text-gray-700 mb-1.5 block">
               Current Demand Level
-            </label>
+            </span>
             <div className="flex gap-2">
               {(['low', 'normal', 'high', 'surge'] as const).map((level) => (
                 <button

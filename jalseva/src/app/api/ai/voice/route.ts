@@ -6,9 +6,10 @@
 // order intent. Supports Hindi, English, and regional Indian languages.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { processVoiceCommand } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/redis';
+import { geminiBreaker } from '@/lib/circuit-breaker';
 
 // ---------------------------------------------------------------------------
 // POST - Process voice command text
@@ -66,7 +67,10 @@ export async function POST(request: NextRequest) {
     const normalizedLanguage = supportedLanguages.includes(language) ? language : 'hi';
 
     // --- Process with Gemini ---
-    const intent = await processVoiceCommand(text.trim(), normalizedLanguage);
+    const intent = await geminiBreaker.execute(
+      () => processVoiceCommand(text.trim(), normalizedLanguage),
+      () => ({ waterType: 'tanker' as const, quantity: 500, language: normalizedLanguage })
+    );
 
     return NextResponse.json({
       success: true,
@@ -81,9 +85,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[POST /api/ai/voice] Error:', error);
-    // Return a safe fallback instead of 500
+    // Return a fallback with success:false so the client knows AI failed
     return NextResponse.json({
-      success: true,
+      success: false,
       intent: {
         waterType: 'tanker',
         quantity: 500,

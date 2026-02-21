@@ -6,7 +6,7 @@
 // All payments auto-succeed after a short simulated delay.
 // =============================================================================
 
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Simulation Helpers

@@ -5,9 +5,11 @@
 // POST /api/whatsapp/webhook  - Handle incoming WhatsApp messages
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { generateChatResponse } from '@/lib/gemini';
+import { firestoreBreaker, geminiBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -152,11 +154,14 @@ export async function POST(request: NextRequest) {
 
     // --- Find or create user ---
     const formattedPhone = senderPhone.startsWith('+') ? senderPhone : `+${senderPhone}`;
-    const usersSnapshot = await adminDb
-      .collection('users')
-      .where('phone', '==', formattedPhone)
-      .limit(1)
-      .get();
+    const usersSnapshot = await firestoreBreaker.execute(
+      () => adminDb
+        .collection('users')
+        .where('phone', '==', formattedPhone)
+        .limit(1)
+        .get(),
+      () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
 
     let userId: string;
     let userLanguage = 'hi';
@@ -169,7 +174,7 @@ export async function POST(request: NextRequest) {
       // Create new user from WhatsApp
       const newUserRef = adminDb.collection('users').doc();
       userId = newUserRef.id;
-      await newUserRef.set({
+      batchWriter.set('users', userId, {
         id: userId,
         phone: formattedPhone,
         name: contactName,
@@ -184,14 +189,14 @@ export async function POST(request: NextRequest) {
 
     // --- Process different message types ---
     let userMessage = '';
-    let messageType = messageData.type;
+    const messageType = messageData.type;
 
     switch (messageType) {
       case 'text':
         userMessage = messageData.text?.body || '';
         break;
 
-      case 'location':
+      case 'location': {
         // User shared location
         const lat = messageData.location?.latitude;
         const lng = messageData.location?.longitude;
@@ -199,7 +204,7 @@ export async function POST(request: NextRequest) {
 
         if (lat && lng) {
           // Update user location
-          await adminDb.collection('users').doc(userId).update({
+          batchWriter.update('users', userId, {
             location: { lat, lng, address },
             updatedAt: new Date().toISOString(),
           });
@@ -207,6 +212,7 @@ export async function POST(request: NextRequest) {
           userMessage = `I'm sharing my location: ${address || `${lat}, ${lng}`}. I want to order water here.`;
         }
         break;
+      }
 
       case 'interactive':
         // Button response
@@ -242,12 +248,15 @@ export async function POST(request: NextRequest) {
     };
 
     // Fetch recent orders
-    const recentOrders = await adminDb
-      .collection('orders')
-      .where('customerId', '==', userId)
-      .orderBy('createdAt', 'desc')
-      .limit(3)
-      .get();
+    const recentOrders = await firestoreBreaker.execute(
+      () => adminDb
+        .collection('orders')
+        .where('customerId', '==', userId)
+        .orderBy('createdAt', 'desc')
+        .limit(3)
+        .get(),
+      () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
 
     if (!recentOrders.empty) {
       context.recentOrders = recentOrders.docs.map((doc) => {
@@ -265,14 +274,20 @@ export async function POST(request: NextRequest) {
     // --- Get session for conversation continuity ---
     const sessionId = `wa_${senderPhone}`;
     const sessionRef = adminDb.collection('chat_sessions').doc(sessionId);
-    const sessionDoc = await sessionRef.get();
+    const sessionDoc = await firestoreBreaker.execute(
+      () => sessionRef.get(),
+      () => null
+    );
 
-    if (sessionDoc.exists) {
+    if (sessionDoc?.exists) {
       context.conversationHistory = sessionDoc.data()?.messages?.slice(-5) || [];
     }
 
     // --- Generate AI response ---
-    const aiResponse = await generateChatResponse(userMessage, context);
+    const aiResponse = await geminiBreaker.execute(
+      () => generateChatResponse(userMessage, context),
+      () => 'Sorry, I am temporarily unable to respond. Please try again shortly.'
+    );
 
     // --- Save to session ---
     const messageEntry = {
@@ -288,12 +303,12 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    if (sessionDoc.exists) {
+    if (sessionDoc?.exists) {
       const existing = sessionDoc.data()!;
       const messages = [...(existing.messages || []), messageEntry, responseEntry].slice(-50);
-      await sessionRef.update({ messages, updatedAt: new Date().toISOString() });
+      batchWriter.update('chat_sessions', sessionId, { messages, updatedAt: new Date().toISOString() });
     } else {
-      await sessionRef.set({
+      batchWriter.set('chat_sessions', sessionId, {
         userId,
         phone: formattedPhone,
         channel: 'whatsapp',
@@ -318,7 +333,8 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Log the webhook event ---
-    await adminDb.collection('whatsapp_logs').add({
+    const logDocId = `walog_${messageId}_${Date.now()}`;
+    batchWriter.set('whatsapp_logs', logDocId, {
       messageId,
       senderPhone,
       userId,

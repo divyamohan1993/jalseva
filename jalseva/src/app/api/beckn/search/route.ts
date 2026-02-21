@@ -7,9 +7,11 @@
 // simulated demo suppliers if none exist in the database.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { haversineDistance } from '@/lib/maps';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type { GeoLocation, WaterType } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -127,7 +129,7 @@ export async function POST(request: NextRequest) {
     let userLocation: GeoLocation | null = null;
     if (gps) {
       const parts = gps.split(',').map(Number);
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      if (parts.length === 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1])) {
         userLocation = { lat: parts[0], lng: parts[1] };
       }
     }
@@ -140,13 +142,16 @@ export async function POST(request: NextRequest) {
     }> = [];
 
     try {
-      let query = adminDb
+      const query = adminDb
         .collection('suppliers')
         .where('isOnline', '==', true)
         .where('verificationStatus', '==', 'verified')
         .where('waterTypes', 'array-contains', waterType) as FirebaseFirestore.Query;
 
-      const snapshot = await query.get();
+      const snapshot = await firestoreBreaker.execute(
+        () => query.get(),
+        () => ({ docs: [], forEach: () => {} } as unknown as FirebaseFirestore.QuerySnapshot)
+      );
 
       snapshot.forEach((doc) => {
         const supplier = doc.data();
@@ -250,19 +255,16 @@ export async function POST(request: NextRequest) {
     };
 
     // --- Log the Beckn transaction ---
-    try {
-      await adminDb.collection('beckn_transactions').add({
-        transactionId: transaction_id,
-        messageId: message_id,
-        action: 'search',
-        request: body,
-        suppliersFound: matchingSuppliers.length,
-        simulated: true,
-        createdAt: new Date().toISOString(),
-      });
-    } catch (logError) {
-      console.warn('[Beckn Sim] Failed to log transaction:', logError);
-    }
+    const becknLogId = `beckn_search_${transaction_id}_${Date.now()}`;
+    batchWriter.set('beckn_transactions', becknLogId, {
+      transactionId: transaction_id,
+      messageId: message_id,
+      action: 'search',
+      request: body as Record<string, unknown>,
+      suppliersFound: matchingSuppliers.length,
+      simulated: true,
+      createdAt: new Date().toISOString(),
+    });
 
     // --- Return on_search response ---
     const response = {

@@ -12,7 +12,7 @@
 // All state is local to the component that mounts this hook.
 // =============================================================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { GeoLocation } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -165,11 +165,11 @@ export function useLocation(options: UseLocationOptions = {}): UseLocationReturn
   // Geolocation options
   // --------------------------------------------------------------------------
 
-  const geoOptions: PositionOptions = {
+  const geoOptions: PositionOptions = useMemo(() => ({
     enableHighAccuracy: highAccuracy,
     maximumAge: maxAge,
     timeout,
-  };
+  }), [highAccuracy, maxAge, timeout]);
 
   // --------------------------------------------------------------------------
   // Start / stop geolocation
@@ -202,8 +202,7 @@ export function useLocation(options: UseLocationOptions = {}): UseLocationReturn
         geoOptions
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watch, highAccuracy, maxAge, timeout]);
+  }, [watch, geoOptions, handleError, handleSuccess]);
 
   // --------------------------------------------------------------------------
   // Effect: mount / unmount
@@ -239,8 +238,7 @@ export function useLocation(options: UseLocationOptions = {}): UseLocationReturn
     setLoading(true);
     setError(null);
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleSuccess, handleError]);
+  }, [handleSuccess, handleError, geoOptions]);
 
   // --------------------------------------------------------------------------
   // Public API

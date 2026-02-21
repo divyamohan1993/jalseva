@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Admin Dashboard Page
@@ -7,7 +8,8 @@
 // placeholder, recent orders table, and pending supplier approvals.
 // =============================================================================
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   collection,
@@ -26,17 +28,15 @@ import {
   MapPin,
   ChevronRight,
   CheckCircle,
-  XCircle,
   Clock,
   Truck,
   AlertTriangle,
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { cn, formatCurrency } from '@/lib/utils';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card, CardTitle, } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import type { Order, Supplier, OrderStatus, VerificationStatus } from '@/types';
+import type { Order, Supplier, } from '@/types';
 
 // =============================================================================
 // Stat Card Component
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [pendingSuppliers, setPendingSuppliers] = useState<(Supplier & { userName?: string })[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
 
   // --------------------------------------------------------------------------
   // Firestore real-time listeners
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
     tanker: 'Tanker',
   };
 
-  const formatTime = (date: Date) => {
+  const _formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',

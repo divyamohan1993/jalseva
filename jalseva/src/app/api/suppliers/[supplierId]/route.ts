@@ -6,8 +6,10 @@
 // PATCH /api/suppliers/[supplierId]  - Admin-only: update verification status
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type { VerificationStatus } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -15,11 +17,11 @@ import type { VerificationStatus } from '@/types';
 // ---------------------------------------------------------------------------
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { supplierId: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {
-    const { supplierId } = params;
+    const { supplierId } = await params;
 
     if (!supplierId) {
       return NextResponse.json(
@@ -28,9 +30,12 @@ export async function GET(
       );
     }
 
-    const supplierDoc = await adminDb.collection('suppliers').doc(supplierId).get();
+    const supplierDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('suppliers').doc(supplierId).get(),
+      () => null
+    );
 
-    if (!supplierDoc.exists) {
+    if (!supplierDoc || !supplierDoc.exists) {
       return NextResponse.json(
         { error: 'Supplier not found.' },
         { status: 404 }
@@ -42,8 +47,11 @@ export async function GET(
     let userProfile = null;
 
     if (supplierData.userId) {
-      const userDoc = await adminDb.collection('users').doc(supplierData.userId).get();
-      if (userDoc.exists) {
+      const userDoc = await firestoreBreaker.execute(
+        () => adminDb.collection('users').doc(supplierData.userId as string).get(),
+        () => null
+      );
+      if (userDoc?.exists) {
         userProfile = { id: userDoc.id, ...userDoc.data() };
       }
     }
@@ -54,7 +62,7 @@ export async function GET(
       userProfile,
     });
   } catch (error) {
-    console.error(`[GET /api/suppliers/${params?.supplierId}] Error:`, error);
+    console.error('[GET /api/suppliers] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while fetching supplier.' },
       { status: 500 }
@@ -68,10 +76,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { supplierId: string } }
+  { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {
-    const { supplierId } = params;
+    const { supplierId } = await params;
 
     if (!supplierId) {
       return NextResponse.json(
@@ -84,9 +92,12 @@ export async function PUT(
     const { isOnline, currentLocation, waterTypes, serviceArea, vehicle, bankDetails } = body;
 
     const supplierRef = adminDb.collection('suppliers').doc(supplierId);
-    const supplierDoc = await supplierRef.get();
+    const supplierDoc = await firestoreBreaker.execute(
+      () => supplierRef.get(),
+      () => null
+    );
 
-    if (!supplierDoc.exists) {
+    if (!supplierDoc || !supplierDoc.exists) {
       return NextResponse.json(
         { error: 'Supplier not found.' },
         { status: 404 }
@@ -164,16 +175,19 @@ export async function PUT(
       updateData.bankDetails = bankDetails;
     }
 
-    await supplierRef.update(updateData);
+    batchWriter.update('suppliers', supplierId, updateData);
 
-    const updatedDoc = await supplierRef.get();
+    const updatedDoc = await firestoreBreaker.execute(
+      () => supplierRef.get(),
+      () => null
+    );
 
     return NextResponse.json({
       success: true,
-      supplier: { id: updatedDoc.id, ...updatedDoc.data() },
+      supplier: updatedDoc ? { id: updatedDoc.id, ...updatedDoc.data() } : { id: supplierId, ...updateData },
     });
   } catch (error) {
-    console.error(`[PUT /api/suppliers/${params?.supplierId}] Error:`, error);
+    console.error('[PUT /api/suppliers] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while updating supplier.' },
       { status: 500 }
@@ -187,10 +201,10 @@ export async function PUT(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { supplierId: string } }
+  { params }: { params: Promise<{ supplierId: string }> }
 ) {
   try {
-    const { supplierId } = params;
+    const { supplierId } = await params;
 
     if (!supplierId) {
       return NextResponse.json(
@@ -215,8 +229,11 @@ export async function PATCH(
     }
 
     // Verify admin role
-    const adminDoc = await adminDb.collection('users').doc(adminId).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
+    const adminDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('users').doc(adminId).get(),
+      () => null
+    );
+    if (!adminDoc || !adminDoc.exists || adminDoc.data()?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
         { status: 403 }
@@ -232,9 +249,12 @@ export async function PATCH(
     }
 
     const supplierRef = adminDb.collection('suppliers').doc(supplierId);
-    const supplierDoc = await supplierRef.get();
+    const supplierDoc = await firestoreBreaker.execute(
+      () => supplierRef.get(),
+      () => null
+    );
 
-    if (!supplierDoc.exists) {
+    if (!supplierDoc || !supplierDoc.exists) {
       return NextResponse.json(
         { error: 'Supplier not found.' },
         { status: 404 }
@@ -258,17 +278,20 @@ export async function PATCH(
       updateData.isOnline = false;
     }
 
-    await supplierRef.update(updateData);
+    batchWriter.update('suppliers', supplierId, updateData);
 
-    const updatedDoc = await supplierRef.get();
+    const updatedDoc = await firestoreBreaker.execute(
+      () => supplierRef.get(),
+      () => null
+    );
 
     return NextResponse.json({
       success: true,
-      supplier: { id: updatedDoc.id, ...updatedDoc.data() },
+      supplier: updatedDoc ? { id: updatedDoc.id, ...updatedDoc.data() } : { id: supplierId, ...updateData },
       message: `Supplier verification status updated to '${verificationStatus}'.`,
     });
   } catch (error) {
-    console.error(`[PATCH /api/suppliers/${params?.supplierId}] Error:`, error);
+    console.error('[PATCH /api/suppliers] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while updating verification status.' },
       { status: 500 }

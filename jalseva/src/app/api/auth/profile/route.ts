@@ -5,8 +5,10 @@
 // PUT  /api/auth/profile             - Update user profile
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // GET - Fetch user profile by userId
@@ -24,9 +26,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('users').doc(userId).get(),
+      () => null
+    );
 
-    if (!userDoc.exists) {
+    if (!userDoc || !userDoc.exists) {
       return NextResponse.json(
         { error: 'User not found.' },
         { status: 404 }
@@ -63,9 +68,12 @@ export async function PUT(request: NextRequest) {
     }
 
     const userRef = adminDb.collection('users').doc(userId);
-    const userDoc = await userRef.get();
+    const userDoc = await firestoreBreaker.execute(
+      () => userRef.get(),
+      () => null
+    );
 
-    if (!userDoc.exists) {
+    if (!userDoc || !userDoc.exists) {
       return NextResponse.json(
         { error: 'User not found.' },
         { status: 404 }
@@ -120,13 +128,16 @@ export async function PUT(request: NextRequest) {
       };
     }
 
-    await userRef.update(updateData);
+    batchWriter.update('users', userId, updateData);
 
-    const updatedDoc = await userRef.get();
+    const updatedDoc = await firestoreBreaker.execute(
+      () => userRef.get(),
+      () => null
+    );
 
     return NextResponse.json({
       success: true,
-      user: { id: updatedDoc.id, ...updatedDoc.data() },
+      user: updatedDoc ? { id: updatedDoc.id, ...updatedDoc.data() } : { id: userId, ...updateData },
     });
   } catch (error) {
     console.error('[PUT /api/auth/profile] Error:', error);

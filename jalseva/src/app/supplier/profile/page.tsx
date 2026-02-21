@@ -1,8 +1,9 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   User,
   Phone,
@@ -32,7 +33,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
-import { useSupplierStore } from '@/store/supplierStore';
 import type { VerificationStatus, WaterType } from '@/types';
 
 // =============================================================================

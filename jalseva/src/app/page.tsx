@@ -1,8 +1,10 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useCallback, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   MapPin,
   Mic,
@@ -13,7 +15,6 @@ import {
   Minus,
   Plus,
   ChevronDown,
-  ChevronUp,
   Home,
   ClipboardList,
   ScrollText,
@@ -23,11 +24,12 @@ import {
   Loader2,
   Navigation,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
+import { createOrder } from '@/actions/orders';
 import { formatCurrency } from '@/lib/utils';
 import type { WaterType, GeoLocation, CreateOrderRequest } from '@/types';
 
@@ -367,7 +369,7 @@ function BottomNav({ active }: { active: string }) {
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, initialized } = useAuthStore();
+  const { user } = useAuthStore();
   const { setCurrentOrder, addOrder } = useOrderStore();
 
   // --- Booking state ---
@@ -380,7 +382,7 @@ export default function HomePage() {
   const [nearbySuppliers, setNearbySuppliers] = useState<number>(0);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
-  const [bookingLoading, setBookingLoading] = useState(false);
+  const [isBooking, startBookingTransition] = useTransition();
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
 
   // --- Calculated price ---
@@ -436,14 +438,7 @@ export default function HomePage() {
   const { isListening, isSupported, startListening, stopListening } =
     useVoiceRecognition(handleVoiceResult);
 
-  // --- Get user location on mount ---
-  useEffect(() => {
-    getCurrentLocation();
-    // Simulate nearby suppliers count
-    setNearbySuppliers(Math.floor(Math.random() * 8) + 3);
-  }, []);
-
-  const getCurrentLocation = async () => {
+  const getCurrentLocation = useCallback(async () => {
     setLocationLoading(true);
     try {
       if (!navigator.geolocation) {
@@ -495,7 +490,14 @@ export default function HomePage() {
     } catch {
       setLocationLoading(false);
     }
-  };
+  }, []);
+
+  // --- Get user location on mount ---
+  useEffect(() => {
+    getCurrentLocation();
+    // Simulate nearby suppliers count
+    setNearbySuppliers(Math.floor(Math.random() * 8) + 3);
+  }, [getCurrentLocation]);
 
   // --- Quantity controls ---
   const decreaseQuantity = () => {
@@ -514,8 +516,8 @@ export default function HomePage() {
     }
   };
 
-  // --- Book now handler ---
-  const handleBookNow = async () => {
+  // --- Book now handler (React 19 useTransition + Server Action) ---
+  const handleBookNow = () => {
     if (!user) {
       setShowLoginModal(true);
       return;
@@ -529,71 +531,59 @@ export default function HomePage() {
       return;
     }
 
-    setBookingLoading(true);
-    try {
-      const orderRequest: CreateOrderRequest = {
-        customerId: user.id,
-        waterType,
-        quantityLitres: quantity,
-        deliveryLocation: location,
-        paymentMethod: 'cash',
-      };
-
-      let order: any = null;
-
+    startBookingTransition(async () => {
       try {
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderRequest),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          order = data.order || data;
-        }
-      } catch {
-        // API failed - will use demo fallback below
-      }
-
-      // Demo fallback: create order client-side if API unavailable
-      if (!order || !order.id) {
-        const demoId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        order = {
-          id: demoId,
+        const orderRequest: CreateOrderRequest = {
           customerId: user.id,
           waterType,
           quantityLitres: quantity,
-          price: {
-            base: basePrice,
-            distance: deliveryFee,
-            surge: surgeAmount,
-            total: totalPrice,
-            commission: Math.round(totalPrice * 0.15),
-            supplierEarning: totalPrice - Math.round(totalPrice * 0.15),
-          },
-          status: 'searching',
           deliveryLocation: location,
-          payment: {
-            method: 'cash',
-            status: 'pending',
-            amount: totalPrice,
-          },
-          createdAt: new Date().toISOString(),
+          paymentMethod: 'cash',
         };
-      }
 
-      setCurrentOrder(order);
-      addOrder(order);
-      toast.success('Order placed! Finding supplier...\nऑर्डर हो गया! सप्लायर ढूंढ रहे हैं...');
-      router.push('/booking');
-    } catch {
-      toast.error(
-        'Something went wrong. Please try again.\nकुछ गलत हो गया।'
-      );
-    } finally {
-      setBookingLoading(false);
-    }
+        // Use Server Action instead of fetch('/api/orders')
+        const result = await createOrder(orderRequest);
+        let order = result.success ? result.order : null;
+
+        // Demo fallback: create order client-side if server action unavailable
+        if (!order?.id) {
+          const demoId = `order_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+          order = {
+            id: demoId,
+            customerId: user.id,
+            waterType,
+            quantityLitres: quantity,
+            price: {
+              base: basePrice,
+              distance: deliveryFee,
+              surge: surgeAmount,
+              total: totalPrice,
+              commission: Math.round(totalPrice * 0.15),
+              supplierEarning: totalPrice - Math.round(totalPrice * 0.15),
+            },
+            status: 'searching',
+            deliveryLocation: location,
+            payment: {
+              method: 'cash',
+              status: 'pending',
+              amount: totalPrice,
+            },
+            createdAt: new Date(),
+          } as any;
+        }
+
+        if (order) {
+          setCurrentOrder(order);
+          addOrder(order);
+        }
+        toast.success('Order placed! Finding supplier...\nऑर्डर हो गया! सप्लायर ढूंढ रहे हैं...');
+        router.push('/booking');
+      } catch {
+        toast.error(
+          'Something went wrong. Please try again.\nकुछ गलत हो गया।'
+        );
+      }
+    });
   };
 
   // --- Language toggle ---
@@ -985,11 +975,11 @@ export default function HomePage() {
             variant="primary"
             size="xl"
             fullWidth
-            loading={bookingLoading}
+            loading={isBooking}
             onClick={handleBookNow}
             className="rounded-2xl text-lg font-bold min-h-[60px] shadow-water"
           >
-            {bookingLoading
+            {isBooking
               ? language === 'en'
                 ? 'Placing Order...'
                 : 'ऑर्डर हो रहा है...'

@@ -1,17 +1,18 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { clearAuthCookie } from '@/actions/auth';
 import {
-  ArrowLeft,
   User,
   Phone,
   MapPin,
-  Globe,
   CreditCard,
   Star,
   LogOut,
@@ -30,7 +31,8 @@ import {
   Droplets,
   Check,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import Image from 'next/image';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
@@ -156,16 +158,16 @@ function EditProfileModal({
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            <label htmlFor="profile-name" className="text-sm font-medium text-gray-700 mb-1.5 block">
               Name / नाम
             </label>
             <input
+              id="profile-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter your name / अपना नाम डालें"
               className="input-field"
-              autoFocus
             />
           </div>
         </div>
@@ -228,6 +230,7 @@ function SavedAddresses({
       ) : (
         <div className="space-y-2">
           {addresses.map((addr, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: addresses lack unique IDs
             <Card key={index} shadow="sm">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
@@ -389,8 +392,8 @@ export default function ProfilePage() {
   const { user, setUser, logout: authLogout } = useAuthStore();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showLanguage, setShowLanguage] = useState(false);
-  const [showAddresses, setShowAddresses] = useState(false);
+  const [_showLanguage, _setShowLanguage] = useState(false);
+  const [_showAddresses, _setShowAddresses] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<
     { label: string; address: string; location?: GeoLocation }[]
   >([]);
@@ -455,30 +458,26 @@ export default function ProfilePage() {
     toast.success('Address removed.\nपता हटा दिया।');
   };
 
-  // --- Handle logout ---
+  // --- Handle logout (Server Action to clear auth cookie) ---
   const handleLogout = async () => {
     try {
-      // Clear demo user from localStorage if present
-      try {
-        localStorage.removeItem('jalseva_demo_user');
-      } catch {
-        // localStorage might be unavailable
-      }
-      await signOut(auth);
-      authLogout();
-      toast.success('Logged out successfully.\nलॉगआउट हो गया।');
-      router.push('/');
+      localStorage.removeItem('jalseva_demo_user');
     } catch {
-      // Even if Firebase signOut fails (e.g. demo user), still clear state
-      try {
-        localStorage.removeItem('jalseva_demo_user');
-      } catch {
-        // ignore
-      }
-      authLogout();
-      toast.success('Logged out successfully.\nलॉगआउट हो गया।');
-      router.push('/');
+      // localStorage might be unavailable
     }
+
+    // Clear auth cookie via Server Action
+    await clearAuthCookie();
+
+    try {
+      await signOut(auth);
+    } catch {
+      // Firebase signOut may fail for demo users
+    }
+
+    authLogout();
+    toast.success('Logged out successfully.\nलॉगआउट हो गया।');
+    router.push('/');
   };
 
   if (!user) {
@@ -511,10 +510,13 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="w-18 h-18 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
               {user.avatar ? (
-                <img
+                <Image
                   src={user.avatar}
                   alt={user.name}
+                  width={72}
+                  height={72}
                   className="w-full h-full object-cover rounded-2xl"
+                  unoptimized
                 />
               ) : (
                 <span className="text-2xl font-bold text-white">

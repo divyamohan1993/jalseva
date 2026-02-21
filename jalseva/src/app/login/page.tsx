@@ -1,9 +1,12 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '@/store/authStore';
+import { setAuthCookie } from '@/actions/auth';
 import { Button } from '@/components/ui/Button';
 import {
   Droplets,
@@ -14,7 +17,7 @@ import {
   AlertTriangle,
   Eye,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -43,8 +46,8 @@ export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [isPendingSend, startSendTransition] = useTransition();
+  const [isPendingVerify, startVerifyTransition] = useTransition();
   const [countdown, setCountdown] = useState(0);
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -70,7 +73,7 @@ export default function LoginPage() {
   }, [countdown]);
 
   // --- Send OTP (Demo: generate and display) ---
-  const handleSendOtp = async () => {
+  const handleSendOtp = () => {
     if (phoneNumber.length !== 10) {
       toast.error(
         'Please enter a valid 10-digit phone number.\nकृपया सही फ़ोन नंबर डालें।'
@@ -78,21 +81,20 @@ export default function LoginPage() {
       return;
     }
 
-    setSendingOtp(true);
+    startSendTransition(async () => {
+      // Simulate a short delay for realism
+      await new Promise((r) => setTimeout(r, 800));
 
-    // Simulate a short delay for realism
-    await new Promise((r) => setTimeout(r, 800));
+      const newOtp = generateOtp();
+      setGeneratedOtp(newOtp);
+      setStep('otp');
+      setCountdown(60);
 
-    const newOtp = generateOtp();
-    setGeneratedOtp(newOtp);
-    setStep('otp');
-    setCountdown(60);
-    setSendingOtp(false);
+      toast.success('OTP generated for demo!\nडेमो के लिए OTP बनाया गया!');
 
-    toast.success('OTP generated for demo!\nडेमो के लिए OTP बनाया गया!');
-
-    // Focus first OTP input
-    setTimeout(() => otpRefs.current[0]?.focus(), 300);
+      // Focus first OTP input
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
+    });
   };
 
   // --- OTP input handling ---
@@ -137,7 +139,7 @@ export default function LoginPage() {
   };
 
   // --- Verify OTP (Demo: compare with generated OTP) ---
-  const handleVerifyOtp = async (otpValue?: string) => {
+  const handleVerifyOtp = (otpValue?: string) => {
     const code = otpValue || otp.join('');
     if (code.length !== 6) {
       toast.error(
@@ -146,54 +148,56 @@ export default function LoginPage() {
       return;
     }
 
-    setVerifyingOtp(true);
-    setLoading(true);
+    startVerifyTransition(async () => {
+      setLoading(true);
 
-    // Simulate verification delay
-    await new Promise((r) => setTimeout(r, 600));
+      // Simulate verification delay
+      await new Promise((r) => setTimeout(r, 600));
 
-    if (code !== generatedOtp) {
-      toast.error('Wrong OTP. Please try again.\nगलत OTP। दोबारा कोशिश करें।');
-      setOtp(['', '', '', '', '', '']);
-      otpRefs.current[0]?.focus();
-      setVerifyingOtp(false);
+      if (code !== generatedOtp) {
+        toast.error('Wrong OTP. Please try again.\nगलत OTP। दोबारा कोशिश करें।');
+        setOtp(['', '', '', '', '', '']);
+        otpRefs.current[0]?.focus();
+        setLoading(false);
+        return;
+      }
+
+      // OTP matches — create demo user
+      const demoUserId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const demoUser = {
+        id: demoUserId,
+        phone: `+91${phoneNumber}`,
+        name: '',
+        role: 'customer' as const,
+        language: 'en',
+        rating: { average: 5, count: 0 },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Persist demo user to localStorage so it survives page refresh
+      try {
+        localStorage.setItem('jalseva_demo_user', JSON.stringify(demoUser));
+      } catch {
+        // localStorage might be unavailable
+      }
+
+      // Set auth cookie via Server Action for middleware auth
+      await setAuthCookie(demoUserId);
+
+      setUser(demoUser);
+      setInitialized(true);
+      setStep('success');
+      toast.success('Login successful!\nलॉगिन सफल!');
+
+      // Redirect after success animation
+      setTimeout(() => {
+        const redirect = searchParams.get('redirect') || '/';
+        router.push(redirect);
+      }, 1500);
+
       setLoading(false);
-      return;
-    }
-
-    // OTP matches — create demo user
-    const demoUserId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const demoUser = {
-      id: demoUserId,
-      phone: `+91${phoneNumber}`,
-      name: '',
-      role: 'customer' as const,
-      language: 'en',
-      rating: { average: 5, count: 0 },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Persist demo user to localStorage so it survives page refresh
-    try {
-      localStorage.setItem('jalseva_demo_user', JSON.stringify(demoUser));
-    } catch {
-      // localStorage might be unavailable
-    }
-
-    setUser(demoUser);
-    setInitialized(true);
-    setStep('success');
-    toast.success('Login successful!\nलॉगिन सफल!');
-
-    // Redirect after success animation
-    setTimeout(() => {
-      const redirect = searchParams.get('redirect') || '/';
-      router.push(redirect);
-    }, 1500);
-
-    setVerifyingOtp(false);
-    setLoading(false);
+    });
   };
 
   // --- Resend OTP ---
@@ -212,9 +216,9 @@ export default function LoginPage() {
       {/* --- Water-themed header decoration --- */}
       <div className="relative bg-water h-48 overflow-hidden">
         {/* Water bubbles */}
-        {[...Array(6)].map((_, i) => (
+        {[0, 1, 2, 3, 4, 5].map((n) => (
           <motion.div
-            key={i}
+            key={n}
             className="absolute rounded-full bg-white/10"
             style={{
               width: 20 + Math.random() * 40,
@@ -301,7 +305,7 @@ export default function LoginPage() {
 
               {/* Phone input */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
+                <label htmlFor="phone-number" className="text-sm font-medium text-gray-700">
                   Mobile Number / मोबाइल नंबर
                 </label>
                 <div className="flex items-center gap-2">
@@ -310,6 +314,7 @@ export default function LoginPage() {
                     <span>+91</span>
                   </div>
                   <input
+                    id="phone-number"
                     type="tel"
                     inputMode="numeric"
                     maxLength={10}
@@ -319,7 +324,6 @@ export default function LoginPage() {
                     }
                     placeholder="XXXXX XXXXX"
                     className="flex-1 px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-lg font-medium tracking-wider placeholder:text-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
-                    autoFocus
                   />
                 </div>
               </div>
@@ -329,7 +333,7 @@ export default function LoginPage() {
                 variant="primary"
                 size="xl"
                 fullWidth
-                loading={sendingOtp}
+                loading={isPendingSend}
                 disabled={phoneNumber.length !== 10}
                 onClick={handleSendOtp}
                 leftIcon={<Phone className="w-5 h-5" />}
@@ -378,12 +382,12 @@ export default function LoginPage() {
                   </p>
                 </div>
                 <div className="flex justify-center gap-2">
-                  {generatedOtp.split('').map((digit, i) => (
+                  {Array.from(generatedOtp, (digit, pos) => ({ digit, pos })).map(({ digit, pos }) => (
                     <motion.span
-                      key={i}
+                      key={pos}
                       initial={{ y: -10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.1 * i }}
+                      transition={{ delay: 0.1 * pos }}
                       className="w-11 h-14 bg-white rounded-xl border-2 border-blue-200 flex items-center justify-center text-2xl font-bold text-blue-700 shadow-sm"
                     >
                       {digit}
@@ -402,18 +406,18 @@ export default function LoginPage() {
 
               {/* OTP inputs */}
               <div className="flex justify-center gap-3">
-                {otp.map((digit, index) => (
+                {Array.from(otp, (digit, pos) => ({ digit, pos })).map(({ digit, pos }) => (
                   <input
-                    key={index}
+                    key={pos}
                     ref={(el) => {
-                      otpRefs.current[index] = el;
+                      otpRefs.current[pos] = el;
                     }}
                     type="tel"
                     inputMode="numeric"
                     maxLength={6}
                     value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    onChange={(e) => handleOtpChange(pos, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(pos, e)}
                     className={`w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all focus:outline-none ${
                       digit
                         ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -428,7 +432,7 @@ export default function LoginPage() {
                 variant="primary"
                 size="xl"
                 fullWidth
-                loading={verifyingOtp}
+                loading={isPendingVerify}
                 disabled={otp.some((d) => !d)}
                 onClick={() => handleVerifyOtp()}
                 className="rounded-2xl min-h-[56px]"

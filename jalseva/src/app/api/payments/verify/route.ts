@@ -6,9 +6,10 @@
 // the order payment status in Firestore.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/razorpay';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
 
 // ---------------------------------------------------------------------------
 // POST - Verify Razorpay payment signature
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
 
       // Update order with failed payment status
-      await adminDb.collection('orders').doc(orderId).update({
+      batchWriter.update('orders', orderId, {
         'payment.status': 'failed',
         'payment.razorpayPaymentId': razorpay_payment_id,
         updatedAt: new Date().toISOString(),
@@ -79,9 +80,12 @@ export async function POST(request: NextRequest) {
 
     // --- Verify order exists ---
     const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
+    const orderDoc = await firestoreBreaker.execute(
+      () => orderRef.get(),
+      () => null
+    );
 
-    if (!orderDoc.exists) {
+    if (!orderDoc || !orderDoc.exists) {
       return NextResponse.json(
         { error: 'Order not found.' },
         { status: 404 }
@@ -99,27 +103,35 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Update order payment status ---
+    // Payment is critical: write directly to Firestore and await persistence
+    // before returning success to the client.
     const now = new Date().toISOString();
+    const paymentDocId = `pay_${orderId}_${Date.now()}`;
 
-    await orderRef.update({
-      'payment.status': 'paid',
-      'payment.razorpayPaymentId': razorpay_payment_id,
-      'payment.transactionId': razorpay_payment_id,
-      'payment.paidAt': now,
-      updatedAt: now,
-    });
+    await firestoreBreaker.execute(async () => {
+      const batch = adminDb.batch();
 
-    // --- Record payment in payments collection for auditing ---
-    await adminDb.collection('payments').add({
-      orderId,
-      customerId: order.customerId,
-      supplierId: order.supplierId || null,
-      razorpayOrderId: razorpay_order_id,
-      razorpayPaymentId: razorpay_payment_id,
-      amount: order.payment?.amount || 0,
-      currency: 'INR',
-      status: 'paid',
-      createdAt: now,
+      batch.update(orderRef, {
+        'payment.status': 'paid',
+        'payment.razorpayPaymentId': razorpay_payment_id,
+        'payment.transactionId': razorpay_payment_id,
+        'payment.paidAt': now,
+        updatedAt: now,
+      });
+
+      batch.set(adminDb.collection('payments').doc(paymentDocId), {
+        orderId,
+        customerId: order.customerId,
+        supplierId: order.supplierId || null,
+        razorpayOrderId: razorpay_order_id,
+        razorpayPaymentId: razorpay_payment_id,
+        amount: order.payment?.amount || 0,
+        currency: 'INR',
+        status: 'paid',
+        createdAt: now,
+      });
+
+      await batch.commit();
     });
 
     return NextResponse.json({

@@ -1,8 +1,10 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import type React from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   IndianRupee,
   ClipboardList,
@@ -66,7 +68,7 @@ const MOCK_INCOMING_ORDERS: Order[] = [
   },
 ];
 
-const MOCK_ACTIVE_ORDER: Order = {
+const _MOCK_ACTIVE_ORDER: Order = {
   id: 'ord_active_1',
   customerId: 'cust_2',
   supplierId: 'sup_1',
@@ -398,10 +400,10 @@ function StatCard({ icon, label, value, subtext, color }: StatCardProps) {
 // =============================================================================
 
 export default function SupplierDashboard() {
-  const router = useRouter();
+  const _router = useRouter();
   const { isOnline, todayEarnings, pendingOrders, activeOrder, supplier } =
     useSupplierStore();
-  const { removePendingOrder, setActiveOrder, setPendingOrders } =
+  const { removePendingOrder, setActiveOrder } =
     useSupplierStore();
 
   // Demo state - in production these come from the store / API

@@ -1,8 +1,9 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Droplets,
   MapPin,
@@ -14,11 +15,12 @@ import {
   Clock,
   Loader2,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
+import { cancelOrder } from '@/actions/orders';
 import { formatCurrency } from '@/lib/utils';
 import type { Order, OrderStatus } from '@/types';
 
@@ -180,7 +182,7 @@ export default function BookingPage() {
   const [searching, setSearching] = useState(true);
   const [supplierFound, setSupplierFound] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
-  const [cancelling, setCancelling] = useState(false);
+  const [isCancelling, startCancelTransition] = useTransition();
 
   // --- Redirect if no active order or not logged in ---
   useEffect(() => {
@@ -270,32 +272,17 @@ export default function BookingPage() {
     return () => clearTimeout(timeout);
   }, [searching, currentOrder, setCurrentOrder]);
 
-  // --- Cancel order ---
-  const handleCancel = async () => {
+  // --- Cancel order (React 19 useTransition + Server Action) ---
+  const handleCancel = () => {
     if (!currentOrder) return;
 
-    setCancelling(true);
-    try {
-      const res = await fetch(`/api/orders/${currentOrder.id}/cancel`, {
-        method: 'POST',
-      });
-
-      if (res.ok) {
-        updateOrderStatus(currentOrder.id, 'cancelled');
-        setCurrentOrder(null);
-        toast.success('Order cancelled.\nऑर्डर रद्द हो गया।');
-        router.push('/');
-      } else {
-        toast.error('Could not cancel order.\nऑर्डर रद्द नहीं हो पाया।');
-      }
-    } catch {
-      // Fallback: cancel locally
+    startCancelTransition(async () => {
+      await cancelOrder(currentOrder.id);
+      updateOrderStatus(currentOrder.id, 'cancelled');
       setCurrentOrder(null);
       toast.success('Order cancelled.\nऑर्डर रद्द हो गया।');
       router.push('/');
-    } finally {
-      setCancelling(false);
-    }
+    });
   };
 
   // --- Go to tracking ---
@@ -425,7 +412,7 @@ export default function BookingPage() {
                 variant="ghost"
                 size="lg"
                 fullWidth
-                loading={cancelling}
+                loading={isCancelling}
                 onClick={handleCancel}
                 leftIcon={<X className="w-5 h-5" />}
                 className="text-red-500 hover:bg-red-50 hover:text-red-600"
@@ -459,7 +446,7 @@ export default function BookingPage() {
                 <Button
                   variant="ghost"
                   size="lg"
-                  loading={cancelling}
+                  loading={isCancelling}
                   onClick={handleCancel}
                   className="text-red-500 hover:bg-red-50 shrink-0 px-6"
                 >

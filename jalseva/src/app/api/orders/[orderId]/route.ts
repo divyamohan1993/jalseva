@@ -5,7 +5,9 @@
 // PUT /api/orders/[orderId]  - Update order (status changes, accept, reject, etc.)
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type { OrderStatus } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -38,11 +40,11 @@ async function getAdminDb() {
 // ---------------------------------------------------------------------------
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { orderId: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await params;
 
     if (!orderId) {
       return NextResponse.json(
@@ -54,9 +56,12 @@ export async function GET(
     if (hasAdminCredentials()) {
       try {
         const adminDb = await getAdminDb();
-        const orderDoc = await adminDb.collection('orders').doc(orderId).get();
+        const orderDoc = await firestoreBreaker.execute(
+          () => adminDb.collection('orders').doc(orderId).get(),
+          () => null
+        );
 
-        if (!orderDoc.exists) {
+        if (!orderDoc || !orderDoc.exists) {
           return NextResponse.json(
             { error: 'Order not found.' },
             { status: 404 }
@@ -79,7 +84,7 @@ export async function GET(
       { status: 404 }
     );
   } catch (error) {
-    console.error(`[GET /api/orders/${params?.orderId}] Error:`, error);
+    console.error('[GET /api/orders] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while fetching order.' },
       { status: 500 }
@@ -93,10 +98,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const { orderId } = params;
+    const { orderId } = await params;
 
     if (!orderId) {
       return NextResponse.json(
@@ -218,12 +223,15 @@ export async function PUT(
           }
         }
 
-        await orderRef.update(updateData);
-        const updatedDoc = await orderRef.get();
+        batchWriter.update('orders', orderId, updateData);
+        const updatedDoc = await firestoreBreaker.execute(
+          () => orderRef.get(),
+          () => null
+        );
 
         return NextResponse.json({
           success: true,
-          order: { id: updatedDoc.id, ...updatedDoc.data() },
+          order: updatedDoc ? { id: updatedDoc.id, ...updatedDoc.data() } : { id: orderId, ...updateData },
           message: `Order status updated to '${status}'.`,
         });
       } catch (dbError) {
@@ -240,7 +248,7 @@ export async function PUT(
       demo: true,
     });
   } catch (error) {
-    console.error(`[PUT /api/orders/${params?.orderId}] Error:`, error);
+    console.error('[PUT /api/orders] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while updating order.' },
       { status: 500 }

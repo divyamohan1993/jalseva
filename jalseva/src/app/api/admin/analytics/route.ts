@@ -6,9 +6,11 @@
 // suppliers, average delivery time, and daily/weekly/monthly breakdowns.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { cacheGet, cacheSet } from '@/lib/redis';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { hotCache } from '@/lib/cache';
 
 // ---------------------------------------------------------------------------
 // Date Helpers
@@ -78,18 +80,33 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const adminDoc = await adminDb.collection('users').doc(adminId).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
+    const adminDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('users').doc(adminId).get(),
+      () => null
+    );
+    if (!adminDoc || !adminDoc.exists || adminDoc.data()?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
         { status: 403 }
       );
     }
 
-    // --- Check cache ---
+    // --- Check L1 hot cache first (60s TTL) ---
     const cacheKey = `analytics:${period}:${granularity}`;
+    const l1Cached = hotCache.get(cacheKey);
+    if (l1Cached !== undefined) {
+      return NextResponse.json({
+        success: true,
+        analytics: l1Cached,
+        source: 'l1-cache',
+      });
+    }
+
+    // --- Check Redis cache (L2) ---
     const cached = await cacheGet<Record<string, unknown>>(cacheKey);
     if (cached) {
+      // Populate L1 cache from L2
+      hotCache.set(cacheKey, cached, 60);
       return NextResponse.json({
         success: true,
         analytics: cached,
@@ -265,8 +282,9 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // --- Cache for 5 minutes ---
+    // --- Cache for 5 minutes in Redis (L2) and 60 seconds in L1 ---
     await cacheSet(cacheKey, analytics, 300);
+    hotCache.set(cacheKey, analytics, 60);
 
     return NextResponse.json({
       success: true,

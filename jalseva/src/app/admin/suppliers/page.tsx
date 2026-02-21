@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Supplier Management Page
@@ -7,7 +8,8 @@
 // side-panel details, approve/reject with confirmation modal, document viewing.
 // =============================================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import {
   collection,
   query,
@@ -15,13 +17,10 @@ import {
   onSnapshot,
   doc,
   updateDoc,
-  where,
   getDoc,
 } from 'firebase/firestore';
 import {
   Search,
-  Filter,
-  ChevronRight,
   CheckCircle,
   XCircle,
   X,
@@ -31,7 +30,6 @@ import {
   FileText,
   Truck,
   Eye,
-  Shield,
   Users,
   AlertTriangle,
 } from 'lucide-react';
@@ -42,7 +40,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import type { Supplier, VerificationStatus, User } from '@/types';
+import type { Supplier, VerificationStatus, } from '@/types';
 
 // =============================================================================
 // Types
@@ -709,10 +707,13 @@ export default function SuppliersPage() {
           <div className="space-y-4">
             <div className="bg-gray-100 rounded-xl p-2 min-h-[300px] flex items-center justify-center">
               {previewDoc.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <img
+                <Image
                   src={previewDoc.url}
                   alt={previewDoc.name}
+                  width={400}
+                  height={400}
                   className="max-w-full max-h-[400px] rounded-lg object-contain"
+                  unoptimized
                 />
               ) : previewDoc.url.match(/\.pdf$/i) ? (
                 <iframe

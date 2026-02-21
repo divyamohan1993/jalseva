@@ -1,16 +1,16 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import type React from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
-  ArrowLeft,
   Droplets,
   Mountain,
   Truck,
   Star,
   Calendar,
-  Filter,
   ChevronRight,
   Package,
   X,
@@ -21,10 +21,8 @@ import {
   ClipboardList,
   ScrollText,
   User,
-  Loader2,
   RefreshCw,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/authStore';
@@ -301,11 +299,11 @@ function OrderDetailModal({
             <div className="flex justify-between text-sm items-center">
               <span className="text-gray-500">Your Rating / रेटिंग</span>
               <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
+                {[1, 2, 3, 4, 5].map((star) => (
                   <Star
-                    key={i}
+                    key={star}
                     className={`w-4 h-4 ${
-                      i < (order.rating?.customerRating || 0)
+                      star <= (order.rating?.customerRating || 0)
                         ? 'text-yellow-400 fill-yellow-400'
                         : 'text-gray-200'
                     }`}

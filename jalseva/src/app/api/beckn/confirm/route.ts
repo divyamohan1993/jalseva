@@ -7,8 +7,10 @@
 // a Beckn on_confirm response.
 // =============================================================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type { GeoLocation, WaterType, PaymentMethod, OrderPrice } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -112,7 +114,7 @@ export async function POST(request: NextRequest) {
     // If items have a quoted price, use it
     if (orderRequest.quote?.price?.value) {
       const quotedPrice = parseFloat(orderRequest.quote.price.value);
-      if (!isNaN(quotedPrice) && quotedPrice > 0) {
+      if (!Number.isNaN(quotedPrice) && quotedPrice > 0) {
         price.total = Math.round(quotedPrice);
         price.commission = Math.round(quotedPrice * 0.15);
         price.supplierEarning = Math.round(quotedPrice * 0.85);
@@ -127,18 +129,21 @@ export async function POST(request: NextRequest) {
 
     try {
       if (customerPhone) {
-        const existingUser = await adminDb
-          .collection('users')
-          .where('phone', '==', customerPhone)
-          .limit(1)
-          .get();
+        const existingUser = await firestoreBreaker.execute(
+          () => adminDb
+            .collection('users')
+            .where('phone', '==', customerPhone)
+            .limit(1)
+            .get(),
+          () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+        );
 
         if (!existingUser.empty) {
           customerId = existingUser.docs[0].id;
         } else {
           const newUserRef = adminDb.collection('users').doc();
           customerId = newUserRef.id;
-          await newUserRef.set({
+          batchWriter.set('users', customerId, {
             id: customerId,
             phone: customerPhone,
             name: customerName,
@@ -152,7 +157,7 @@ export async function POST(request: NextRequest) {
       } else {
         const anonRef = adminDb.collection('users').doc();
         customerId = anonRef.id;
-        await anonRef.set({
+        batchWriter.set('users', customerId, {
           id: customerId,
           phone: '',
           name: customerName || 'Beckn Customer',
@@ -202,26 +207,23 @@ export async function POST(request: NextRequest) {
         acceptedAt: supplierId ? now : null,
       };
 
-      await orderRef.set(jalsevaOrder);
+      batchWriter.set('orders', orderId, jalsevaOrder as unknown as Record<string, unknown>);
     } catch (orderError) {
       console.warn('[Beckn Sim] Firestore order creation failed, using sim ID:', orderError);
       orderId = `sim_order_${Date.now()}`;
     }
 
     // --- Log Beckn transaction ---
-    try {
-      await adminDb.collection('beckn_transactions').add({
-        transactionId: transaction_id,
-        messageId: message_id,
-        action: 'confirm',
-        orderId,
-        request: body,
-        simulated: true,
-        createdAt: now,
-      });
-    } catch (logError) {
-      console.warn('[Beckn Sim] Failed to log transaction:', logError);
-    }
+    const becknLogId = `beckn_confirm_${transaction_id}_${Date.now()}`;
+    batchWriter.set('beckn_transactions', becknLogId, {
+      transactionId: transaction_id,
+      messageId: message_id,
+      action: 'confirm',
+      orderId,
+      request: body as Record<string, unknown>,
+      simulated: true,
+      createdAt: now,
+    });
 
     // --- Build Beckn on_confirm response ---
     const response = {

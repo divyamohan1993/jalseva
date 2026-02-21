@@ -84,7 +84,7 @@ function docToOrder(id: string, data: Record<string, any>): Order {
 
 export function useOrders() {
   const user = useAuthStore((s) => s.user);
-  const { orders, currentOrder, loading, setOrders, setCurrentOrder, setLoading } =
+  const { orders, currentOrder, loading, setOrders, setCurrentOrder, setLoading, getOrderById } =
     useOrderStore();
 
   useEffect(() => {
@@ -115,13 +115,13 @@ export function useOrders() {
           docToOrder(docSnap.id, docSnap.data())
         );
 
+        // Populate both the orders array and the ordersMap for O(1) lookups
         setOrders(fetchedOrders);
 
         // If there's a current order, keep it synced with the latest data
+        // using O(1) Map lookup instead of array.find()
         if (currentOrder) {
-          const updated = fetchedOrders.find(
-            (o) => o.id === currentOrder.id
-          );
+          const updated = getOrderById(currentOrder.id);
           if (updated) {
             setCurrentOrder(updated);
           }
@@ -148,8 +148,7 @@ export function useOrders() {
     );
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.role]);
+  }, [user, currentOrder, setOrders, setLoading, setCurrentOrder, getOrderById]);
 
   return { orders, currentOrder, loading };
 }

@@ -73,15 +73,6 @@ export async function GET() {
         type: 'image/svg+xml',
       },
     ],
-    screenshots: [
-      {
-        src: '/screenshots/home.png',
-        sizes: '390x844',
-        type: 'image/png',
-        form_factor: 'narrow',
-        label: 'JalSeva Home - Order water delivery',
-      },
-    ],
     shortcuts: [
       {
         name: 'Order RO Water',

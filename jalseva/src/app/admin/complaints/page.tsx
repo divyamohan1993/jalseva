@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Complaint Management Page
@@ -20,7 +21,6 @@ import {
 import {
   MessageSquareWarning,
   Search,
-  Filter,
   ChevronRight,
   X,
   Send,
@@ -34,12 +34,11 @@ import {
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { Card, } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // =============================================================================
 // Types
@@ -292,7 +291,7 @@ export default function ComplaintsPage() {
   // --------------------------------------------------------------------------
   // Format helpers
   // --------------------------------------------------------------------------
-  const formatDate = (date: Date) => {
+  const _formatDate = (date: Date) => {
     return date.toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',

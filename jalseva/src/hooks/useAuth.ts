@@ -15,7 +15,7 @@ import {
   signInWithPhoneNumber,
   signOut,
   RecaptchaVerifier,
-  ConfirmationResult,
+  type ConfirmationResult,
   PhoneAuthProvider,
   signInWithCredential,
 } from 'firebase/auth';
@@ -111,7 +111,7 @@ export function useAuth() {
 
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setInitialized, setLoading, setUser]);
 
   // --------------------------------------------------------------------------
   // Login with phone number

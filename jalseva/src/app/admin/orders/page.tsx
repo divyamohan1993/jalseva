@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Order Management Page
@@ -7,7 +8,7 @@
 // date range, search by order ID, full order details view, cancel and refund.
 // =============================================================================
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   collection,
   query,
@@ -16,22 +17,15 @@ import {
   doc,
   updateDoc,
   limit,
-  where,
   Timestamp,
 } from 'firebase/firestore';
 import {
   Search,
-  Filter,
   Calendar,
-  ChevronRight,
   X,
   Package,
   MapPin,
-  Phone,
-  Clock,
-  CreditCard,
   AlertTriangle,
-  DollarSign,
   Eye,
   XCircle,
   RefreshCcw,
@@ -44,7 +38,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import type { Order, OrderStatus, PaymentStatus } from '@/types';
+import type { Order, OrderStatus, } from '@/types';
 
 // =============================================================================
 // Constants
@@ -118,7 +112,7 @@ export default function OrdersPage() {
   // --------------------------------------------------------------------------
   // Date range calculation
   // --------------------------------------------------------------------------
-  const getDateThreshold = (range: DateRange): Date | null => {
+  const getDateThreshold = useCallback((range: DateRange): Date | null => {
     const now = new Date();
     switch (range) {
       case 'today': {
@@ -141,7 +135,7 @@ export default function OrdersPage() {
       default:
         return null;
     }
-  };
+  }, []);
 
   // --------------------------------------------------------------------------
   // Firestore listener
@@ -222,7 +216,7 @@ export default function OrdersPage() {
     }
 
     return result;
-  }, [orders, statusFilter, dateRange, searchQuery]);
+  }, [orders, statusFilter, dateRange, searchQuery, getDateThreshold]);
 
   // Status counts
   const statusCounts = useMemo(() => {

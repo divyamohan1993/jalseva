@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import type React from 'react';
+import { useState, useCallback } from 'react';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -67,6 +68,7 @@ const StarRating: React.FC<StarRatingProps> = ({
 
   return (
     <div className={cn('flex items-center gap-1', className)}>
+      {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-label is valid for both img and radiogroup roles */}
       <div
         className="flex items-center"
         onMouseLeave={handleMouseLeave}
@@ -96,7 +98,8 @@ const StarRating: React.FC<StarRatingProps> = ({
               onMouseEnter={() => handleMouseEnter(star)}
               aria-label={`${star} star${star > 1 ? 's' : ''}`}
               role={interactive ? 'radio' : undefined}
-              aria-checked={interactive ? star === value : undefined}
+              aria-pressed={interactive ? star === value : undefined}
+              tabIndex={interactive ? (star === value ? 0 : -1) : undefined}
             >
               {halfFilled ? (
                 <div className="relative">

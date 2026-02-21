@@ -1,8 +1,9 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Droplets,
   MapPin,

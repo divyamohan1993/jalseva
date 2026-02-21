@@ -7,7 +7,6 @@
 
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { v4 as uuidv4 } from 'uuid';
 import type { WaterType, OrderPrice } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -103,8 +102,7 @@ export function formatDuration(seconds: number): string {
  * @returns A string like "JLS-A1B2C3D4" (prefix + 8 uppercase hex chars).
  */
 export function generateOrderId(): string {
-  // Take the first 8 characters of a UUID (without hyphens) and uppercase them.
-  const shortId = uuidv4().replace(/-/g, '').substring(0, 8).toUpperCase();
+  const shortId = crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase();
   return `JLS-${shortId}`;
 }
 
