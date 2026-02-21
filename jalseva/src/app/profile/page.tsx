@@ -550,7 +550,7 @@ export default function ProfilePage() {
       </header>
 
       {/* Main content */}
-      <main className="px-4 -mt-4 space-y-4 max-w-lg mx-auto">
+      <main className="px-4 -mt-4 space-y-4 app-container">
         {/* Quick stats */}
         <Card shadow="md" className="relative z-10">
           <div className="grid grid-cols-3 gap-4 text-center">

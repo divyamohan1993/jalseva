@@ -494,7 +494,7 @@ export default function SupplierEarningsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-white/10 rounded-lg p-2.5 text-center">
             <p className="text-xl font-bold text-white">{summary.orders}</p>
             <p className="text-[10px] text-green-200 font-medium">Orders</p>

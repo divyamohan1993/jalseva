@@ -405,6 +405,39 @@
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Responsive app container — scales from phone to 8K */
+  .app-container {
+    @apply w-full mx-auto px-4;
+    max-width: 32rem; /* 512px — mobile default (max-w-lg) */
+  }
+
+  @media (min-width: 768px) {
+    .app-container {
+      max-width: 42rem; /* 672px — tablet */
+      @apply px-6;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .app-container {
+      max-width: 48rem; /* 768px — laptop */
+      @apply px-8;
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .app-container {
+      max-width: 56rem; /* 896px — desktop/2K */
+    }
+  }
+
+  @media (min-width: 2560px) {
+    .app-container {
+      max-width: 64rem; /* 1024px — 4K/8K ultra-wide */
+      @apply px-10;
+    }
+  }
 }
 
 /* ===== Animations ===== */

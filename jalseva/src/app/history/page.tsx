@@ -557,7 +557,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Orders list */}
-      <main className="px-4 pt-4 space-y-3 max-w-lg mx-auto">
+      <main className="px-4 pt-4 space-y-3 app-container">
         {loading ? (
           // Skeleton loaders
           <div className="space-y-3">

@@ -70,7 +70,7 @@ const Navbar: React.FC<NavbarProps> = ({
         {showBack ? (
           <button
             onClick={() => router.back()}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             aria-label="Go back"
           >
             <ArrowLeft size={22} className="text-gray-700" />
@@ -95,8 +95,10 @@ const Navbar: React.FC<NavbarProps> = ({
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setLangOpen(!langOpen)}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-sm rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+            className="flex items-center gap-1 px-2.5 min-h-[44px] text-sm rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors border border-gray-200"
             aria-label="Select language"
+            aria-expanded={langOpen}
+            aria-haspopup="listbox"
           >
             <span className="font-medium text-gray-700">
               {selectedLang.short}
@@ -111,7 +113,7 @@ const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[140px] z-50">
+            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[140px] z-50" role="listbox">
               {languages.map((lang) => (
                 <button
                   key={lang.code}
@@ -119,8 +121,10 @@ const Navbar: React.FC<NavbarProps> = ({
                     onLanguageChange?.(lang.code);
                     setLangOpen(false);
                   }}
+                  role="option"
+                  aria-selected={lang.code === language}
                   className={cn(
-                    'w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between',
+                    'w-full text-left px-3 py-2 min-h-[44px] text-sm hover:bg-blue-50 focus:outline-none focus:bg-blue-50 transition-colors flex items-center justify-between',
                     lang.code === language &&
                       'bg-blue-50 text-blue-700 font-medium'
                   )}
@@ -137,15 +141,15 @@ const Navbar: React.FC<NavbarProps> = ({
 
         <button
           onClick={onProfileClick}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors overflow-hidden"
+          className="flex items-center justify-center w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors overflow-hidden"
           aria-label="Profile"
         >
           {userAvatar ? (
             <Image
               src={userAvatar}
               alt={userName || 'User'}
-              width={36}
-              height={36}
+              width={44}
+              height={44}
               className="w-full h-full object-cover"
               unoptimized
             />

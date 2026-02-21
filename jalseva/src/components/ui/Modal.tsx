@@ -68,6 +68,9 @@ const Modal: React.FC<ModalProps> = ({
             onClick={closeOnBackdrop ? onClose : undefined}
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || 'Dialog'}
             initial={{ y: '100%', opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0.5 }}
@@ -91,7 +94,7 @@ const Modal: React.FC<ModalProps> = ({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 ml-auto"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-gray-500 ml-auto"
                     aria-label="Close"
                   >
                     <X size={22} />

@@ -722,7 +722,7 @@ export default function SettingsPage() {
             <p className="text-sm font-medium text-gray-700 mb-3">
               Base Prices (INR)
             </p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input
                 label="RO Water"
                 type="number"

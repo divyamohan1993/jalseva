@@ -648,7 +648,7 @@ export default function HomePage() {
       </header>
 
       {/* ============== Main Content ============== */}
-      <main id="main-content" className="px-4 pt-4 space-y-4 max-w-lg mx-auto" role="main">
+      <main id="main-content" className="px-4 pt-4 space-y-4 app-container" role="main">
         {/* --- Location Card --- */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

@@ -98,7 +98,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
         className
       )}
     >
-      <div className="flex items-stretch justify-around h-16 max-w-lg mx-auto">
+      <div className="flex items-stretch justify-around h-16 app-container">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.href;
 
@@ -108,7 +108,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
               href={tab.href}
               className={cn(
                 'flex flex-col items-center justify-center gap-0.5 flex-1 px-1 transition-colors',
-                'min-w-0 relative',
+                'min-w-0 relative focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500',
                 isActive
                   ? 'text-blue-600'
                   : 'text-gray-400 hover:text-gray-600'
@@ -127,7 +127,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
               </span>
               <span
                 className={cn(
-                  'text-[10px] font-medium truncate max-w-full',
+                  'text-[11px] font-medium truncate max-w-full',
                   isActive && 'font-semibold'
                 )}
               >

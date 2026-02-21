@@ -81,7 +81,7 @@ const WaterTypeSelector: React.FC<WaterTypeSelectorProps> = ({
             onClick={() => onChange?.(water.type)}
             className={cn(
               'relative flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-200 text-left',
-              'min-h-[80px]',
+              'min-h-[80px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
               isSelected
                 ? cn(water.bgColor, water.borderColor, 'shadow-md')
                 : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'

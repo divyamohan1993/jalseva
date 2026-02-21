@@ -112,7 +112,7 @@ export default function SupplierLayout({
       {/* ================================================================== */}
       {!hideBottomNav && (
         <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between px-4 h-14 max-w-lg mx-auto">
+          <div className="flex items-center justify-between px-4 h-14 app-container">
             {/* Branding */}
             <div className="flex items-center gap-2">
               <Droplets className="w-6 h-6 text-green-600" />
@@ -162,7 +162,7 @@ export default function SupplierLayout({
       {/* ================================================================== */}
       <main
         className={cn(
-          'flex-1 max-w-lg mx-auto w-full',
+          'flex-1 app-container w-full',
           !hideBottomNav && 'pb-20'
         )}
       >
@@ -185,7 +185,7 @@ export default function SupplierLayout({
       {/* ================================================================== */}
       {!hideBottomNav && (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
-          <div className="flex items-center justify-around max-w-lg mx-auto h-16 px-2">
+          <div className="flex items-center justify-around app-container h-16 px-2">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
@@ -194,7 +194,7 @@ export default function SupplierLayout({
                   key={item.href}
                   onClick={() => router.push(item.href)}
                   className={cn(
-                    'flex flex-col items-center justify-center gap-0.5 w-16 h-full rounded-lg transition-colors duration-200',
+                    'flex flex-col items-center justify-center gap-0.5 w-16 h-full rounded-lg transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-green-500',
                     active
                       ? 'text-green-600'
                       : 'text-gray-400 hover:text-gray-600'
@@ -218,7 +218,7 @@ export default function SupplierLayout({
                   </div>
                   <span
                     className={cn(
-                      'text-[10px] font-medium',
+                      'text-[11px] font-medium',
                       active && 'font-semibold'
                     )}
                   >

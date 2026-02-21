@@ -138,6 +138,9 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
 
           <motion.div
             ref={sheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || 'Bottom sheet'}
             initial={{ height: 0 }}
             animate={controls}
             exit={{ height: 0 }}
@@ -150,7 +153,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               className
             )}
           >
-            <div className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+            <div className="flex justify-center min-h-[44px] items-center cursor-grab active:cursor-grabbing">
               <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
             </div>
 
@@ -162,7 +165,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 ml-auto"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-gray-500 ml-auto"
                     aria-label="Close"
                   >
                     <X size={20} />

@@ -322,7 +322,7 @@ export default function BookingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="px-4 pt-6 pb-8 max-w-lg mx-auto">
+      <main className="px-4 pt-6 pb-8 app-container">
         <AnimatePresence mode="wait">
           {searching ? (
             <motion.div
