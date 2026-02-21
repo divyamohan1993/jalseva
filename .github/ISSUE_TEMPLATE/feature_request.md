@@ -1,44 +1,44 @@
 ---
 name: Feature Request
-about: Suggest a new feature or improvement for JalSeva
+about: Every great feature starts with a problem worth solving.
 title: "[FEATURE] "
 labels: enhancement
 assignees: ''
 ---
 
-## Problem Statement
+## The Problem
 
-A clear description of the problem this feature would solve.
-Example: "As a customer, I'm frustrated when..."
+<!-- What's frustrating? What's missing? What would make someone's life better?
+     Start with the person, not the feature. "As a customer, I can't..." -->
 
-## Proposed Solution
+## The Solution
 
-A clear description of what you'd like to happen.
+<!-- How should it work? Describe the experience you want to create. Be specific — what does the user see, tap, or hear? -->
 
-## Alternatives Considered
+## Why This Matters
 
-Any alternative solutions or features you've considered.
+- **Who benefits:** [e.g., customers, suppliers, admins]
+- **Scale of impact:** [e.g., every user, specific city, edge case]
+- **Priority:** [Low / Medium / High]
 
-## User Interface
+## Alternatives You've Considered
 
-<!-- If this is a UI feature, describe the expected behavior: -->
+<!-- Have you thought about other ways to solve this? What are the trade-offs? -->
+
+## User Experience
+
+<!-- If this is a UI feature: -->
 - **Screen/Page:** [e.g., Home, Booking, Supplier Dashboard]
 - **Interaction:** [e.g., tap, voice, swipe]
-- **Accessibility:** How would this work for low-literacy users or screen readers?
+- **Accessibility:** How does this work for someone who can't read English? For a screen reader user?
 
 ## Technical Considerations
 
-<!-- Optional — if you have thoughts on implementation: -->
-- **API changes:** [any new endpoints needed?]
-- **Data model:** [any Firestore schema changes?]
-- **Performance:** [any caching, rate limiting, or scaling considerations?]
+<!-- Optional — if you've thought about implementation: -->
+- **API changes:** Any new endpoints needed?
+- **Data model:** Any Firestore schema changes?
+- **Performance:** Caching, rate limiting, or scaling implications?
 
-## Additional Context
+## Mockups or References
 
-Add any mockups, screenshots, or references that help explain this feature.
-
-## Impact
-
-- **Who benefits:** [e.g., customers, suppliers, admins]
-- **Priority:** [Low / Medium / High]
-- **Scale:** [e.g., single city, state-level, national]
+<!-- Sketches, screenshots, links to similar features in other products — anything visual helps. -->

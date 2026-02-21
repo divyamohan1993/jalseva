@@ -1,43 +1,44 @@
 ---
 name: Bug Report
-about: Report a bug to help us improve JalSeva
+about: Something's not working? Let's fix it.
 title: "[BUG] "
 labels: bug
 assignees: ''
 ---
 
-## Describe the Bug
+## What Happened?
 
-A clear and concise description of what the bug is.
+<!-- One or two sentences. What went wrong? -->
 
-## Steps to Reproduce
+## How to Reproduce It
+
+<!-- Walk us through it — step by step. The more detail, the faster we fix it. -->
 
 1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
-4. See error
+2. Tap/click on '...'
+3. See the problem
 
-## Expected Behavior
+## What Should Have Happened?
 
-A clear description of what you expected to happen.
+<!-- What were you expecting instead? -->
 
-## Actual Behavior
+## What Actually Happened?
 
-What actually happened instead.
+<!-- What did you see? Error messages, blank screens, wrong data? -->
 
 ## Screenshots
 
-If applicable, add screenshots to help explain your problem.
+<!-- A picture is worth a thousand words. Drop them here if you have them. -->
 
-## Environment
+## Your Setup
 
 - **Device:** [e.g., iPhone 14, Samsung Galaxy S23, Desktop]
 - **OS:** [e.g., iOS 17, Android 14, Windows 11]
 - **Browser:** [e.g., Chrome 120, Safari 17]
 - **Network:** [e.g., WiFi, 4G, 2G/3G]
-- **Language Setting:** [e.g., Hindi, English, Tamil]
+- **Language:** [e.g., Hindi, English, Tamil]
 
-## Deployment Context
+## How Are You Running JalSeva?
 
 - [ ] Local development (`npm run dev`)
 - [ ] Docker single container (`docker compose up`)
@@ -46,12 +47,12 @@ If applicable, add screenshots to help explain your problem.
 
 ## Logs
 
-<!-- If applicable, paste relevant console/server logs (remove any sensitive data): -->
+<!-- If you have them, paste relevant console/server logs below. Remove any sensitive data first. -->
 
 ```
 Paste logs here
 ```
 
-## Additional Context
+## Anything Else?
 
-Add any other context about the problem here.
+<!-- Context, workarounds you've tried, related issues — anything that helps. -->

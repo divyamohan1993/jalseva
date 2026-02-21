@@ -1,58 +1,60 @@
-## Description
+## What This Does
 
-<!-- A brief description of the changes in this PR. -->
+<!-- One or two sentences. What does this PR change, and why? -->
 
 ## Type of Change
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
+- [ ] Bug fix
+- [ ] New feature
 - [ ] Performance improvement
-- [ ] Documentation update
 - [ ] Refactoring (no functional changes)
+- [ ] Documentation update
+- [ ] Breaking change
 
 ## Related Issues
 
-<!-- Link related issues: Closes #123, Fixes #456 -->
+<!-- Closes #123, Fixes #456 -->
 
-## Changes Made
+## Key Changes
 
-<!-- List the key changes: -->
+<!-- What did you change? Keep it brief — the diff tells the full story. -->
 -
 -
 
-## Testing
+---
 
-<!-- Describe the tests you ran and how to reproduce: -->
-- [ ] `npm run build` passes
+## The Checklist
+
+### It must work.
+
 - [ ] `npm run lint` passes
+- [ ] `npm run build` passes
 - [ ] `npm test` passes
 - [ ] Tested locally in browser
-- [ ] Tested on mobile viewport
+- [ ] Tested on mobile viewport — this is where our users are
 
-## Performance Checklist
+### It must be fast.
 
-<!-- If your change touches API routes or core libraries: -->
-- [ ] Firestore queries use `.limit()` (no unbounded reads)
+<!-- Check these if your change touches API routes or core libraries: -->
+- [ ] Firestore queries use `.limit()` — no unbounded reads
 - [ ] External API calls wrapped with circuit breaker
 - [ ] Hot-path data uses L1 cache where appropriate
 - [ ] Non-critical writes use batch writer
 
-## Accessibility Checklist
+### It must be accessible.
 
-<!-- If your change touches UI components: -->
+<!-- Check these if your change touches UI components: -->
 - [ ] ARIA labels on interactive elements
 - [ ] Keyboard navigable (tab order, focus management)
 - [ ] Works with `prefers-reduced-motion`
-- [ ] Tested with screen reader (or sr-only text provided)
+- [ ] Screen reader tested (or `sr-only` text provided)
+
+### It must be safe.
+
+- [ ] No API keys or secrets committed
+- [ ] No new warnings generated
+- [ ] Documentation updated if needed
 
 ## Screenshots
 
-<!-- If applicable, add before/after screenshots: -->
-
-## Checklist
-
-- [ ] My code follows the project's code style
-- [ ] I have not committed any API keys or secrets
-- [ ] I have updated documentation if needed
-- [ ] My changes generate no new warnings
+<!-- Before/after screenshots if this is a UI change. -->
