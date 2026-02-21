@@ -110,5 +110,39 @@
     "pushEnabled": "ऑर्डर अपडेट के लिए पुश सूचनाएं चालू हैं।",
     "dataSecured": "आपका डेटा एन्क्रिप्टेड और सुरक्षित है।",
     "openingEmail": "सहायता ईमेल खोल रहे हैं"
+  },
+  "voice": {
+    "conversationTitle": "बोलकर ऑर्डर करें",
+    "conversationSubtitle": "किसी भी भाषा में बोलें",
+    "tapToSpeak": "बोलने के लिए दबाएं",
+    "tapToStop": "रोकने के लिए दबाएं",
+    "listeningNow": "सुन रहे हैं...",
+    "thinking": "सोच रहे हैं...",
+    "speaking": "बोल रहे हैं...",
+    "typeMessage": "टाइप करके बताएं...",
+    "send": "भेजें",
+    "muteAudio": "आवाज़ बंद करें",
+    "enableAudio": "आवाज़ चालू करें",
+    "messageHistory": "बातचीत",
+    "startConversation": "बोलकर ऑर्डर करें",
+    "startConversationDesc": "किसी भी भाषा में बोलें, मिलाकर भी बोल सकते हैं",
+    "orderConfirmed": "ऑर्डर बोलकर हो गया!"
+  },
+  "accessibility": {
+    "fontSizeLabel": "अक्षर का आकार",
+    "increase": "अक्षर बड़े करें",
+    "decrease": "अक्षर छोटे करें",
+    "reset": "अक्षर सामान्य करें",
+    "highContrast": "उच्च कंट्रास्ट चालू",
+    "reducedMotion": "कम एनिमेशन चालू",
+    "screenReader": "स्क्रीन रीडर चालू"
+  },
+  "tracking": {
+    "mapLabel": "लाइव डिलीवरी ट्रैकिंग मैप",
+    "yourLocation": "आपकी डिलीवरी लोकेशन",
+    "supplierVehicle": "पानी का टैंकर",
+    "etaAway": "{minutes} मिनट दूर",
+    "delivered": "पानी पहुंच गया!",
+    "mapUnavailable": "मैप उपलब्ध नहीं। आपकी डिलीवरी ट्रैक हो रही है।"
   }
 }

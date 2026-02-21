@@ -622,15 +622,65 @@
   }
 }
 
-/* ===== High Contrast Mode ===== */
+/* ===== High Contrast Mode (Enhanced for Low-Vision Users) ===== */
 @media (prefers-contrast: high) {
   :root {
     --color-primary-500: #0044CC;
+    --color-bg: #FFFFFF;
+    --color-text: #000000;
+    --color-border: #000000;
   }
 
   .text-gray-400,
   .text-gray-500 {
     color: #374151 !important;
+  }
+
+  .text-gray-300 {
+    color: #4B5563 !important;
+  }
+
+  /* Ensure all buttons have visible borders */
+  button, [role="button"] {
+    border: 2px solid currentColor !important;
+  }
+
+  /* Make focus indicators extra prominent */
+  :focus-visible {
+    outline: 3px solid #0044CC !important;
+    outline-offset: 3px !important;
+  }
+
+  /* Stronger card borders */
+  .card, [class*="rounded-2xl"] {
+    border: 2px solid #374151 !important;
+  }
+}
+
+/* ===== Forced Colors Mode (Windows High Contrast) ===== */
+@media (forced-colors: active) {
+  button, [role="button"] {
+    border: 2px solid ButtonText;
+  }
+
+  .bg-water {
+    background: ButtonFace;
+    color: ButtonText;
+    border: 2px solid ButtonText;
+  }
+}
+
+/* ===== Voice Conversation Accessibility ===== */
+/* Ensure the voice conversation overlay is properly layered */
+[role="dialog"][aria-modal="true"] {
+  isolation: isolate;
+}
+
+/* Larger tap targets for accessibility (WCAG 2.5.8) */
+@media (pointer: coarse) {
+  button, [role="button"], a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
 

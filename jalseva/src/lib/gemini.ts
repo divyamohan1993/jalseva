@@ -100,8 +100,10 @@ export async function processVoiceCommand(
   const prompt = `You are a voice assistant for JalSeva, an Indian water tanker delivery service.
 
 Analyze the following transcribed voice command and extract the user's intent.
+The user may speak in MIXED LANGUAGES (Hindi + English + Tamil + Telugu + any Indian language in a single sentence).
+The speech-to-text may contain ERRORS, MISSPELLINGS, or WRONG TRANSCRIPTIONS. Use your best judgment to correct them.
 
-Voice text (language: ${language}): "${audioText}"
+Voice text (detected language: ${language}): "${audioText}"
 
 You MUST respond with ONLY a valid JSON object (no markdown, no explanation) in this exact format:
 {
@@ -110,14 +112,33 @@ You MUST respond with ONLY a valid JSON object (no markdown, no explanation) in 
   "language": "${language}"
 }
 
-Rules for extraction:
+MIXED-LANGUAGE UNDERSTANDING:
+- "Mujhe 20 litre RO paani chahiye" = ro, 20L (Hindi+English)
+- "oru tanker thanni anuppu" = tanker, 5000L (Tamil)
+- "naku 500 litres mineral water kavali" = mineral, 500L (Telugu+English)
+- "Bhai ek chhota can bhej do" = ro, 20L (Hindi colloquial)
+- "arre yaar paanch sau liter ka tanker bhejdo" = tanker, 500L
+- "send me twenty litre Bisleri" = mineral, 20L (English)
+
+ERROR CORRECTION (common speech-to-text mistakes):
+- "aarow" / "aaro" / "aa-ro" / "arro" / "R O" / "r.o" = RO water
+- "minral" / "mineral" / "minirl" / "Bisleri" / "Kinley" / "Aquafina" = mineral water
+- "tenker" / "tankar" / "thanker" / "gaadi" / "lorry" = tanker water
+- "leter" / "litr" / "litar" / "litre" / "liter" = litres
+- "pani" / "paani" / "panni" / "thanni" / "neeru" / "neer" / "jal" / "vellam" / "jalam" = water
+- "bees" / "bis" = 20, "pachaas" / "pachas" = 50, "sau" = 100
+- "do sau" / "dho sau" = 200, "paanch sau" = 500, "hazaar" / "hajaar" = 1000
+- Any number words in Hindi, Tamil, Telugu, Bengali, Marathi, etc. should be parsed correctly
+
+RULES:
 - Default waterType to "tanker" if not explicitly mentioned.
 - Default quantity to 500 litres if the user does not specify.
-- If the user says "RO water" or "purified", use "ro".
-- If the user says "mineral" or "Bisleri" or branded, use "mineral".
-- If the user mentions "tanker" or "borewell" or large quantity, use "tanker".
-- Quantities mentioned in gallons should be converted to litres (1 gallon = 3.785 litres).
-- Common Hindi terms: "paani" = water, "gaadi" = tanker, "liter" = litres.`;
+- If the user says "RO water" or "purified" or "drinking water" or "peene ka paani", use "ro".
+- If the user says "mineral" or "Bisleri" or "branded" or "bottle", use "mineral".
+- If the user mentions "tanker" or "borewell" or large quantity (>=1000L), use "tanker".
+- Quantities mentioned in gallons should be converted to litres (1 gallon ≈ 3.785 litres).
+- "can" or "jar" or "bottle" without quantity = 20L
+- "chhota tanker" = 2000L, "bada tanker" = 5000L`;
 
   const text = (await generateContent(prompt)).trim();
 
