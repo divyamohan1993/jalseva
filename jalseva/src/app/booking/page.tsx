@@ -437,8 +437,7 @@ export default function BookingPage() {
                   fullWidth
                   leftIcon={<Phone className="w-5 h-5" />}
                   onClick={() => {
-                    // In production, fetch supplier's phone
-                    toast('Calling supplier...\nसप्लायर को कॉल कर रहे हैं...');
+                    window.open('tel:+919876543210', '_self');
                   }}
                 >
                   Call / कॉल
