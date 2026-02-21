@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Admin Settings Page
@@ -19,7 +20,7 @@ import {
   addDoc,
   deleteDoc,
 } from 'firebase/firestore';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import {
   DollarSign,
   MapPin,

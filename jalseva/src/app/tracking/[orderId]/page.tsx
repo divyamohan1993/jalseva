@@ -1,6 +1,7 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -17,10 +18,12 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
+import { cancelOrder } from '@/actions/orders';
+import { submitRating } from '@/actions/ratings';
 import { formatCurrency } from '@/lib/utils';
 import type { Order, OrderStatus, TrackingInfo } from '@/types';
 
@@ -442,7 +445,7 @@ export default function TrackingPage() {
   const [loading, setLoading] = useState(!currentOrder);
   const [sheetExpanded, setSheetExpanded] = useState(true);
   const [showRating, setShowRating] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const [isCancelling, startCancelTransition] = useTransition();
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
 
   // --- Fetch order if not in store ---
@@ -555,8 +558,8 @@ export default function TrackingPage() {
     setEtaMinutes(Math.ceil(order.tracking.eta / 60));
   }, [order?.tracking?.eta]);
 
-  // --- Cancel handler ---
-  const handleCancel = async () => {
+  // --- Cancel handler (React 19 useTransition + Server Action) ---
+  const handleCancel = () => {
     if (!order) return;
 
     // Only allow cancel before en_route
@@ -567,44 +570,25 @@ export default function TrackingPage() {
       return;
     }
 
-    setCancelling(true);
-    try {
-      const res = await fetch(`/api/orders/${order.id}/cancel`, {
-        method: 'POST',
-      });
-
-      if (res.ok) {
-        updateOrderStatus(order.id, 'cancelled');
-        setCurrentOrder(null);
-        toast.success('Order cancelled.\nऑर्डर रद्द हो गया।');
-        router.push('/');
-      } else {
-        toast.error('Could not cancel.\nरद्द नहीं हो पाया।');
-      }
-    } catch {
+    startCancelTransition(async () => {
+      // Use Server Action instead of fetch
+      await cancelOrder(order.id);
+      updateOrderStatus(order.id, 'cancelled');
       setCurrentOrder(null);
       toast.success('Order cancelled.\nऑर्डर रद्द हो गया।');
       router.push('/');
-    } finally {
-      setCancelling(false);
-    }
+    });
   };
 
-  // --- Submit rating ---
+  // --- Submit rating (Server Action) ---
   const handleSubmitRating = async (rating: number, feedback: string) => {
-    try {
-      await fetch(`/api/ratings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: order?.id,
-          rating,
-          feedback,
-          type: 'customer',
-        }),
+    if (order?.id) {
+      await submitRating({
+        orderId: order.id,
+        rating,
+        feedback,
+        type: 'customer',
       });
-    } catch {
-      // Silent
     }
 
     setShowRating(false);
@@ -837,7 +821,7 @@ export default function TrackingPage() {
                     variant="danger"
                     size="lg"
                     fullWidth
-                    loading={cancelling}
+                    loading={isCancelling}
                     onClick={handleCancel}
                     leftIcon={<X className="w-5 h-5" />}
                     className="rounded-2xl"

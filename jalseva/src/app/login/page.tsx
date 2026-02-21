@@ -1,10 +1,12 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import type React from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '@/store/authStore';
+import { setAuthCookie } from '@/actions/auth';
 import { Button } from '@/components/ui/Button';
 import {
   Droplets,
@@ -15,7 +17,7 @@ import {
   AlertTriangle,
   Eye,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -44,8 +46,8 @@ export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [isPendingSend, startSendTransition] = useTransition();
+  const [isPendingVerify, startVerifyTransition] = useTransition();
   const [countdown, setCountdown] = useState(0);
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -71,7 +73,7 @@ export default function LoginPage() {
   }, [countdown]);
 
   // --- Send OTP (Demo: generate and display) ---
-  const handleSendOtp = async () => {
+  const handleSendOtp = () => {
     if (phoneNumber.length !== 10) {
       toast.error(
         'Please enter a valid 10-digit phone number.\nकृपया सही फ़ोन नंबर डालें।'
@@ -79,21 +81,20 @@ export default function LoginPage() {
       return;
     }
 
-    setSendingOtp(true);
+    startSendTransition(async () => {
+      // Simulate a short delay for realism
+      await new Promise((r) => setTimeout(r, 800));
 
-    // Simulate a short delay for realism
-    await new Promise((r) => setTimeout(r, 800));
+      const newOtp = generateOtp();
+      setGeneratedOtp(newOtp);
+      setStep('otp');
+      setCountdown(60);
 
-    const newOtp = generateOtp();
-    setGeneratedOtp(newOtp);
-    setStep('otp');
-    setCountdown(60);
-    setSendingOtp(false);
+      toast.success('OTP generated for demo!\nडेमो के लिए OTP बनाया गया!');
 
-    toast.success('OTP generated for demo!\nडेमो के लिए OTP बनाया गया!');
-
-    // Focus first OTP input
-    setTimeout(() => otpRefs.current[0]?.focus(), 300);
+      // Focus first OTP input
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
+    });
   };
 
   // --- OTP input handling ---
@@ -138,7 +139,7 @@ export default function LoginPage() {
   };
 
   // --- Verify OTP (Demo: compare with generated OTP) ---
-  const handleVerifyOtp = async (otpValue?: string) => {
+  const handleVerifyOtp = (otpValue?: string) => {
     const code = otpValue || otp.join('');
     if (code.length !== 6) {
       toast.error(
@@ -147,54 +148,56 @@ export default function LoginPage() {
       return;
     }
 
-    setVerifyingOtp(true);
-    setLoading(true);
+    startVerifyTransition(async () => {
+      setLoading(true);
 
-    // Simulate verification delay
-    await new Promise((r) => setTimeout(r, 600));
+      // Simulate verification delay
+      await new Promise((r) => setTimeout(r, 600));
 
-    if (code !== generatedOtp) {
-      toast.error('Wrong OTP. Please try again.\nगलत OTP। दोबारा कोशिश करें।');
-      setOtp(['', '', '', '', '', '']);
-      otpRefs.current[0]?.focus();
-      setVerifyingOtp(false);
+      if (code !== generatedOtp) {
+        toast.error('Wrong OTP. Please try again.\nगलत OTP। दोबारा कोशिश करें।');
+        setOtp(['', '', '', '', '', '']);
+        otpRefs.current[0]?.focus();
+        setLoading(false);
+        return;
+      }
+
+      // OTP matches — create demo user
+      const demoUserId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const demoUser = {
+        id: demoUserId,
+        phone: `+91${phoneNumber}`,
+        name: '',
+        role: 'customer' as const,
+        language: 'en',
+        rating: { average: 5, count: 0 },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      // Persist demo user to localStorage so it survives page refresh
+      try {
+        localStorage.setItem('jalseva_demo_user', JSON.stringify(demoUser));
+      } catch {
+        // localStorage might be unavailable
+      }
+
+      // Set auth cookie via Server Action for middleware auth
+      await setAuthCookie(demoUserId);
+
+      setUser(demoUser);
+      setInitialized(true);
+      setStep('success');
+      toast.success('Login successful!\nलॉगिन सफल!');
+
+      // Redirect after success animation
+      setTimeout(() => {
+        const redirect = searchParams.get('redirect') || '/';
+        router.push(redirect);
+      }, 1500);
+
       setLoading(false);
-      return;
-    }
-
-    // OTP matches — create demo user
-    const demoUserId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const demoUser = {
-      id: demoUserId,
-      phone: `+91${phoneNumber}`,
-      name: '',
-      role: 'customer' as const,
-      language: 'en',
-      rating: { average: 5, count: 0 },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Persist demo user to localStorage so it survives page refresh
-    try {
-      localStorage.setItem('jalseva_demo_user', JSON.stringify(demoUser));
-    } catch {
-      // localStorage might be unavailable
-    }
-
-    setUser(demoUser);
-    setInitialized(true);
-    setStep('success');
-    toast.success('Login successful!\nलॉगिन सफल!');
-
-    // Redirect after success animation
-    setTimeout(() => {
-      const redirect = searchParams.get('redirect') || '/';
-      router.push(redirect);
-    }, 1500);
-
-    setVerifyingOtp(false);
-    setLoading(false);
+    });
   };
 
   // --- Resend OTP ---
@@ -329,7 +332,7 @@ export default function LoginPage() {
                 variant="primary"
                 size="xl"
                 fullWidth
-                loading={sendingOtp}
+                loading={isPendingSend}
                 disabled={phoneNumber.length !== 10}
                 onClick={handleSendOtp}
                 leftIcon={<Phone className="w-5 h-5" />}
@@ -428,7 +431,7 @@ export default function LoginPage() {
                 variant="primary"
                 size="xl"
                 fullWidth
-                loading={verifyingOtp}
+                loading={isPendingVerify}
                 disabled={otp.some((d) => !d)}
                 onClick={() => handleVerifyOtp()}
                 className="rounded-2xl min-h-[56px]"

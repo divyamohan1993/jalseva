@@ -1,12 +1,14 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { signOut } from 'firebase/auth';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import { clearAuthCookie } from '@/actions/auth';
 import {
   User,
   Phone,
@@ -29,7 +31,7 @@ import {
   Droplets,
   Check,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
@@ -453,30 +455,26 @@ export default function ProfilePage() {
     toast.success('Address removed.\nपता हटा दिया।');
   };
 
-  // --- Handle logout ---
+  // --- Handle logout (Server Action to clear auth cookie) ---
   const handleLogout = async () => {
     try {
-      // Clear demo user from localStorage if present
-      try {
-        localStorage.removeItem('jalseva_demo_user');
-      } catch {
-        // localStorage might be unavailable
-      }
-      await signOut(auth);
-      authLogout();
-      toast.success('Logged out successfully.\nलॉगआउट हो गया।');
-      router.push('/');
+      localStorage.removeItem('jalseva_demo_user');
     } catch {
-      // Even if Firebase signOut fails (e.g. demo user), still clear state
-      try {
-        localStorage.removeItem('jalseva_demo_user');
-      } catch {
-        // ignore
-      }
-      authLogout();
-      toast.success('Logged out successfully.\nलॉगआउट हो गया।');
-      router.push('/');
+      // localStorage might be unavailable
     }
+
+    // Clear auth cookie via Server Action
+    await clearAuthCookie();
+
+    try {
+      await signOut(auth);
+    } catch {
+      // Firebase signOut may fail for demo users
+    }
+
+    authLogout();
+    toast.success('Logged out successfully.\nलॉगआउट हो गया।');
+    router.push('/');
   };
 
   if (!user) {

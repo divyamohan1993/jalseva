@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 // =============================================================================
 // JalSeva - Complaint Management Page
@@ -37,7 +38,7 @@ import { Card, } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // =============================================================================
 // Types
