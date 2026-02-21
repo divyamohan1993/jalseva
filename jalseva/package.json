@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "biome check src/"
+    "lint": "biome check src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "water",
@@ -46,8 +48,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "jsdom": "^28.1.0",
     "serwist": "^9.5.6",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "vitest": "^4.0.18"
   },
   "overrides": {
     "minimatch": "^10.2.1",
