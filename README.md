@@ -376,6 +376,19 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 
 ---
 
+## Credits
+
+| Role | Name | Contribution |
+|------|------|-------------|
+| **Owner & Sole Orchestrator** | **Divya Mohan** ([@divyamohan1993](https://github.com/divyamohan1993)) | Entire project — vision, architecture, management, and execution |
+| **AI Development Partner** | **Claude** (by Anthropic) | Full-stack code implementation under Divya's direction |
+| **Original Idea** | **Jatin** | Conceptualized the core idea of an on-demand water tanker platform |
+| Presentation — AI & Data | Anshuman | Contributed to the pitch deck |
+| Presentation — Product & Design | Ashutosh | Contributed to the pitch deck |
+| Presentation — Operations | Kaustuv | Contributed to the pitch deck |
+
+---
+
 ## License
 
 [ISC License](LICENSE) — Copyright (c) 2026 Divya Mohan
@@ -400,5 +413,5 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 ---
 
 <p align="center">
-  Made with &#10084; for Bharat
+  Made with &#10084; for Bharat by Divya Mohan
 </p>
