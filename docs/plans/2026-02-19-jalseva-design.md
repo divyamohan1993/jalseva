@@ -277,9 +277,9 @@ Four streams. All built in.
 
 ## Deployment and Scaling
 
-### One More Thing.
+### And There's More
 
-Here's what most platforms get wrong: they build for one city and then spend months rewriting for scale. JalSeva doesn't need a rewrite. **Zero code changes** between any scaling stage:
+Here's what most platforms get wrong: they build for one city and then spend months rewriting for scale. JalSeva doesn't need a rewrite — **zero code changes** between any scaling stage:
 
 | Mode | Command | Throughput |
 |---|---|---|
