@@ -380,12 +380,12 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 
 | Role | Name | Contribution |
 |------|------|-------------|
-| **Owner & Sole Orchestrator** | **Divya Mohan** ([@divyamohan1993](https://github.com/divyamohan1993)) | Entire project — vision, architecture, management, and execution |
+| **Owner & Orchestrator** | **Divya Mohan** ([@divyamohan1993](https://github.com/divyamohan1993)) | Project vision, architecture, management, execution & security review (Cybersecurity) |
 | **AI Development Partner** | **Claude** (by Anthropic) | Full-stack code implementation under Divya's direction |
-| **Original Idea** | **Jatin** | Conceptualized the core idea of an on-demand water tanker platform |
-| Presentation — AI & Data | Anshuman | Contributed to the pitch deck |
-| Presentation — Product & Design | Ashutosh | Contributed to the pitch deck |
-| Presentation — Operations | Kaustuv | Contributed to the pitch deck |
+| Idea & Data Consulting | Jatin | Original idea for the platform; advised on analytics approach (Data Science) |
+| Cloud Consulting | Anshuman | Provided input on infrastructure and deployment (Cloud) |
+| Security Consulting | Ashutosh | Reviewed security and product design aspects (Cybersecurity) |
+| AI Consulting | Kaustuv | Provided input on Gemini integration and demand prediction (AI) |
 
 ---
 
