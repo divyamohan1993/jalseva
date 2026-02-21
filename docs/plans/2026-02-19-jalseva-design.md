@@ -31,7 +31,7 @@ JalSeva (जलसेवा — "Water Service") is an open-source digital marke
 | Auth | Firebase Auth (Phone OTP) |
 | Maps | Google Maps JavaScript API, Routes API, Geocoding |
 | Payments | Razorpay (UPI, Cards, Wallets) — simulated in dev |
-| AI | Gemini 2.0 Flash — voice, translation, demand prediction |
+| AI | Gemini 3 Flash — voice, translation, demand prediction |
 | WhatsApp | Meta Cloud API (WhatsApp Business) |
 | State | Zustand 5 |
 | Cache | Upstash Redis (serverless) + L1 in-process cache |
@@ -67,7 +67,7 @@ JalSeva (जलसेवा — "Water Service") is an open-source digital marke
          ┌─────────┬─────────┼─────────┬─────────┐
          ▼         ▼         ▼         ▼         ▼
     Firestore   Firebase   Redis    Gemini    Razorpay
-    (DB)        Auth       (Cache)  2.0       (Pay)
+    (DB)        Auth       (Cache)  3 Flash   (Pay)
                                       │
                           ┌───────────▼───────────┐
                           │  ONDC/Beckn Protocol  │
@@ -135,7 +135,7 @@ Voice-first, icon-heavy design for near-illiterate users:
 
 ### 3.4 WhatsApp Bot
 
-- Gemini 2.0 Flash powered conversational ordering
+- Gemini 3 Flash powered conversational ordering
 - Any Indian language supported
 - Water type selection via buttons
 - Location via WhatsApp location share
@@ -235,7 +235,7 @@ Connected to ONDC Staging sandbox for demo. Production-ready architecture.
 |---|---|
 | Commission (5-15%) | Auto-deducted via Razorpay Route |
 | Premium listing | Razorpay Subscriptions API |
-| Surge pricing | Gemini 2.0 Flash demand prediction |
+| Surge pricing | Gemini 3 Flash demand prediction |
 | Supplier subscription | Monthly plans, reduced commission |
 
 ---

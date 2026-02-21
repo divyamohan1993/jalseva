@@ -4,14 +4,14 @@ import type React from 'react';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import type { WaterType } from '@/types';
 
 interface WaterTypeOption {
   type: WaterType;
   icon: string;
-  labelEn: string;
-  labelHi: string;
-  description: string;
+  tKey: string;
+  descKey: string;
   color: string;
   bgColor: string;
   borderColor: string;
@@ -22,9 +22,8 @@ const waterTypes: WaterTypeOption[] = [
   {
     type: 'ro',
     icon: '\uD83D\uDCA7',
-    labelEn: 'Purified RO',
-    labelHi: '\u0936\u0941\u0926\u094D\u0927 RO \u092A\u093E\u0928\u0940',
-    description: 'Reverse osmosis purified',
+    tKey: 'purifiedRo',
+    descKey: 'roDescLong',
     color: 'text-blue-700',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-500',
@@ -33,9 +32,8 @@ const waterTypes: WaterTypeOption[] = [
   {
     type: 'mineral',
     icon: '\uD83C\uDFD4\uFE0F',
-    labelEn: 'Mineral Water',
-    labelHi: '\u092E\u093F\u0928\u0930\u0932 \u0935\u0949\u091F\u0930',
-    description: 'Natural mineral rich',
+    tKey: 'mineralWater',
+    descKey: 'mineralDescLong',
     color: 'text-teal-700',
     bgColor: 'bg-teal-50',
     borderColor: 'border-teal-500',
@@ -44,9 +42,8 @@ const waterTypes: WaterTypeOption[] = [
   {
     type: 'tanker',
     icon: '\uD83D\uDE9B',
-    labelEn: 'Tanker Water',
-    labelHi: '\u091F\u0948\u0902\u0915\u0930 \u092A\u093E\u0928\u0940',
-    description: 'Bulk water delivery',
+    tKey: 'tankerWater',
+    descKey: 'tankerDescLong',
     color: 'text-cyan-700',
     bgColor: 'bg-cyan-50',
     borderColor: 'border-cyan-500',
@@ -57,17 +54,15 @@ const waterTypes: WaterTypeOption[] = [
 export interface WaterTypeSelectorProps {
   value?: WaterType;
   onChange?: (type: WaterType) => void;
-  language?: string;
   className?: string;
 }
 
 const WaterTypeSelector: React.FC<WaterTypeSelectorProps> = ({
   value,
   onChange,
-  language = 'en',
   className,
 }) => {
-  const isHindi = language === 'hi';
+  const { t } = useT();
 
   return (
     <div className={cn('grid grid-cols-1 gap-3', className)}>
@@ -103,10 +98,10 @@ const WaterTypeSelector: React.FC<WaterTypeSelectorProps> = ({
                   isSelected ? water.color : 'text-gray-900'
                 )}
               >
-                {isHindi ? water.labelHi : water.labelEn}
+                {t('water.' + water.tKey)}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {water.description}
+                {t('water.' + water.descKey)}
               </p>
             </div>
 
@@ -119,7 +114,7 @@ const WaterTypeSelector: React.FC<WaterTypeSelectorProps> = ({
               >
                 {formatCurrency(water.pricePerUnit)}
               </p>
-              <p className="text-[10px] text-gray-400">per 20L</p>
+              <p className="text-[10px] text-gray-400">{t('water.per20L')}</p>
             </div>
 
             {isSelected && (

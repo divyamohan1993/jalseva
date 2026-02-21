@@ -6,23 +6,12 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, ChevronDown, User, Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const languages = [
-  { code: 'en', label: 'English', short: 'EN' },
-  { code: 'hi', label: 'हिन्दी', short: 'हि' },
-  { code: 'ta', label: 'தமிழ்', short: 'த' },
-  { code: 'te', label: 'తెలుగు', short: 'తె' },
-  { code: 'kn', label: 'ಕನ್ನಡ', short: 'ಕ' },
-  { code: 'mr', label: 'मराठी', short: 'म' },
-  { code: 'bn', label: 'বাংলা', short: 'বা' },
-  { code: 'gu', label: 'ગુજરાતી', short: 'ગુ' },
-];
+import { LANGUAGES, getLanguage } from '@/lib/languages';
+import { useT } from '@/lib/i18n';
 
 export interface NavbarProps {
   showBack?: boolean;
   title?: string;
-  language?: string;
-  onLanguageChange?: (lang: string) => void;
   userAvatar?: string;
   userName?: string;
   onProfileClick?: () => void;
@@ -32,8 +21,6 @@ export interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({
   showBack = false,
   title,
-  language = 'en',
-  onLanguageChange,
   userAvatar,
   userName,
   onProfileClick,
@@ -42,8 +29,9 @@ const Navbar: React.FC<NavbarProps> = ({
   const router = useRouter();
   const [langOpen, setLangOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { locale, setLocale } = useT();
 
-  const selectedLang = languages.find((l) => l.code === language) || languages[0];
+  const selectedLang = getLanguage(locale);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -113,24 +101,24 @@ const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[140px] z-50" role="listbox">
-              {languages.map((lang) => (
+            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[160px] max-h-[320px] overflow-y-auto z-50" role="listbox">
+              {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => {
-                    onLanguageChange?.(lang.code);
+                    setLocale(lang.code);
                     setLangOpen(false);
                   }}
                   role="option"
-                  aria-selected={lang.code === language}
+                  aria-selected={lang.code === locale}
                   className={cn(
                     'w-full text-left px-3 py-2 min-h-[44px] text-sm hover:bg-blue-50 focus:outline-none focus:bg-blue-50 transition-colors flex items-center justify-between',
-                    lang.code === language &&
+                    lang.code === locale &&
                       'bg-blue-50 text-blue-700 font-medium'
                   )}
                 >
-                  <span>{lang.label}</span>
-                  {lang.code === language && (
+                  <span>{lang.native} <span className="text-gray-400 text-xs">{lang.label}</span></span>
+                  {lang.code === locale && (
                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
                   )}
                 </button>

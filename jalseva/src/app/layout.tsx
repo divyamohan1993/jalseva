@@ -42,7 +42,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="hi-IN" dir="ltr">
+    <html lang="en" dir="ltr">
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="format-detection" content="telephone=yes" />

@@ -241,6 +241,9 @@ export async function POST(request: NextRequest) {
         const orderId = orderRef.id;
         const now = new Date().toISOString();
 
+        // Generate delivery OTP (inspired by Tankerwala/BWSSB verification)
+        const deliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
+
         const order = {
           id: orderId,
           customerId,
@@ -253,6 +256,9 @@ export async function POST(request: NextRequest) {
             method: paymentMethod,
             status: 'pending' as const,
             amount: zonedPrice.total,
+          },
+          deliveryVerification: {
+            otp: deliveryOtp,
           },
           nearbySupplierIds: nearbySuppliers.map((s) => s.id),
           createdAt: now,
@@ -273,6 +279,7 @@ export async function POST(request: NextRequest) {
     // --- Demo mode: create order without Firestore ---
     const orderId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const now = new Date().toISOString();
+    const demoDeliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
 
     const order = {
       id: orderId,
@@ -286,6 +293,9 @@ export async function POST(request: NextRequest) {
         method: paymentMethod,
         status: 'pending' as const,
         amount: price.total,
+      },
+      deliveryVerification: {
+        otp: demoDeliveryOtp,
       },
       createdAt: now,
     };
@@ -344,13 +354,19 @@ export async function GET(request: NextRequest) {
 
         if (page > 1) {
           const skipCount = (page - 1) * limit;
+          let skipQuery = adminDb.collection('orders') as FirebaseFirestore.Query;
+          if (customerId) {
+            skipQuery = skipQuery.where('customerId', '==', customerId);
+          } else if (supplierId) {
+            skipQuery = skipQuery.where('supplierId', '==', supplierId);
+          }
+          if (status) {
+            skipQuery = skipQuery.where('status', '==', status);
+          }
+          skipQuery = skipQuery.orderBy('createdAt', 'desc').limit(skipCount);
+
           const skipSnapshot = await firestoreBreaker.execute(
-            () => adminDb
-              .collection('orders')
-              .where(customerId ? 'customerId' : 'supplierId', '==', customerId || supplierId)
-              .orderBy('createdAt', 'desc')
-              .limit(skipCount)
-              .get(),
+            () => skipQuery.get(),
             () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
           );
 

@@ -83,6 +83,32 @@ export interface BankDetails {
   accountHolderName: string;
 }
 
+export interface WaterQualityReport {
+  ph: number;
+  tds: number; // Total Dissolved Solids (ppm)
+  testedAt: Date;
+  labName: string;
+  certificateUrl?: string;
+  fssaiCompliant: boolean;
+}
+
+export type SubscriptionFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface SubscriptionPlan {
+  id: string;
+  customerId: string;
+  supplierId?: string;
+  waterType: WaterType;
+  quantityLitres: number;
+  frequency: SubscriptionFrequency;
+  deliveryLocation: GeoLocation;
+  nextDeliveryDate: Date;
+  isActive: boolean;
+  paymentMethod: PaymentMethod;
+  pricePerDelivery: number;
+  createdAt: Date;
+}
+
 export interface Supplier {
   id: string;
   userId: string;
@@ -95,6 +121,9 @@ export interface Supplier {
   waterTypes: WaterType[];
   rating: Rating;
   bankDetails?: BankDetails;
+  waterQualityReport?: WaterQualityReport;
+  qualityScore?: number; // 0-100 composite quality score
+  supportsSubscription: boolean;
 }
 
 // --- Order Interfaces ---
@@ -138,6 +167,13 @@ export interface BecknInfo {
   bppId?: string;
 }
 
+export interface DeliveryVerification {
+  otp: string;
+  otpVerifiedAt?: Date;
+  photoProofUrl?: string;
+  volumeConfirmed?: number; // litres actually delivered
+}
+
 export interface Order {
   id: string;
   customerId: string;
@@ -152,6 +188,8 @@ export interface Order {
   payment: PaymentInfo;
   rating?: OrderRating;
   beckn?: BecknInfo;
+  deliveryVerification?: DeliveryVerification;
+  subscriptionId?: string;
   createdAt: Date;
   acceptedAt?: Date;
   pickedAt?: Date;

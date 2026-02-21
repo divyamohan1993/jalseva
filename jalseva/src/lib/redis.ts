@@ -222,8 +222,19 @@ export async function checkRateLimit(
   const key = `${KEYS.RATE_LIMIT}${identifier}`;
   const current = await redis.incr(key);
 
+  // Always set expiry to avoid orphaned keys from race conditions.
+  // If the key already has a TTL, this refreshes it only on the first
+  // increment (when current === 1). For subsequent increments, we skip
+  // to preserve the original window boundary.
   if (current === 1) {
-    await redis.expire(key, windowSeconds);
+    // Use pipeline-safe pattern: set expiry immediately after creation
+    // to prevent keys persisting forever if the process crashes.
+    try {
+      await redis.expire(key, windowSeconds);
+    } catch {
+      // If expire fails, delete the key to prevent an unbounded counter
+      await redis.del(key);
+    }
   }
 
   return {

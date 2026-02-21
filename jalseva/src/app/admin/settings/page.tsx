@@ -40,21 +40,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import type { AdminSettings, PricingZone, WaterType } from '@/types';
-
-// =============================================================================
-// Language options
-// =============================================================================
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'Hindi' },
-  { code: 'mr', label: 'Marathi' },
-  { code: 'ta', label: 'Tamil' },
-  { code: 'te', label: 'Telugu' },
-  { code: 'kn', label: 'Kannada' },
-  { code: 'gu', label: 'Gujarati' },
-  { code: 'bn', label: 'Bengali' },
-];
+import { LANGUAGES } from '@/lib/languages';
 
 // =============================================================================
 // Settings Section Sub-component

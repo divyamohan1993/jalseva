@@ -11,37 +11,33 @@ import {
   IndianRupee,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import type { UserRole } from '@/types';
 
 interface NavTab {
-  label: string;
-  labelHi: string;
+  key: string;
   href: string;
   icon: React.ReactNode;
 }
 
 const customerTabs: NavTab[] = [
   {
-    label: 'Home',
-    labelHi: 'होम',
+    key: 'home',
     href: '/customer',
     icon: <Droplet size={22} />,
   },
   {
-    label: 'Orders',
-    labelHi: 'ऑर्डर',
+    key: 'orders',
     href: '/customer/orders',
     icon: <ListOrdered size={22} />,
   },
   {
-    label: 'History',
-    labelHi: 'इतिहास',
+    key: 'history',
     href: '/customer/history',
     icon: <Clock size={22} />,
   },
   {
-    label: 'Profile',
-    labelHi: 'प्रोफाइल',
+    key: 'profile',
     href: '/customer/profile',
     icon: <User size={22} />,
   },
@@ -49,26 +45,22 @@ const customerTabs: NavTab[] = [
 
 const supplierTabs: NavTab[] = [
   {
-    label: 'Dashboard',
-    labelHi: 'डैशबोर्ड',
+    key: 'dashboard',
     href: '/supplier',
     icon: <Home size={22} />,
   },
   {
-    label: 'Orders',
-    labelHi: 'ऑर्डर',
+    key: 'orders',
     href: '/supplier/orders',
     icon: <ListOrdered size={22} />,
   },
   {
-    label: 'Earnings',
-    labelHi: 'कमाई',
+    key: 'earnings',
     href: '/supplier/earnings',
     icon: <IndianRupee size={22} />,
   },
   {
-    label: 'Profile',
-    labelHi: 'प्रोफाइल',
+    key: 'profile',
     href: '/supplier/profile',
     icon: <User size={22} />,
   },
@@ -77,18 +69,16 @@ const supplierTabs: NavTab[] = [
 export interface BottomNavProps {
   role: UserRole;
   activeTab: string;
-  language?: string;
   className?: string;
 }
 
 const BottomNav: React.FC<BottomNavProps> = ({
   role,
   activeTab,
-  language = 'en',
   className,
 }) => {
   const tabs = role === 'supplier' ? supplierTabs : customerTabs;
-  const isHindi = language === 'hi';
+  const { t } = useT();
 
   return (
     <nav
@@ -131,7 +121,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
                   isActive && 'font-semibold'
                 )}
               >
-                {isHindi ? tab.labelHi : tab.label}
+                {t('nav.' + tab.key)}
               </span>
             </Link>
           );

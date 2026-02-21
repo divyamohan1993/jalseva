@@ -45,7 +45,7 @@
 |---|---|
 | Frontend | Next.js 16 · React 19 · Tailwind CSS 4 · PWA (Serwist) |
 | Animation | Motion (formerly Framer Motion) |
-| AI | Google Gemini 2.0 Flash — voice, translation, demand prediction |
+| AI | Google Gemini 3 Flash — voice, translation, demand prediction |
 | Maps | Google Maps JavaScript API |
 | Auth | Firebase Auth (Phone OTP) |
 | Database | Cloud Firestore (real-time) |
@@ -86,7 +86,7 @@
                    ▼         ▼         ▼
               ┌─────────┐ ┌──────┐ ┌─────────┐
               │Firestore│ │Redis │ │ Gemini  │
-              │ + Auth  │ │(L1+) │ │ 2.0     │
+              │ + Auth  │ │(L1+) │ │ 3 Flash │
               └─────────┘ └──────┘ └─────────┘
 
 Resilience layers at every level:

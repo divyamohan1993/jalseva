@@ -70,7 +70,8 @@ const Modal: React.FC<ModalProps> = ({
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label={title || 'Dialog'}
+            aria-labelledby={title ? 'modal-title' : undefined}
+            aria-label={title ? undefined : 'Dialog'}
             initial={{ y: '100%', opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0.5 }}
@@ -89,7 +90,7 @@ const Modal: React.FC<ModalProps> = ({
             {(title || showCloseButton) && (
               <div className="flex items-center justify-between px-5 pt-4 pb-2">
                 {title && (
-                  <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+                  <h2 id="modal-title" className="text-xl font-bold text-gray-900">{title}</h2>
                 )}
                 {showCloseButton && (
                   <button

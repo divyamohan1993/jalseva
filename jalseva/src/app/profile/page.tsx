@@ -29,7 +29,6 @@ import {
   Bell,
   HelpCircle,
   Droplets,
-  Check,
 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -37,6 +36,8 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import type { GeoLocation } from '@/types';
+import { LANGUAGES, getLanguage } from '@/lib/languages';
+import { useT } from '@/lib/i18n';
 
 // ---------------------------------------------------------------------------
 // Bottom Navigation (shared)
@@ -44,27 +45,25 @@ import type { GeoLocation } from '@/types';
 
 function BottomNav({ active }: { active: string }) {
   const router = useRouter();
+  const { t } = useT();
 
   const navItems = [
-    { key: 'home', label: 'Home', hindi: 'होम', icon: Home, path: '/' },
+    { key: 'home', label: t('nav.home'), icon: Home, path: '/' },
     {
       key: 'booking',
-      label: 'Booking',
-      hindi: 'बुकिंग',
+      label: t('nav.booking'),
       icon: ClipboardList,
       path: '/booking',
     },
     {
       key: 'history',
-      label: 'History',
-      hindi: 'इतिहास',
+      label: t('nav.history'),
       icon: ScrollText,
       path: '/history',
     },
     {
       key: 'profile',
-      label: 'Profile',
-      hindi: 'प्रोफाइल',
+      label: t('nav.profile'),
       icon: User,
       path: '/profile',
     },
@@ -111,6 +110,7 @@ function EditProfileModal({
   currentName: string;
   onSave: (name: string) => void;
 }) {
+  const { t } = useT();
   const [name, setName] = useState(currentName);
   const [saving, setSaving] = useState(false);
 
@@ -122,7 +122,7 @@ function EditProfileModal({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error('Please enter your name.\nकृपया अपना नाम डालें।');
+      toast.error(t('toast.enterName'));
       return;
     }
     setSaving(true);
@@ -146,7 +146,7 @@ function EditProfileModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-gray-900">Edit Profile</h3>
+          <h3 className="text-lg font-bold text-gray-900">{t('profile.editProfile')}</h3>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100"
@@ -154,19 +154,18 @@ function EditProfileModal({
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
-        <p className="text-sm text-gray-400 -mt-4 mb-5">प्रोफाइल बदलें</p>
 
         <div className="space-y-4">
           <div>
             <label htmlFor="profile-name" className="text-sm font-medium text-gray-700 mb-1.5 block">
-              Name / नाम
+              {t('common.name')}
             </label>
             <input
               id="profile-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name / अपना नाम डालें"
+              placeholder={t('profile.enterName')}
               className="input-field"
             />
           </div>
@@ -181,7 +180,7 @@ function EditProfileModal({
           leftIcon={<Save className="w-5 h-5" />}
           className="mt-5 rounded-2xl"
         >
-          Save / सहेजें
+          {t('common.save')}
         </Button>
       </motion.div>
     </motion.div>
@@ -201,21 +200,22 @@ function SavedAddresses({
   onAdd: () => void;
   onDelete: (index: number) => void;
 }) {
+  const { t } = useT();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
         <div>
           <p className="font-semibold text-gray-900 text-sm">
-            Saved Addresses
+            {t('profile.savedAddresses')}
           </p>
-          <p className="text-xs text-gray-400">सहेजे गए पते</p>
         </div>
         <button
           onClick={onAdd}
           className="flex items-center gap-1 text-sm text-blue-600 font-medium px-3 py-2 rounded-xl hover:bg-blue-50 min-h-[44px]"
         >
           <Plus className="w-4 h-4" />
-          Add / जोड़ें
+          {t('common.add')}
         </button>
       </div>
 
@@ -223,8 +223,7 @@ function SavedAddresses({
         <Card shadow="sm">
           <div className="text-center py-4">
             <MapPin className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No saved addresses</p>
-            <p className="text-xs text-gray-400">कोई सहेजा हुआ पता नहीं</p>
+            <p className="text-sm text-gray-500">{t('profile.noAddresses')}</p>
           </div>
         </Card>
       ) : (
@@ -270,55 +269,33 @@ function LanguageSelector({
   current: string;
   onChange: (lang: string) => void;
 }) {
-  const languages = [
-    { key: 'en', label: 'English', native: 'English' },
-    { key: 'hi', label: 'Hindi', native: 'हिंदी' },
-    { key: 'mr', label: 'Marathi', native: 'मराठी' },
-    { key: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
-    { key: 'ta', label: 'Tamil', native: 'தமிழ்' },
-    { key: 'te', label: 'Telugu', native: 'తెలుగు' },
-    { key: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
-    { key: 'bn', label: 'Bengali', native: 'বাংলা' },
-  ];
+  const { t } = useT();
+  const selected = getLanguage(current);
 
   return (
     <div>
       <div className="mb-3">
-        <p className="font-semibold text-gray-900 text-sm">Language</p>
-        <p className="text-xs text-gray-400">भाषा चुनें</p>
+        <p className="font-semibold text-gray-900 text-sm">{t('common.language')}</p>
+        <p className="text-xs text-gray-400">{t('profile.selectLanguage')}</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {languages.map((lang) => {
-          const isSelected = current === lang.key;
-          return (
-            <button
-              key={lang.key}
-              onClick={() => onChange(lang.key)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all min-h-[48px] ${
-                isSelected
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div>
-                <p
-                  className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}
-                >
-                  {lang.native}
-                </p>
-                <p
-                  className={`text-[10px] ${isSelected ? 'text-blue-400' : 'text-gray-400'}`}
-                >
-                  {lang.label}
-                </p>
-              </div>
-              {isSelected && (
-                <Check className="w-4 h-4 text-blue-600 shrink-0" />
-              )}
-            </button>
-          );
-        })}
+      <div className="relative">
+        <select
+          value={current}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full appearance-none rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-base py-3 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+          aria-label="Select language"
+        >
+          {LANGUAGES.map((lang) => (
+            <option key={lang.code} value={lang.code}>
+              {lang.native} — {lang.label}
+            </option>
+          ))}
+        </select>
+        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 rotate-90 pointer-events-none" />
       </div>
+      <p className="text-xs text-gray-400 mt-1.5">
+        Currently: {selected.native} ({selected.label})
+      </p>
     </div>
   );
 }
@@ -330,14 +307,12 @@ function LanguageSelector({
 function MenuItem({
   icon: Icon,
   label,
-  hindi,
   onClick,
   danger,
   value,
 }: {
   icon: React.ElementType;
   label: string;
-  hindi: string;
   onClick: () => void;
   danger?: boolean;
   value?: string;
@@ -366,11 +341,6 @@ function MenuItem({
         >
           {label}
         </p>
-        <p
-          className={`text-[10px] ${danger ? 'text-red-400' : 'text-gray-400'}`}
-        >
-          {hindi}
-        </p>
       </div>
       {value ? (
         <span className="text-sm text-gray-500 shrink-0">{value}</span>
@@ -396,6 +366,7 @@ function AddAddressModal({
   onClose: () => void;
   onSave: (label: string, address: string) => void;
 }) {
+  const { t } = useT();
   const [label, setLabel] = useState('Home');
   const [address, setAddress] = useState('');
 
@@ -403,7 +374,7 @@ function AddAddressModal({
 
   const handleSave = () => {
     if (!address.trim()) {
-      toast.error('Please enter an address.\nकृपया पता डालें।');
+      toast.error(t('toast.enterAddress'));
       return;
     }
     onSave(label.trim() || 'Address', address.trim());
@@ -411,6 +382,12 @@ function AddAddressModal({
     setAddress('');
     onClose();
   };
+
+  const labelOptions = [
+    { key: 'Home', label: t('common.home') },
+    { key: 'Office', label: t('common.office') },
+    { key: 'Other', label: t('common.other') },
+  ];
 
   return (
     <motion.div
@@ -427,7 +404,7 @@ function AddAddressModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-gray-900">Add Address</h3>
+          <h3 className="text-lg font-bold text-gray-900">{t('profile.addAddress')}</h3>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -435,25 +412,24 @@ function AddAddressModal({
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
-        <p className="text-sm text-gray-400 -mt-4 mb-5">नया पता जोड़ें</p>
 
         <div className="space-y-4">
           <div>
             <label htmlFor="address-label" className="text-sm font-medium text-gray-700 mb-1.5 block">
-              Label / लेबल
+              {t('common.label')}
             </label>
             <div className="flex gap-2">
-              {['Home', 'Office', 'Other'].map((opt) => (
+              {labelOptions.map((opt) => (
                 <button
-                  key={opt}
-                  onClick={() => setLabel(opt)}
+                  key={opt.key}
+                  onClick={() => setLabel(opt.key)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
-                    label === opt
+                    label === opt.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  {opt}
+                  {opt.label}
                 </button>
               ))}
             </div>
@@ -461,13 +437,13 @@ function AddAddressModal({
 
           <div>
             <label htmlFor="address-text" className="text-sm font-medium text-gray-700 mb-1.5 block">
-              Address / पता
+              {t('common.address')}
             </label>
             <textarea
               id="address-text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Enter full address / पूरा पता डालें"
+              placeholder={t('profile.enterAddress')}
               rows={3}
               className="input-field resize-none"
             />
@@ -482,7 +458,7 @@ function AddAddressModal({
           leftIcon={<Plus className="w-5 h-5" />}
           className="mt-5 rounded-2xl"
         >
-          Save Address / पता सहेजें
+          {t('profile.saveAddress')}
         </Button>
       </motion.div>
     </motion.div>
@@ -496,6 +472,7 @@ function AddAddressModal({
 export default function ProfilePage() {
   const router = useRouter();
   const { user, setUser, logout: authLogout } = useAuthStore();
+  const { locale, setLocale, t } = useT();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showAddAddress, setShowAddAddress] = useState(false);
@@ -504,7 +481,6 @@ export default function ProfilePage() {
   const [savedAddresses, setSavedAddresses] = useState<
     { label: string; address: string; location?: GeoLocation }[]
   >([]);
-  const [language, setLanguage] = useState(user?.language || 'en');
 
   // --- Redirect if not logged in ---
   useEffect(() => {
@@ -524,16 +500,16 @@ export default function ProfilePage() {
         updatedAt: serverTimestamp(),
       });
       setUser({ ...user, name });
-      toast.success('Name updated!\nनाम अपडेट हो गया!');
+      toast.success(t('toast.nameUpdated'));
     } catch {
-      toast.error('Failed to update name.\nनाम अपडेट नहीं हो पाया।');
+      toast.error(t('toast.nameUpdateFailed'));
     }
   };
 
   // --- Handle language change ---
   const handleLanguageChange = async (lang: string) => {
     if (!user) return;
-    setLanguage(lang);
+    setLocale(lang);
 
     try {
       const userRef = doc(db, 'users', user.id);
@@ -542,7 +518,7 @@ export default function ProfilePage() {
         updatedAt: serverTimestamp(),
       });
       setUser({ ...user, language: lang });
-      toast.success('Language updated!\nभाषा बदल गई!');
+      toast.success(t('toast.languageUpdated'));
     } catch {
       // Silent
     }
@@ -555,13 +531,13 @@ export default function ProfilePage() {
 
   const handleSaveAddress = (label: string, address: string) => {
     setSavedAddresses((prev) => [...prev, { label, address }]);
-    toast.success('Address saved!\nपता सहेज लिया!');
+    toast.success(t('toast.addressSaved'));
   };
 
   // --- Handle delete address ---
   const handleDeleteAddress = (index: number) => {
     setSavedAddresses((prev) => prev.filter((_, i) => i !== index));
-    toast.success('Address removed.\nपता हटा दिया।');
+    toast.success(t('toast.addressRemoved'));
   };
 
   // --- Handle logout (Server Action to clear auth cookie) ---
@@ -582,7 +558,7 @@ export default function ProfilePage() {
     }
 
     authLogout();
-    toast.success('Logged out successfully.\nलॉगआउट हो गया।');
+    toast.success(t('toast.loggedOut'));
     router.push('/');
   };
 
@@ -601,7 +577,7 @@ export default function ProfilePage() {
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                 <Droplets className="w-4 h-4 text-white" />
               </div>
-              <h1 className="text-lg font-bold text-white">Profile</h1>
+              <h1 className="text-lg font-bold text-white">{t('profile.title')}</h1>
             </div>
             <button
               onClick={() => setShowEditProfile(true)}
@@ -646,7 +622,7 @@ export default function ProfilePage() {
                     {user.rating.average.toFixed(1)}
                   </span>
                   <span className="text-white/60 text-xs">
-                    ({user.rating.count} ratings / रेटिंग)
+                    ({user.rating.count} {t('common.rating')})
                   </span>
                 </div>
               )}
@@ -664,22 +640,19 @@ export default function ProfilePage() {
               <p className="text-2xl font-bold text-gray-900">
                 {user.rating?.count || 0}
               </p>
-              <p className="text-xs text-gray-500">Orders</p>
-              <p className="text-[10px] text-gray-400">ऑर्डर</p>
+              <p className="text-xs text-gray-500">{t('common.orders')}</p>
             </div>
             <div className="border-x border-gray-100">
               <p className="text-2xl font-bold text-gray-900">
                 {user.rating?.average?.toFixed(1) || '5.0'}
               </p>
-              <p className="text-xs text-gray-500">Rating</p>
-              <p className="text-[10px] text-gray-400">रेटिंग</p>
+              <p className="text-xs text-gray-500">{t('common.rating')}</p>
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                {user.language?.toUpperCase() || 'EN'}
+                {getLanguage(locale).short}
               </p>
-              <p className="text-xs text-gray-500">Language</p>
-              <p className="text-[10px] text-gray-400">भाषा</p>
+              <p className="text-xs text-gray-500">{t('common.language')}</p>
             </div>
           </div>
         </Card>
@@ -704,7 +677,7 @@ export default function ProfilePage() {
           transition={{ delay: 0.15 }}
         >
           <LanguageSelector
-            current={language}
+            current={locale}
             onChange={handleLanguageChange}
           />
         </motion.div>
@@ -718,32 +691,28 @@ export default function ProfilePage() {
           <Card shadow="sm" padding="sm">
             <MenuItem
               icon={CreditCard}
-              label="Payment History"
-              hindi="भुगतान इतिहास"
+              label={t('profile.paymentHistory')}
               onClick={() => router.push('/history')}
             />
             <div className="h-px bg-gray-100 mx-4" />
             <MenuItem
               icon={Bell}
-              label="Notifications"
-              hindi="सूचनाएं"
-              onClick={() => toast.info('Push notifications are enabled. You will be notified for order updates.\nऑर्डर अपडेट के लिए पुश सूचनाएं चालू हैं।')}
+              label={t('profile.notifications')}
+              onClick={() => toast.info(t('toast.pushEnabled'))}
             />
             <div className="h-px bg-gray-100 mx-4" />
             <MenuItem
               icon={Shield}
-              label="Privacy & Security"
-              hindi="गोपनीयता और सुरक्षा"
-              onClick={() => toast.info('Your data is encrypted and secured with Firebase Auth.\nआपका डेटा एन्क्रिप्टेड और सुरक्षित है।')}
+              label={t('profile.privacySecurity')}
+              onClick={() => toast.info(t('toast.dataSecured'))}
             />
             <div className="h-px bg-gray-100 mx-4" />
             <MenuItem
               icon={HelpCircle}
-              label="Help & Support"
-              hindi="सहायता"
+              label={t('profile.helpSupport')}
               onClick={() => {
                 window.open('mailto:support@jalseva.in?subject=Help%20Request', '_blank');
-                toast.info('Opening email to support@jalseva.in\nसहायता ईमेल खोल रहे हैं');
+                toast.info(t('toast.openingEmail'));
               }}
             />
           </Card>
@@ -758,8 +727,7 @@ export default function ProfilePage() {
           <Card shadow="sm" padding="sm">
             <MenuItem
               icon={LogOut}
-              label="Logout"
-              hindi="लॉगआउट"
+              label={t('common.logout')}
               onClick={handleLogout}
               danger
             />

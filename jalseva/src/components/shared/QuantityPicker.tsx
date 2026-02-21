@@ -5,13 +5,13 @@ import { useState, useCallback } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n';
 import type { WaterType } from '@/types';
 
 export interface QuantityPickerProps {
   value: number;
   onChange: (litres: number) => void;
   waterType?: WaterType;
-  language?: string;
   className?: string;
 }
 
@@ -46,11 +46,10 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
   value,
   onChange,
   waterType = 'ro',
-  language = 'en',
   className,
 }) => {
   const isTanker = waterType === 'tanker';
-  const isHindi = language === 'hi';
+  const { t } = useT();
 
   const [sliderValue, setSliderValue] = useState(
     isTanker ? Math.max(TANKER_MIN, value) : value
@@ -86,7 +85,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
             {sliderValue.toLocaleString('en-IN')}L
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            {isHindi ? 'टैंकर पानी' : 'Tanker Water'}
+            {t('water.tankerWater')}
           </p>
         </div>
 
@@ -123,9 +122,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
 
         <div className="bg-cyan-50 rounded-xl p-3 text-center">
           <p className="text-sm text-cyan-800">
-            {isHindi
-              ? `~ ${Math.ceil(sliderValue / 1000)} टैंकर लोड`
-              : `~ ${Math.ceil(sliderValue / 1000)} tanker load${Math.ceil(sliderValue / 1000) > 1 ? 's' : ''}`}
+            {t('water.tankerLoads', { count: Math.ceil(sliderValue / 1000) })}
           </p>
         </div>
       </div>
@@ -154,9 +151,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
         <div className="text-center min-w-[120px]">
           <p className="text-4xl font-bold text-gray-900">{jarCount}</p>
           <p className="text-sm text-gray-500 mt-0.5">
-            {isHindi
-              ? `${jarCount} जार \u00D7 20L = ${totalLitres}L`
-              : `${jarCount} jar${jarCount > 1 ? 's' : ''} \u00D7 20L = ${totalLitres}L`}
+            {t('water.jarCount', { count: jarCount, total: totalLitres })}
           </p>
         </div>
 
@@ -191,9 +186,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
       {jarCount > 10 && (
         <div className="bg-blue-50 rounded-xl p-3 text-center">
           <p className="text-sm text-blue-700 font-medium">
-            {isHindi
-              ? `${jarCount} जार = ${totalLitres} लीटर पानी`
-              : `${jarCount} jars = ${totalLitres} litres of water`}
+            {t('water.jarsLitres', { jars: jarCount, litres: totalLitres })}
           </p>
         </div>
       )}
