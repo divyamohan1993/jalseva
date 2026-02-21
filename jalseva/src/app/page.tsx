@@ -32,6 +32,7 @@ import { useOrderStore } from '@/store/orderStore';
 import { createOrder } from '@/actions/orders';
 import { formatCurrency } from '@/lib/utils';
 import type { WaterType, GeoLocation, CreateOrderRequest } from '@/types';
+import { LANGUAGES, getLanguage } from '@/lib/languages';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -385,7 +386,9 @@ export default function HomePage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
   const [isBooking, startBookingTransition] = useTransition();
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [language, setLanguage] = useState('en');
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
 
   // --- Calculated price ---
   const basePrice = BASE_PRICES[waterType] * quantity;
@@ -588,10 +591,16 @@ export default function HomePage() {
     });
   };
 
-  // --- Language toggle ---
-  const toggleLanguage = () => {
-    setLanguage((prev) => (prev === 'en' ? 'hi' : 'en'));
-  };
+  // --- Close language dropdown on outside click ---
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(e.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -615,17 +624,48 @@ export default function HomePage() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* Language toggle */}
-            <button
-              onClick={toggleLanguage}
-              aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
-              className="flex items-center gap-1 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px]"
-            >
-              <Globe className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-600">
-                {language === 'en' ? 'हिंदी' : 'ENG'}
-              </span>
-            </button>
+            {/* Language selector */}
+            <div className="relative" ref={langDropdownRef}>
+              <button
+                onClick={() => setLangDropdownOpen((o) => !o)}
+                aria-label="Select language"
+                aria-expanded={langDropdownOpen}
+                aria-haspopup="listbox"
+                className="flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors min-h-[44px]"
+              >
+                <Globe className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">
+                  {getLanguage(language).short}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${langDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {langDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[170px] max-h-[320px] overflow-y-auto z-50" role="listbox">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setLangDropdownOpen(false);
+                      }}
+                      role="option"
+                      aria-selected={lang.code === language}
+                      className={`w-full text-left px-3 py-2 min-h-[44px] text-sm hover:bg-blue-50 transition-colors flex items-center justify-between ${
+                        lang.code === language
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <span>{lang.native} <span className="text-gray-400 text-xs">{lang.label}</span></span>
+                      {lang.code === language && (
+                        <span className="w-1.5 h-1.5 bg-blue-600 rounded-full shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Profile / Login */}
             <button

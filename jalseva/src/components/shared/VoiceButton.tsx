@@ -5,6 +5,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { getSpeechLocale } from '@/lib/languages';
 
 type VoiceState = 'idle' | 'listening' | 'processing';
 
@@ -15,17 +16,6 @@ export interface VoiceButtonProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
-
-const langMap: Record<string, string> = {
-  en: 'en-IN',
-  hi: 'hi-IN',
-  ta: 'ta-IN',
-  te: 'te-IN',
-  kn: 'kn-IN',
-  mr: 'mr-IN',
-  bn: 'bn-IN',
-  gu: 'gu-IN',
-};
 
 const sizeConfig = {
   sm: { button: 'w-10 h-10', icon: 16, ring: 'w-14 h-14' },
@@ -65,7 +55,7 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     const recognition = new SpeechRecognitionAPI();
-    recognition.lang = langMap[language] || 'hi-IN';
+    recognition.lang = getSpeechLocale(language);
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;

@@ -29,7 +29,6 @@ import {
   Bell,
   HelpCircle,
   Droplets,
-  Check,
 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -37,6 +36,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useAuthStore } from '@/store/authStore';
 import type { GeoLocation } from '@/types';
+import { LANGUAGES, getLanguage } from '@/lib/languages';
 
 // ---------------------------------------------------------------------------
 // Bottom Navigation (shared)
@@ -270,16 +270,7 @@ function LanguageSelector({
   current: string;
   onChange: (lang: string) => void;
 }) {
-  const languages = [
-    { key: 'en', label: 'English', native: 'English' },
-    { key: 'hi', label: 'Hindi', native: 'हिंदी' },
-    { key: 'mr', label: 'Marathi', native: 'मराठी' },
-    { key: 'gu', label: 'Gujarati', native: 'ગુજરાતી' },
-    { key: 'ta', label: 'Tamil', native: 'தமிழ்' },
-    { key: 'te', label: 'Telugu', native: 'తెలుగు' },
-    { key: 'kn', label: 'Kannada', native: 'ಕನ್ನಡ' },
-    { key: 'bn', label: 'Bengali', native: 'বাংলা' },
-  ];
+  const selected = getLanguage(current);
 
   return (
     <div>
@@ -287,38 +278,24 @@ function LanguageSelector({
         <p className="font-semibold text-gray-900 text-sm">Language</p>
         <p className="text-xs text-gray-400">भाषा चुनें</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {languages.map((lang) => {
-          const isSelected = current === lang.key;
-          return (
-            <button
-              key={lang.key}
-              onClick={() => onChange(lang.key)}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all min-h-[48px] ${
-                isSelected
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <div>
-                <p
-                  className={`text-sm font-medium ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}
-                >
-                  {lang.native}
-                </p>
-                <p
-                  className={`text-[10px] ${isSelected ? 'text-blue-400' : 'text-gray-400'}`}
-                >
-                  {lang.label}
-                </p>
-              </div>
-              {isSelected && (
-                <Check className="w-4 h-4 text-blue-600 shrink-0" />
-              )}
-            </button>
-          );
-        })}
+      <div className="relative">
+        <select
+          value={current}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full appearance-none rounded-xl border-2 border-gray-200 bg-white text-gray-900 text-base py-3 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+          aria-label="Select language"
+        >
+          {LANGUAGES.map((lang) => (
+            <option key={lang.code} value={lang.code}>
+              {lang.native} — {lang.label}
+            </option>
+          ))}
+        </select>
+        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 rotate-90 pointer-events-none" />
       </div>
+      <p className="text-xs text-gray-400 mt-1.5">
+        Currently: {selected.native} ({selected.label})
+      </p>
     </div>
   );
 }

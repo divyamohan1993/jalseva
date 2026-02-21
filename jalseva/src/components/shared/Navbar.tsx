@@ -6,17 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, ChevronDown, User, Droplet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const languages = [
-  { code: 'en', label: 'English', short: 'EN' },
-  { code: 'hi', label: 'हिन्दी', short: 'हि' },
-  { code: 'ta', label: 'தமிழ்', short: 'த' },
-  { code: 'te', label: 'తెలుగు', short: 'తె' },
-  { code: 'kn', label: 'ಕನ್ನಡ', short: 'ಕ' },
-  { code: 'mr', label: 'मराठी', short: 'म' },
-  { code: 'bn', label: 'বাংলা', short: 'বা' },
-  { code: 'gu', label: 'ગુજરાતી', short: 'ગુ' },
-];
+import { LANGUAGES, getLanguage } from '@/lib/languages';
 
 export interface NavbarProps {
   showBack?: boolean;
@@ -43,7 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({
   const [langOpen, setLangOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedLang = languages.find((l) => l.code === language) || languages[0];
+  const selectedLang = getLanguage(language);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -113,8 +103,8 @@ const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[140px] z-50" role="listbox">
-              {languages.map((lang) => (
+            <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[160px] max-h-[320px] overflow-y-auto z-50" role="listbox">
+              {LANGUAGES.map((lang) => (
                 <button
                   key={lang.code}
                   onClick={() => {
@@ -129,7 +119,7 @@ const Navbar: React.FC<NavbarProps> = ({
                       'bg-blue-50 text-blue-700 font-medium'
                   )}
                 >
-                  <span>{lang.label}</span>
+                  <span>{lang.native} <span className="text-gray-400 text-xs">{lang.label}</span></span>
                   {lang.code === language && (
                     <span className="w-1.5 h-1.5 bg-blue-600 rounded-full" />
                   )}

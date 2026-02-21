@@ -10,6 +10,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { processVoiceCommand } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/redis';
 import { geminiBreaker } from '@/lib/circuit-breaker';
+import { isSupported as isLangSupported } from '@/lib/languages';
 
 // ---------------------------------------------------------------------------
 // POST - Process voice command text
@@ -59,12 +60,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // --- Supported languages ---
-    const supportedLanguages = [
-      'hi', 'en', 'ta', 'te', 'kn', 'mr', 'bn', 'gu', 'pa', 'ml',
-      'or', 'as', 'ur',
-    ];
-    const normalizedLanguage = supportedLanguages.includes(language) ? language : 'hi';
+    // --- Supported languages (uses central language list) ---
+    const normalizedLanguage = isLangSupported(language) ? language : 'hi';
 
     // --- Process with Gemini ---
     const intent = await geminiBreaker.execute(
