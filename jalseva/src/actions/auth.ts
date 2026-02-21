@@ -1,6 +1,6 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { batchWriter } from '@/lib/batch-writer';
 import { cookies } from 'next/headers';
 
 export async function updateProfile(
@@ -9,7 +9,7 @@ export async function updateProfile(
 ) {
   try {
     try {
-      await adminDb.collection('users').doc(userId).update({
+      batchWriter.update('users', userId, {
         ...data,
         updatedAt: new Date(),
       });

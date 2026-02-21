@@ -1,6 +1,6 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { batchWriter } from '@/lib/batch-writer';
 
 export async function toggleSupplierOnline(
   supplierId: string,
@@ -8,7 +8,7 @@ export async function toggleSupplierOnline(
 ) {
   try {
     try {
-      await adminDb.collection('suppliers').doc(supplierId).update({
+      batchWriter.update('suppliers', supplierId, {
         isOnline,
         updatedAt: new Date(),
       });
@@ -31,7 +31,7 @@ export async function acceptOrder(
 ) {
   try {
     try {
-      await adminDb.collection('orders').doc(orderId).update({
+      batchWriter.update('orders', orderId, {
         status: 'accepted',
         supplierId,
         acceptedAt: new Date(),
@@ -53,7 +53,7 @@ export async function acceptOrder(
 export async function rejectOrder(orderId: string) {
   try {
     try {
-      await adminDb.collection('orders').doc(orderId).update({
+      batchWriter.update('orders', orderId, {
         updatedAt: new Date(),
       });
     } catch {

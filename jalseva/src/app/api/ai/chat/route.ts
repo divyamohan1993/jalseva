@@ -10,6 +10,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { generateChatResponse } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/redis';
+import { firestoreBreaker, geminiBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // POST - Process chat message
@@ -69,8 +71,11 @@ export async function POST(request: NextRequest) {
 
     // Fetch user profile if userId is provided
     if (userId) {
-      const userDoc = await adminDb.collection('users').doc(userId).get();
-      if (userDoc.exists) {
+      const userDoc = await firestoreBreaker.execute(
+        () => adminDb.collection('users').doc(userId).get(),
+        () => null
+      );
+      if (userDoc && userDoc.exists) {
         const userData = userDoc.data()!;
         context.user = {
           name: userData.name,
@@ -81,12 +86,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Fetch recent orders for context
-      const recentOrdersSnapshot = await adminDb
-        .collection('orders')
-        .where('customerId', '==', userId)
-        .orderBy('createdAt', 'desc')
-        .limit(3)
-        .get();
+      const recentOrdersSnapshot = await firestoreBreaker.execute(
+        () => adminDb
+          .collection('orders')
+          .where('customerId', '==', userId)
+          .orderBy('createdAt', 'desc')
+          .limit(3)
+          .get(),
+        () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+      );
 
       if (!recentOrdersSnapshot.empty) {
         context.recentOrders = recentOrdersSnapshot.docs.map((doc) => {
@@ -105,24 +113,33 @@ export async function POST(request: NextRequest) {
 
     // --- Fetch conversation history from session if available ---
     if (sessionId) {
-      const sessionDoc = await adminDb
-        .collection('chat_sessions')
-        .doc(sessionId)
-        .get();
+      const sessionDoc = await firestoreBreaker.execute(
+        () => adminDb
+          .collection('chat_sessions')
+          .doc(sessionId)
+          .get(),
+        () => null
+      );
 
-      if (sessionDoc.exists) {
+      if (sessionDoc && sessionDoc.exists) {
         const sessionData = sessionDoc.data()!;
         context.conversationHistory = sessionData.messages?.slice(-5) || [];
       }
     }
 
     // --- Generate response with Gemini ---
-    const aiResponse = await generateChatResponse(message.trim(), context);
+    const aiResponse = await geminiBreaker.execute(
+      () => generateChatResponse(message.trim(), context),
+      () => 'I apologize, but I am temporarily unable to process your request. Please try again shortly.'
+    );
 
     // --- Save message to session ---
     if (sessionId) {
       const sessionRef = adminDb.collection('chat_sessions').doc(sessionId);
-      const sessionDoc = await sessionRef.get();
+      const sessionDoc = await firestoreBreaker.execute(
+        () => sessionRef.get(),
+        () => null
+      );
 
       const messageEntry = {
         role: 'user',
@@ -136,7 +153,7 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString(),
       };
 
-      if (sessionDoc.exists) {
+      if (sessionDoc && sessionDoc.exists) {
         const existing = sessionDoc.data()!;
         const messages = existing.messages || [];
         messages.push(messageEntry, responseEntry);
@@ -144,12 +161,12 @@ export async function POST(request: NextRequest) {
         // Keep last 50 messages
         const trimmedMessages = messages.slice(-50);
 
-        await sessionRef.update({
+        batchWriter.update('chat_sessions', sessionId, {
           messages: trimmedMessages,
           updatedAt: new Date().toISOString(),
         });
       } else {
-        await sessionRef.set({
+        batchWriter.set('chat_sessions', sessionId, {
           userId: userId || null,
           channel,
           language,

@@ -8,6 +8,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getDemandLevel } from '@/lib/redis';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { hotCache, cacheAside, LRUCache } from '@/lib/cache';
 import type { WaterType, DemandLevel } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -72,14 +74,25 @@ export async function GET(request: NextRequest) {
     let demandLevel: DemandLevel = 'normal';
     let surgeMultiplier = SURGE_MULTIPLIERS.normal;
 
-    // Try to get zone-specific pricing from Firestore
-    const zoneDoc = await adminDb.collection('pricing_zones').doc(zone).get();
+    // Try to get zone-specific pricing from Firestore (with L1 cache)
+    const zoneData = await cacheAside<Record<string, unknown> | null>(
+      hotCache as LRUCache<Record<string, unknown> | null>,
+      `pricing_zone:${zone}`,
+      async () => {
+        const zoneDoc = await firestoreBreaker.execute(
+          () => adminDb.collection('pricing_zones').doc(zone).get(),
+          () => null
+        );
+        if (zoneDoc && zoneDoc.exists) return zoneDoc.data() as Record<string, unknown>;
+        return null;
+      },
+      120 // 2 minute TTL for zone pricing
+    );
 
-    if (zoneDoc.exists) {
-      const zoneData = zoneDoc.data()!;
+    if (zoneData) {
       if (zoneData.basePrice) basePrices = zoneData.basePrice as Record<WaterType, number>;
-      if (zoneData.perKmRate) perKmRate = zoneData.perKmRate;
-      if (zoneData.surgeMultiplier) surgeMultiplier = zoneData.surgeMultiplier;
+      if (zoneData.perKmRate) perKmRate = zoneData.perKmRate as number;
+      if (zoneData.surgeMultiplier) surgeMultiplier = zoneData.surgeMultiplier as number;
       if (zoneData.demandLevel) demandLevel = zoneData.demandLevel as DemandLevel;
     }
 
@@ -155,8 +168,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adminDoc = await adminDb.collection('users').doc(adminId).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== 'admin') {
+    const adminDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('users').doc(adminId).get(),
+      () => null
+    );
+    if (!adminDoc || !adminDoc.exists || adminDoc.data()?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized. Admin access required.' },
         { status: 403 }
@@ -224,13 +240,21 @@ export async function POST(request: NextRequest) {
     }
 
     // --- Upsert zone pricing ---
-    await adminDb.collection('pricing_zones').doc(zoneId).set(updateData, { merge: true });
+    await firestoreBreaker.execute(
+      () => adminDb.collection('pricing_zones').doc(zoneId).set(updateData, { merge: true })
+    );
 
-    const updatedDoc = await adminDb.collection('pricing_zones').doc(zoneId).get();
+    // Invalidate L1 cache for this zone
+    hotCache.delete(`pricing_zone:${zoneId}`);
+
+    const updatedDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('pricing_zones').doc(zoneId).get(),
+      () => null
+    );
 
     return NextResponse.json({
       success: true,
-      zone: { id: updatedDoc.id, ...updatedDoc.data() },
+      zone: updatedDoc ? { id: updatedDoc.id, ...updatedDoc.data() } : { id: zoneId, ...updateData },
       message: `Pricing zone '${zoneId}' updated successfully.`,
     });
   } catch (error) {

@@ -7,6 +7,8 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type { WaterType, VerificationStatus } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -34,8 +36,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user exists
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
+    const userDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('users').doc(userId).get(),
+      () => null
+    );
+    if (!userDoc || !userDoc.exists) {
       return NextResponse.json(
         { error: 'User not found.' },
         { status: 404 }
@@ -43,11 +48,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if supplier profile already exists for this user
-    const existingSupplier = await adminDb
-      .collection('suppliers')
-      .where('userId', '==', userId)
-      .limit(1)
-      .get();
+    const existingSupplier = await firestoreBreaker.execute(
+      () => adminDb
+        .collection('suppliers')
+        .where('userId', '==', userId)
+        .limit(1)
+        .get(),
+      () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
 
     if (!existingSupplier.empty) {
       return NextResponse.json(
@@ -133,10 +141,10 @@ export async function POST(request: NextRequest) {
       updatedAt: now,
     };
 
-    await supplierRef.set(supplierData);
+    batchWriter.set('suppliers', supplierId, supplierData as unknown as Record<string, unknown>);
 
     // Update user role to supplier
-    await adminDb.collection('users').doc(userId).update({
+    batchWriter.update('users', userId, {
       role: 'supplier',
       updatedAt: now,
     });
@@ -207,10 +215,13 @@ export async function GET(request: NextRequest) {
         skipQuery = skipQuery.where('waterTypes', 'array-contains', waterType);
       }
 
-      const skipSnapshot = await skipQuery
-        .orderBy('createdAt', 'desc')
-        .limit(skipCount)
-        .get();
+      const skipSnapshot = await firestoreBreaker.execute(
+        () => skipQuery
+          .orderBy('createdAt', 'desc')
+          .limit(skipCount)
+          .get(),
+        () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+      );
 
       if (!skipSnapshot.empty) {
         const lastDoc = skipSnapshot.docs[skipSnapshot.docs.length - 1];
@@ -218,7 +229,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const snapshot = await query.get();
+    const snapshot = await firestoreBreaker.execute(
+      () => query.get(),
+      () => ({ docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
     const suppliers = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),

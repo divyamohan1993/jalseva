@@ -10,6 +10,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { haversineDistance } from '@/lib/maps';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type { GeoLocation, WaterType } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -146,7 +148,10 @@ export async function POST(request: NextRequest) {
         .where('verificationStatus', '==', 'verified')
         .where('waterTypes', 'array-contains', waterType) as FirebaseFirestore.Query;
 
-      const snapshot = await query.get();
+      const snapshot = await firestoreBreaker.execute(
+        () => query.get(),
+        () => ({ docs: [], forEach: () => {} } as unknown as FirebaseFirestore.QuerySnapshot)
+      );
 
       snapshot.forEach((doc) => {
         const supplier = doc.data();
@@ -250,19 +255,16 @@ export async function POST(request: NextRequest) {
     };
 
     // --- Log the Beckn transaction ---
-    try {
-      await adminDb.collection('beckn_transactions').add({
-        transactionId: transaction_id,
-        messageId: message_id,
-        action: 'search',
-        request: body,
-        suppliersFound: matchingSuppliers.length,
-        simulated: true,
-        createdAt: new Date().toISOString(),
-      });
-    } catch (logError) {
-      console.warn('[Beckn Sim] Failed to log transaction:', logError);
-    }
+    const becknLogId = `beckn_search_${transaction_id}_${Date.now()}`;
+    batchWriter.set('beckn_transactions', becknLogId, {
+      transactionId: transaction_id,
+      messageId: message_id,
+      action: 'search',
+      request: body as Record<string, unknown>,
+      suppliersFound: matchingSuppliers.length,
+      simulated: true,
+      createdAt: new Date().toISOString(),
+    });
 
     // --- Return on_search response ---
     const response = {

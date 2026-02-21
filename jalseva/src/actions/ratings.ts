@@ -1,6 +1,6 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { batchWriter } from '@/lib/batch-writer';
 
 export async function submitRating(data: {
   orderId: string;
@@ -9,23 +9,22 @@ export async function submitRating(data: {
   type: 'customer' | 'supplier';
 }) {
   try {
+    const ratingId = `${data.orderId}_${data.type}_${Date.now()}`;
     const ratingDoc = {
       ...data,
       createdAt: new Date(),
     };
 
     try {
-      await adminDb.collection('ratings').add(ratingDoc);
+      // Batch write rating document
+      batchWriter.set('ratings', ratingId, ratingDoc as unknown as Record<string, unknown>);
 
-      // Update order with rating
+      // Update order with rating field
       const ratingField =
         data.type === 'customer' ? 'rating.customer' : 'rating.supplier';
-      await adminDb
-        .collection('orders')
-        .doc(data.orderId)
-        .update({
-          [ratingField]: { score: data.rating, feedback: data.feedback || '' },
-        });
+      batchWriter.update('orders', data.orderId, {
+        [ratingField]: { score: data.rating, feedback: data.feedback || '' },
+      });
     } catch {
       // Firestore may be unavailable
     }

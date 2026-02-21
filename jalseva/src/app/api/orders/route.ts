@@ -7,6 +7,8 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { haversineDistance } from '@/lib/maps';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 import type {
   WaterType,
   PaymentMethod,
@@ -226,7 +228,7 @@ export async function POST(request: NextRequest) {
           createdAt: now,
         };
 
-        await orderRef.set(order);
+        batchWriter.set('orders', orderId, order as unknown as Record<string, unknown>);
 
         return NextResponse.json(
           { success: true, order, nearbySupplierCount: nearbySuppliers.length },
@@ -312,12 +314,15 @@ export async function GET(request: NextRequest) {
 
         if (page > 1) {
           const skipCount = (page - 1) * limit;
-          const skipSnapshot = await adminDb
-            .collection('orders')
-            .where(customerId ? 'customerId' : 'supplierId', '==', customerId || supplierId)
-            .orderBy('createdAt', 'desc')
-            .limit(skipCount)
-            .get();
+          const skipSnapshot = await firestoreBreaker.execute(
+            () => adminDb
+              .collection('orders')
+              .where(customerId ? 'customerId' : 'supplierId', '==', customerId || supplierId)
+              .orderBy('createdAt', 'desc')
+              .limit(skipCount)
+              .get(),
+            () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+          );
 
           if (!skipSnapshot.empty) {
             const lastDoc = skipSnapshot.docs[skipSnapshot.docs.length - 1];
@@ -325,7 +330,10 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        const snapshot = await query.get();
+        const snapshot = await firestoreBreaker.execute(
+          () => query.get(),
+          () => ({ docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+        );
         const orders = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),

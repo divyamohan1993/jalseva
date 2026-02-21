@@ -9,6 +9,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { createOrder as createRazorpayOrder, simulateCheckout } from '@/lib/razorpay';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // POST - Create a simulated Razorpay order
@@ -40,9 +42,12 @@ export async function POST(request: NextRequest) {
 
     // --- Verify order exists ---
     const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
+    const orderDoc = await firestoreBreaker.execute(
+      () => orderRef.get(),
+      () => null
+    );
 
-    if (!orderDoc.exists) {
+    if (!orderDoc || !orderDoc.exists) {
       return NextResponse.json(
         { error: 'Order not found.' },
         { status: 404 }
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
     const checkoutResult = simulateCheckout(razorpayOrder.id);
 
     // --- Update JalSeva order with Razorpay order ID ---
-    await orderRef.update({
+    batchWriter.update('orders', orderId, {
       'payment.razorpayOrderId': razorpayOrder.id,
       'payment.amount': amount,
       updatedAt: new Date().toISOString(),

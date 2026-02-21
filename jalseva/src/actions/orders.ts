@@ -1,8 +1,9 @@
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
 import { calculatePrice, generateOrderId } from '@/lib/utils';
 import { getDemandLevel } from '@/lib/redis';
+import { batchWriter } from '@/lib/batch-writer';
+import { hotCache } from '@/lib/cache';
 import type { CreateOrderRequest, Order, OrderStatus } from '@/types';
 
 // Demand multipliers - O(1) Map lookup
@@ -16,7 +17,15 @@ const DEMAND_MULTIPLIERS = new Map<string, number>([
 export async function createOrder(request: CreateOrderRequest) {
   try {
     const orderId = generateOrderId();
-    const demandLevel = (await getDemandLevel('default')) ?? 'normal';
+
+    // Cache-aside for demand level — avoids Redis roundtrip on hot path
+    const cacheKey = 'demand:default';
+    let demandLevel = hotCache.get(cacheKey) as string | undefined;
+    if (!demandLevel) {
+      demandLevel = (await getDemandLevel('default')) ?? 'normal';
+      hotCache.set(cacheKey, demandLevel, 30);
+    }
+
     const surgeMultiplier = DEMAND_MULTIPLIERS.get(demandLevel) ?? 1.0;
 
     const price = calculatePrice(
@@ -43,8 +52,9 @@ export async function createOrder(request: CreateOrderRequest) {
       updatedAt: new Date(),
     };
 
+    // Non-blocking batch write — returns immediately, flushed every 100ms
     try {
-      await adminDb.collection('orders').doc(orderId).set(order);
+      batchWriter.set('orders', orderId, order as unknown as Record<string, unknown>);
     } catch {
       // Firestore may be unavailable in demo mode
     }
@@ -73,11 +83,15 @@ export async function updateOrderStatus(
     if (status === 'accepted') updateData.acceptedAt = new Date();
     if (status === 'delivered') updateData.deliveredAt = new Date();
 
+    // Non-blocking batch update
     try {
-      await adminDb.collection('orders').doc(orderId).update(updateData);
+      batchWriter.update('orders', orderId, updateData);
     } catch {
       // Firestore may be unavailable
     }
+
+    // Invalidate cached order data
+    hotCache.delete(`order:${orderId}`);
 
     return { success: true as const };
   } catch (error) {

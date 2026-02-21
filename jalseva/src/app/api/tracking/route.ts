@@ -9,6 +9,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { getETA, haversineDistance } from '@/lib/maps';
 import { cacheSet, cacheGet } from '@/lib/redis';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { locationCache } from '@/lib/cache';
+import { batchWriter } from '@/lib/batch-writer';
 import type { GeoLocation, TrackingInfo } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -52,9 +55,12 @@ export async function POST(request: NextRequest) {
 
     // --- Fetch order ---
     const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
+    const orderDoc = await firestoreBreaker.execute(
+      () => orderRef.get(),
+      () => null
+    );
 
-    if (!orderDoc.exists) {
+    if (!orderDoc || !orderDoc.exists) {
       return NextResponse.json(
         { error: 'Order not found.' },
         { status: 404 }
@@ -98,8 +104,8 @@ export async function POST(request: NextRequest) {
     };
 
     // --- Update order with tracking data ---
-    await orderRef.update({
-      tracking: trackingInfo,
+    batchWriter.update('orders', orderId, {
+      tracking: trackingInfo as unknown as Record<string, unknown>,
       supplierLocation: trackingInfo.supplierLocation,
       updatedAt: new Date().toISOString(),
     });
@@ -108,13 +114,16 @@ export async function POST(request: NextRequest) {
     await cacheSet(`tracking:${orderId}`, trackingInfo, 30); // 30 second TTL
 
     // --- Also update supplier's current location ---
-    await adminDb.collection('suppliers').doc(supplierId).update({
+    batchWriter.update('suppliers', supplierId, {
       currentLocation: {
         lat: location.lat,
         lng: location.lng,
         address: location.address || '',
       },
     });
+
+    // --- Cache supplier location in L1 for fast reads ---
+    locationCache.set(`supplier:${supplierId}`, { lat: location.lat, lng: location.lng }, 60);
 
     return NextResponse.json({
       success: true,
@@ -156,9 +165,12 @@ export async function GET(request: NextRequest) {
     }
 
     // --- Fallback to Firestore ---
-    const orderDoc = await adminDb.collection('orders').doc(orderId).get();
+    const orderDoc = await firestoreBreaker.execute(
+      () => adminDb.collection('orders').doc(orderId).get(),
+      () => null
+    );
 
-    if (!orderDoc.exists) {
+    if (!orderDoc || !orderDoc.exists) {
       return NextResponse.json(
         { error: 'Order not found.' },
         { status: 404 }

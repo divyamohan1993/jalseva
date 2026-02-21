@@ -8,6 +8,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { haversineDistance } from '@/lib/maps';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
 import type { GeoLocation, WaterType } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -65,7 +66,10 @@ export async function GET(request: NextRequest) {
       query = query.where('waterTypes', 'array-contains', waterType);
     }
 
-    const snapshot = await query.get();
+    const snapshot = await firestoreBreaker.execute(
+      () => query.get(),
+      () => ({ docs: [], forEach: () => {} } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
 
     // --- Filter by distance and sort ---
     const nearbySuppliers: Array<{

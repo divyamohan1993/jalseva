@@ -9,6 +9,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
 import type { User, UserRole } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -35,10 +36,13 @@ export async function POST(request: NextRequest) {
 
     // Check if user already exists by phone number
     const usersRef = adminDb.collection('users');
-    const existingUserSnapshot = await usersRef
-      .where('phone', '==', phone)
-      .limit(1)
-      .get();
+    const existingUserSnapshot = await firestoreBreaker.execute(
+      () => usersRef
+        .where('phone', '==', phone)
+        .limit(1)
+        .get(),
+      () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
+    );
 
     let userId: string;
     let isNewUser = false;
@@ -49,9 +53,11 @@ export async function POST(request: NextRequest) {
       userId = existingDoc.id;
 
       // Update last login timestamp
-      await existingDoc.ref.update({
-        updatedAt: new Date().toISOString(),
-      });
+      await firestoreBreaker.execute(
+        () => existingDoc.ref.update({
+          updatedAt: new Date().toISOString(),
+        })
+      );
     } else {
       // Create new user document
       isNewUser = true;
@@ -72,7 +78,9 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date().toISOString(),
       };
 
-      await newUserRef.set(newUser);
+      await firestoreBreaker.execute(
+        () => newUserRef.set(newUser)
+      );
     }
 
     return NextResponse.json(

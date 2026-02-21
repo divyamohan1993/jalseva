@@ -9,6 +9,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { processVoiceCommand } from '@/lib/gemini';
 import { checkRateLimit } from '@/lib/redis';
+import { geminiBreaker } from '@/lib/circuit-breaker';
 
 // ---------------------------------------------------------------------------
 // POST - Process voice command text
@@ -66,7 +67,10 @@ export async function POST(request: NextRequest) {
     const normalizedLanguage = supportedLanguages.includes(language) ? language : 'hi';
 
     // --- Process with Gemini ---
-    const intent = await processVoiceCommand(text.trim(), normalizedLanguage);
+    const intent = await geminiBreaker.execute(
+      () => processVoiceCommand(text.trim(), normalizedLanguage),
+      () => ({ waterType: 'tanker' as const, quantity: 500, language: normalizedLanguage })
+    );
 
     return NextResponse.json({
       success: true,

@@ -2,6 +2,9 @@
 
 import { adminDb } from '@/lib/firebase-admin';
 import { cacheSet, cacheGet } from '@/lib/redis';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
+import { locationCache } from '@/lib/cache';
 
 export async function updateSupplierLocation(
   orderId: string,
@@ -17,11 +20,15 @@ export async function updateSupplierLocation(
       updatedAt: new Date(),
     };
 
-    // Cache in Redis for fast reads - O(1)
+    // Hot cache for in-process reads — O(1), zero network
+    locationCache.set(`tracking:${orderId}`, location, 30);
+
+    // Redis cache for cross-process reads
     await cacheSet(`tracking:${orderId}`, JSON.stringify(trackingData), 60);
 
+    // Non-blocking batch write to Firestore
     try {
-      await adminDb.collection('orders').doc(orderId).update({
+      batchWriter.update('orders', orderId, {
         tracking: trackingData,
         updatedAt: new Date(),
       });
@@ -40,14 +47,24 @@ export async function updateSupplierLocation(
 
 export async function getTrackingInfo(orderId: string) {
   try {
-    // Try Redis cache first - O(1)
+    // L1: In-process hot cache — O(1)
+    const hotLocation = locationCache.get(`tracking:${orderId}`);
+    if (hotLocation) {
+      return { success: true as const, tracking: { supplierLocation: hotLocation } };
+    }
+
+    // L2: Redis cache — ~1ms
     const cached = await cacheGet(`tracking:${orderId}`);
     if (cached) {
       return { success: true as const, tracking: JSON.parse(cached as string) };
     }
 
-    // Fallback to Firestore
-    const orderSnap = await adminDb.collection('orders').doc(orderId).get();
+    // L3: Firestore via circuit breaker
+    const orderSnap = await firestoreBreaker.execute(
+      () => adminDb.collection('orders').doc(orderId).get(),
+      () => ({ exists: false, data: () => null } as any),
+    );
+
     if (orderSnap.exists) {
       const tracking = orderSnap.data()?.tracking;
       return { success: true as const, tracking: tracking ?? null };

@@ -6,6 +6,8 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // POST - Submit a rating for an order
@@ -59,9 +61,12 @@ export async function POST(request: NextRequest) {
 
     // --- Fetch order ---
     const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
+    const orderDoc = await firestoreBreaker.execute(
+      () => orderRef.get(),
+      () => null
+    );
 
-    if (!orderDoc.exists) {
+    if (!orderDoc || !orderDoc.exists) {
       return NextResponse.json(
         { error: 'Order not found.' },
         { status: 404 }
@@ -121,7 +126,7 @@ export async function POST(request: NextRequest) {
       if (feedback) ratingUpdate['rating.supplierFeedback'] = feedback;
     }
 
-    await orderRef.update(ratingUpdate);
+    batchWriter.update('orders', orderId, ratingUpdate);
 
     // --- Recalculate and update the rated party's average rating ---
     // If customer rated, update supplier's average. If supplier rated, update customer's average.
@@ -159,13 +164,13 @@ export async function POST(request: NextRequest) {
       // Update the rated entity's rating
       if (ratedBy === 'customer' && order.supplierId) {
         // Update supplier rating
-        await adminDb.collection('suppliers').doc(order.supplierId).update({
+        batchWriter.update('suppliers', order.supplierId as string, {
           'rating.average': newAverage,
           'rating.count': ratingCount,
         });
       } else if (ratedBy === 'supplier' && order.customerId) {
         // Update customer (user) rating
-        await adminDb.collection('users').doc(order.customerId).update({
+        batchWriter.update('users', order.customerId as string, {
           'rating.average': newAverage,
           'rating.count': ratingCount,
         });

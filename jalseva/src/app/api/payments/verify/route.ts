@@ -9,6 +9,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/razorpay';
+import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
 
 // ---------------------------------------------------------------------------
 // POST - Verify Razorpay payment signature
@@ -62,15 +64,11 @@ export async function POST(request: NextRequest) {
       );
 
       // Update order with failed payment status
-      try {
-        await adminDb.collection('orders').doc(orderId).update({
-          'payment.status': 'failed',
-          'payment.razorpayPaymentId': razorpay_payment_id,
-          updatedAt: new Date().toISOString(),
-        });
-      } catch (updateError) {
-        console.error('[POST /api/payments/verify] Failed to update order payment status:', updateError);
-      }
+      batchWriter.update('orders', orderId, {
+        'payment.status': 'failed',
+        'payment.razorpayPaymentId': razorpay_payment_id,
+        updatedAt: new Date().toISOString(),
+      });
 
       return NextResponse.json(
         {
@@ -83,9 +81,12 @@ export async function POST(request: NextRequest) {
 
     // --- Verify order exists ---
     const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await orderRef.get();
+    const orderDoc = await firestoreBreaker.execute(
+      () => orderRef.get(),
+      () => null
+    );
 
-    if (!orderDoc.exists) {
+    if (!orderDoc || !orderDoc.exists) {
       return NextResponse.json(
         { error: 'Order not found.' },
         { status: 404 }
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     // --- Update order payment status ---
     const now = new Date().toISOString();
 
-    await orderRef.update({
+    batchWriter.update('orders', orderId, {
       'payment.status': 'paid',
       'payment.razorpayPaymentId': razorpay_payment_id,
       'payment.transactionId': razorpay_payment_id,
@@ -114,7 +115,8 @@ export async function POST(request: NextRequest) {
     });
 
     // --- Record payment in payments collection for auditing ---
-    await adminDb.collection('payments').add({
+    const paymentDocId = `pay_${orderId}_${Date.now()}`;
+    batchWriter.set('payments', paymentDocId, {
       orderId,
       customerId: order.customerId,
       supplierId: order.supplierId || null,
