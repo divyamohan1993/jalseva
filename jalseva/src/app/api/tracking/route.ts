@@ -41,7 +41,13 @@ wireCoalescer();
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: unknown;
+    try { body = await request.json(); } catch {
+      return NextResponse.json({ error: 'Invalid or missing JSON body.' }, { status: 400 });
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object.' }, { status: 400 });
+    }
     const { orderId, supplierId, location } = body as {
       orderId: string;
       supplierId: string;
@@ -157,7 +163,11 @@ export async function POST(request: NextRequest) {
     hotCache.set(`tracking:${orderId}`, trackingInfo, 30);
 
     // --- Update geohash spatial index ---
+    // Merge with existing indexed data to preserve metadata (verificationStatus,
+    // waterTypes, etc.) that geohash lookup filters depend on.
+    const existingEntry = supplierIndex.get(supplierId);
     supplierIndex.upsert(supplierId, location.lat, location.lng, {
+      ...existingEntry?.data,
       isOnline: true,
       lastTrackingUpdate: Date.now(),
     });

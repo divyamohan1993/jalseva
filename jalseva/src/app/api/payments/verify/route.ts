@@ -11,7 +11,6 @@ import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/razorpay';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
 import { batchWriter } from '@/lib/batch-writer';
-import { hotCache } from '@/lib/cache';
 
 // ---------------------------------------------------------------------------
 // POST - Verify Razorpay payment signature
@@ -19,7 +18,13 @@ import { hotCache } from '@/lib/cache';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: unknown;
+    try { body = await request.json(); } catch {
+      return NextResponse.json({ error: 'Invalid or missing JSON body.' }, { status: 400 });
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object.' }, { status: 400 });
+    }
     const {
       razorpay_order_id,
       razorpay_payment_id,
@@ -80,27 +85,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Verify order exists (L1 cache first to avoid Firestore latency) ---
-    const orderCacheKey = `order:${orderId}`;
-    let order = hotCache.get(orderCacheKey) as Record<string, unknown> | undefined;
+    // --- Verify order exists (always read from Firestore for payment verification) ---
+    // Bypass hotCache: create-order writes razorpayOrderId asynchronously via
+    // batchWriter, so the cached entry may still contain stale payment data
+    // within its TTL window, causing valid callbacks to be rejected.
+    const orderRef = adminDb.collection('orders').doc(orderId);
+    const orderDoc = await firestoreBreaker.execute(
+      () => orderRef.get(),
+      () => null
+    );
 
-    if (!order) {
-      const orderRef = adminDb.collection('orders').doc(orderId);
-      const orderDoc = await firestoreBreaker.execute(
-        () => orderRef.get(),
-        () => null
+    if (!orderDoc || !orderDoc.exists) {
+      return NextResponse.json(
+        { error: 'Order not found.' },
+        { status: 404 }
       );
-
-      if (!orderDoc || !orderDoc.exists) {
-        return NextResponse.json(
-          { error: 'Order not found.' },
-          { status: 404 }
-        );
-      }
-
-      order = orderDoc.data()!;
-      hotCache.set(orderCacheKey, order, 120);
     }
+
+    const order = orderDoc.data()!;
 
     // Verify the Razorpay order ID matches
     const orderPayment = order.payment as Record<string, unknown> | undefined;
@@ -116,7 +118,6 @@ export async function POST(request: NextRequest) {
     // before returning success to the client.
     const now = new Date().toISOString();
     const paymentDocId = `pay_${orderId}_${Date.now()}`;
-    const orderRef = adminDb.collection('orders').doc(orderId);
 
     await firestoreBreaker.execute(async () => {
       const batch = adminDb.batch();

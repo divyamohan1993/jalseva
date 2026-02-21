@@ -19,7 +19,13 @@ import { hotCache } from '@/lib/cache';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    let body: unknown;
+    try { body = await request.json(); } catch {
+      return NextResponse.json({ error: 'Invalid or missing JSON body.' }, { status: 400 });
+    }
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object.' }, { status: 400 });
+    }
     const { orderId, amount, currency = 'INR' } = body as {
       orderId: string;
       amount: number;
@@ -105,6 +111,10 @@ export async function POST(request: NextRequest) {
       'payment.amount': amount,
       updatedAt: new Date().toISOString(),
     });
+
+    // Invalidate cached order so payment verification reads fresh data
+    // from Firestore instead of seeing a stale entry without razorpayOrderId
+    hotCache.delete(orderCacheKey);
 
     return NextResponse.json({
       success: true,

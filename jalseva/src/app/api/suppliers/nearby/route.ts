@@ -99,13 +99,18 @@ export async function GET(request: NextRequest) {
         .sort((a, b) => a!.distance - b!.distance)
         .slice(0, limit) as Array<{ id: string; distance: number; [key: string]: unknown }>;
 
-      return NextResponse.json({
-        success: true,
-        suppliers: nearbySuppliers,
-        count: nearbySuppliers.length,
-        source: 'geohash-index',
-        searchParams: { lat, lng, radiusKm, waterType: waterType || 'all' },
-      });
+      // Only return geohash results if we found candidates; a partially warmed
+      // index (entries exist for other regions but not this area) should fall
+      // through to the Firestore query rather than returning empty results.
+      if (nearbySuppliers.length > 0) {
+        return NextResponse.json({
+          success: true,
+          suppliers: nearbySuppliers,
+          count: nearbySuppliers.length,
+          source: 'geohash-index',
+          searchParams: { lat, lng, radiusKm, waterType: waterType || 'all' },
+        });
+      }
     }
 
     // --- Fallback: Firestore query + Haversine scan (cold start) ---

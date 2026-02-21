@@ -156,7 +156,7 @@ export function getCellsForRadius(lat: number, lng: number, radiusKm: number): s
 
   const centerHash = encodeGeohash(lat, lng, precision);
 
-  if (radiusKm <= 5) {
+  if (radiusKm <= 3.5) {
     // 9 cells (center + 8 neighbors) covers ~3.6km radius at precision 6
     return getNeighbors(centerHash);
   }
