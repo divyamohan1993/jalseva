@@ -338,7 +338,7 @@ function BottomNav({ active }: { active: string }) {
   ];
 
   return (
-    <nav className="bottom-nav shadow-lg">
+    <nav className="bottom-nav shadow-lg" role="navigation" aria-label="Main navigation">
       {navItems.map((item) => {
         const isActive = active === item.key;
         const Icon = item.icon;
@@ -346,6 +346,8 @@ function BottomNav({ active }: { active: string }) {
           <button
             key={item.key}
             onClick={() => router.push(item.path)}
+            aria-label={`${item.label} - ${item.hindi}`}
+            aria-current={isActive ? 'page' : undefined}
             className={`bottom-nav-item ${isActive ? 'active' : ''}`}
           >
             <Icon
@@ -594,18 +596,18 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* ============== Navbar ============== */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 safe-top">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 safe-top" role="banner">
         <div className="flex items-center justify-between px-4 h-16">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-water rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-water rounded-xl flex items-center justify-center" aria-hidden="true">
               <Droplets className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-gray-900 leading-tight">
                 JalSeva
               </h1>
-              <p className="text-[10px] text-gray-400 leading-none -mt-0.5">
+              <p className="text-[10px] text-gray-400 leading-none -mt-0.5" aria-hidden="true">
                 जलसेवा
               </p>
             </div>
@@ -616,6 +618,7 @@ export default function HomePage() {
             {/* Language toggle */}
             <button
               onClick={toggleLanguage}
+              aria-label={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
               className="flex items-center gap-1 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors min-h-[44px]"
             >
               <Globe className="w-4 h-4 text-gray-500" />
@@ -629,6 +632,7 @@ export default function HomePage() {
               onClick={() =>
                 user ? router.push('/profile') : setShowLoginModal(true)
               }
+              aria-label={user ? 'View profile' : 'Login'}
               className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center hover:bg-blue-100 transition-colors"
             >
               {user ? (
@@ -644,7 +648,7 @@ export default function HomePage() {
       </header>
 
       {/* ============== Main Content ============== */}
-      <main className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
+      <main id="main-content" className="px-4 pt-4 space-y-4 max-w-lg mx-auto" role="main">
         {/* --- Location Card --- */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

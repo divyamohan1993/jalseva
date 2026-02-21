@@ -190,12 +190,13 @@ export async function POST(request: NextRequest) {
             }
           }
         } else {
-          // Fallback: Firestore scan (cold start)
+          // Fallback: Firestore scan (cold start) - capped to prevent unbounded reads
           const suppliersSnapshot = await adminDb
             .collection('suppliers')
             .where('isOnline', '==', true)
             .where('waterTypes', 'array-contains', waterType)
             .where('verificationStatus', '==', 'verified')
+            .limit(500)
             .get();
 
           suppliersSnapshot.forEach((doc) => {

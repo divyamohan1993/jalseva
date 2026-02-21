@@ -10,16 +10,16 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const manifest = {
-    name: 'JalSeva - Water Delivery',
+    name: 'JalSeva - Water Delivery | जलसेवा - पानी डिलीवरी',
     short_name: 'JalSeva',
-    description: 'Order water delivery in minutes',
+    description: 'Order water delivery in minutes. घर बैठे पानी मंगाएं।',
     start_url: '/',
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#0066FF',
     theme_color: '#0066FF',
     categories: ['utilities', 'lifestyle'],
-    lang: 'en-IN',
+    lang: 'hi-IN',
     dir: 'ltr',
     scope: '/',
     prefer_related_applications: false,

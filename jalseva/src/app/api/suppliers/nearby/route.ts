@@ -128,6 +128,9 @@ export async function GET(request: NextRequest) {
       query = query.where('waterTypes', 'array-contains', waterType);
     }
 
+    // Hard cap to prevent unbounded collection scans at 50K RPS
+    query = query.limit(500);
+
     const snapshot = await firestoreBreaker.execute(
       () => query.get(),
       () => ({ docs: [], forEach: () => {} } as unknown as FirebaseFirestore.QuerySnapshot)

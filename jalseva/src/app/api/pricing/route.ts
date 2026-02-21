@@ -96,11 +96,26 @@ export async function GET(request: NextRequest) {
       if (zoneData.demandLevel) demandLevel = zoneData.demandLevel as DemandLevel;
     }
 
-    // Try to get real-time demand level from Redis
-    const redisDemandLevel = await getDemandLevel(zone);
-    if (redisDemandLevel) {
-      demandLevel = redisDemandLevel;
+    // Try to get real-time demand level (L1 cache first, then Redis with timeout)
+    const demandCacheKey = `demand:${zone}`;
+    const cachedDemand = hotCache.get(demandCacheKey) as DemandLevel | undefined;
+    if (cachedDemand) {
+      demandLevel = cachedDemand;
       surgeMultiplier = SURGE_MULTIPLIERS[demandLevel];
+    } else {
+      try {
+        const redisDemandLevel = await Promise.race([
+          getDemandLevel(zone),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 200)),
+        ]);
+        if (redisDemandLevel) {
+          demandLevel = redisDemandLevel;
+          surgeMultiplier = SURGE_MULTIPLIERS[demandLevel];
+          hotCache.set(demandCacheKey, demandLevel, 60);
+        }
+      } catch {
+        // Redis unavailable - use default demand level
+      }
     }
 
     // --- Calculate price ---

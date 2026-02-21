@@ -535,6 +535,72 @@
   overflow: auto !important;
 }
 
+/* ===== Accessibility: Reduced Motion ===== */
+/* Respects user preference for reduced animations (low-end devices, motion sensitivity) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-pulse,
+  .animate-spin,
+  .animate-bounce,
+  .float-animation,
+  .slide-in-bottom {
+    animation: none !important;
+  }
+}
+
+/* ===== Accessibility: Screen Reader Only ===== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ===== RTL Support for Urdu/Sindhi ===== */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .bottom-nav {
+  direction: rtl;
+}
+
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* ===== Data Saver Mode ===== */
+@media (prefers-reduced-data: reduce) {
+  img {
+    image-rendering: pixelated;
+  }
+}
+
+/* ===== High Contrast Mode ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-primary-500: #0044CC;
+  }
+
+  .text-gray-400,
+  .text-gray-500 {
+    color: #374151 !important;
+  }
+}
+
 /* Print styles */
 @media print {
   .no-print {

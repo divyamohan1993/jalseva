@@ -113,10 +113,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Calculate ETA ---
+    // --- Calculate ETA (use cached or Haversine, async Maps update) ---
     const deliveryLocation = order.deliveryLocation as GeoLocation;
-    const etaResult = await getETA(location, deliveryLocation);
     const distanceMeters = haversineDistance(location, deliveryLocation);
+
+    // Check L1 cache for recent ETA (avoids synchronous Maps API call)
+    const etaCacheKey = `eta:${orderId}`;
+    const cachedEta = hotCache.get(etaCacheKey) as { eta: number; distance: number; polyline?: string } | undefined;
+
+    // Use Haversine-based ETA immediately (sub-microsecond), update with Maps API asynchronously
+    let etaResult: { eta: number; distance: number; polyline?: string };
+    if (cachedEta) {
+      etaResult = cachedEta;
+    } else {
+      // Fast Haversine fallback: ~30 km/h city speed
+      etaResult = {
+        eta: Math.round(distanceMeters / 8.33),
+        distance: Math.round(distanceMeters),
+      };
+    }
+
+    // Fire-and-forget: fetch accurate Maps API ETA and cache it (non-blocking)
+    getETA(location, deliveryLocation)
+      .then((mapsResult) => {
+        hotCache.set(etaCacheKey, mapsResult, 60);
+      })
+      .catch(() => {});
 
     // --- Build tracking info ---
     const trackingInfo: TrackingInfo = {
