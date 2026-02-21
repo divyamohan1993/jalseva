@@ -200,6 +200,12 @@ export async function GET(request: NextRequest) {
       if (status) {
         skipQuery = skipQuery.where('verificationStatus', '==', status);
       }
+      if (isOnline !== null && isOnline !== undefined) {
+        skipQuery = skipQuery.where('isOnline', '==', isOnline === 'true');
+      }
+      if (waterType) {
+        skipQuery = skipQuery.where('waterTypes', 'array-contains', waterType);
+      }
 
       const skipSnapshot = await skipQuery
         .orderBy('createdAt', 'desc')

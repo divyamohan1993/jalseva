@@ -62,11 +62,15 @@ export async function POST(request: NextRequest) {
       );
 
       // Update order with failed payment status
-      await adminDb.collection('orders').doc(orderId).update({
-        'payment.status': 'failed',
-        'payment.razorpayPaymentId': razorpay_payment_id,
-        updatedAt: new Date().toISOString(),
-      });
+      try {
+        await adminDb.collection('orders').doc(orderId).update({
+          'payment.status': 'failed',
+          'payment.razorpayPaymentId': razorpay_payment_id,
+          updatedAt: new Date().toISOString(),
+        });
+      } catch (updateError) {
+        console.error('[POST /api/payments/verify] Failed to update order payment status:', updateError);
+      }
 
       return NextResponse.json(
         {

@@ -54,7 +54,7 @@ export async function GET(
       userProfile,
     });
   } catch (error) {
-    console.error(`[GET /api/suppliers/unknown] Error:`, error);
+    console.error('[GET /api/suppliers] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while fetching supplier.' },
       { status: 500 }
@@ -173,7 +173,7 @@ export async function PUT(
       supplier: { id: updatedDoc.id, ...updatedDoc.data() },
     });
   } catch (error) {
-    console.error(`[PUT /api/suppliers/unknown] Error:`, error);
+    console.error('[PUT /api/suppliers] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while updating supplier.' },
       { status: 500 }
@@ -268,7 +268,7 @@ export async function PATCH(
       message: `Supplier verification status updated to '${verificationStatus}'.`,
     });
   } catch (error) {
-    console.error(`[PATCH /api/suppliers/unknown] Error:`, error);
+    console.error('[PATCH /api/suppliers] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while updating verification status.' },
       { status: 500 }

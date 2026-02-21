@@ -12,7 +12,6 @@ import type {
   PaymentMethod,
   GeoLocation,
   OrderPrice,
-  Order,
 } from '@/types';
 
 // ---------------------------------------------------------------------------
@@ -210,21 +209,21 @@ export async function POST(request: NextRequest) {
         const orderId = orderRef.id;
         const now = new Date().toISOString();
 
-        const order: Order & { nearbySupplierIds: string[] } = {
+        const order = {
           id: orderId,
           customerId,
           waterType,
           quantityLitres,
           price: zonedPrice,
-          status: 'searching',
+          status: 'searching' as const,
           deliveryLocation,
           payment: {
             method: paymentMethod,
-            status: 'pending',
+            status: 'pending' as const,
             amount: zonedPrice.total,
           },
           nearbySupplierIds: nearbySuppliers.map((s) => s.id),
-          createdAt: now as unknown as Date,
+          createdAt: now,
         };
 
         await orderRef.set(order);

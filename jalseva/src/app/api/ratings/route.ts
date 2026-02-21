@@ -125,8 +125,6 @@ export async function POST(request: NextRequest) {
 
     // --- Recalculate and update the rated party's average rating ---
     // If customer rated, update supplier's average. If supplier rated, update customer's average.
-    const _ratedEntityCollection =
-      ratedBy === 'customer' ? 'suppliers' : 'users';
     const ratedEntityId =
       ratedBy === 'customer' ? order.supplierId : order.customerId;
     const ratingField =
@@ -146,16 +144,15 @@ export async function POST(request: NextRequest) {
 
       ratingsSnapshot.forEach((doc) => {
         const orderData = doc.data();
-        const orderRating = orderData.rating?.[ratingField];
+        // For the current order, use the just-submitted rating since the
+        // Firestore query may not yet reflect the update we made above.
+        const orderRating =
+          doc.id === orderId ? rating : orderData.rating?.[ratingField];
         if (typeof orderRating === 'number') {
           totalRating += orderRating;
           ratingCount++;
         }
       });
-
-      // Include the current rating
-      totalRating += rating;
-      ratingCount++;
 
       const newAverage = parseFloat((totalRating / ratingCount).toFixed(2));
 

@@ -117,10 +117,7 @@ export function useTracking(orderId?: string): UseTrackingReturn {
     );
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetOrderId, // Also sync back into the order store so other parts of the app
-          // can read tracking without mounting this hook.
-          updateTracking]);
+  }, [targetOrderId, updateTracking]);
 
   // --------------------------------------------------------------------------
   // Client-side ETA countdown
@@ -147,7 +144,7 @@ export function useTracking(orderId?: string): UseTrackingReturn {
     }, ETA_TICK_INTERVAL);
 
     return () => clearInterval(timer);
-  }, []); // restart when location updates
+  }, [supplierLocation]);
 
   // --------------------------------------------------------------------------
   // Public API

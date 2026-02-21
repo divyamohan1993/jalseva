@@ -79,7 +79,7 @@ export async function GET(
       { status: 404 }
     );
   } catch (error) {
-    console.error(`[GET /api/orders/unknown] Error:`, error);
+    console.error('[GET /api/orders] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while fetching order.' },
       { status: 500 }
@@ -240,7 +240,7 @@ export async function PUT(
       demo: true,
     });
   } catch (error) {
-    console.error(`[PUT /api/orders/unknown] Error:`, error);
+    console.error('[PUT /api/orders] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error while updating order.' },
       { status: 500 }

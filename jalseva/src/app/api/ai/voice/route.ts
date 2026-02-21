@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('[POST /api/ai/voice] Error:', error);
-    // Return a safe fallback instead of 500
+    // Return a fallback with success:false so the client knows AI failed
     return NextResponse.json({
-      success: true,
+      success: false,
       intent: {
         waterType: 'tanker',
         quantity: 500,

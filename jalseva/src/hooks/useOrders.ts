@@ -148,8 +148,7 @@ export function useOrders() {
     );
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.role, currentOrder?.id, setOrders, setLoading, user, currentOrder, setCurrentOrder]);
+  }, [user?.id, user?.role, currentOrder?.id, setOrders, setLoading, setCurrentOrder]);
 
   return { orders, currentOrder, loading };
 }

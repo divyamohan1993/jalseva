@@ -11,7 +11,7 @@ import type { GeoLocation } from '@/types';
 
 export interface LocationPickerProps {
   value?: GeoLocation;
-  onChange?: (location: GeoLocation) => void;
+  onChange?: (location: GeoLocation | undefined) => void;
   placeholder?: string;
   className?: string;
 }
@@ -120,7 +120,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
           </div>
           <button
             onClick={() => {
-              onChange?.(undefined as unknown as GeoLocation);
+              onChange?.(undefined);
               setManualInput('');
             }}
             className="text-xs text-blue-600 font-medium hover:underline shrink-0"
