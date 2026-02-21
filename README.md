@@ -376,6 +376,19 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 
 ---
 
+## Credits
+
+| Role | Name | Contribution |
+|------|------|-------------|
+| **Owner & Orchestrator** | **Divya Mohan** ([@divyamohan1993](https://github.com/divyamohan1993)) | Project vision, architecture, management, execution & security review (Cybersecurity) |
+| **AI Development Partner** | **Claude** (by Anthropic) | Full-stack code implementation under Divya's direction |
+| Idea & Data Consulting | Jatin | Original idea for the platform; advised on analytics approach (Data Science) |
+| Cloud Consulting | Anshuman | Provided input on infrastructure and deployment (Cloud) |
+| Security Consulting | Ashutosh | Reviewed security and product design aspects (Cybersecurity) |
+| AI Consulting | Kaustuv | Provided input on Gemini integration and demand prediction (AI) |
+
+---
+
 ## License
 
 [ISC License](LICENSE) — Copyright (c) 2026 Divya Mohan
@@ -400,5 +413,5 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 ---
 
 <p align="center">
-  Made with &#10084; for Bharat
+  Made with &#10084; for Bharat by Divya Mohan
 </p>

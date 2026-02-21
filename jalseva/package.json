@@ -18,7 +18,7 @@
     "nextjs",
     "pwa"
   ],
-  "author": "JalSeva",
+  "author": "Divya Mohan (divyamohan1993)",
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^1.42.0",
