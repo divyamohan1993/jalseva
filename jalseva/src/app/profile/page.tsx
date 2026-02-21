@@ -29,6 +29,8 @@ import {
   Bell,
   HelpCircle,
   Droplets,
+  FlaskConical,
+  Repeat,
 } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -682,11 +684,32 @@ export default function ProfilePage() {
           />
         </motion.div>
 
-        {/* Menu items */}
+        {/* Services */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+        >
+          <Card shadow="sm" padding="sm">
+            <MenuItem
+              icon={Repeat}
+              label={t('subscriptions.title')}
+              onClick={() => router.push('/subscriptions')}
+            />
+            <div className="h-px bg-gray-100 mx-4" />
+            <MenuItem
+              icon={FlaskConical}
+              label={t('quality.title')}
+              onClick={() => router.push('/quality')}
+            />
+          </Card>
+        </motion.div>
+
+        {/* Menu items */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
         >
           <Card shadow="sm" padding="sm">
             <MenuItem
@@ -722,7 +745,7 @@ export default function ProfilePage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
         >
           <Card shadow="sm" padding="sm">
             <MenuItem

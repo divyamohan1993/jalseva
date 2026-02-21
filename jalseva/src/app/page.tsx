@@ -23,6 +23,9 @@ import {
   X,
   Loader2,
   Navigation,
+  FlaskConical,
+  Repeat,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
@@ -1005,6 +1008,44 @@ export default function HomePage() {
               {t('home.needLogin')}
             </p>
           )}
+        </motion.div>
+
+        {/* --- Feature Discovery Cards --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="grid grid-cols-2 gap-3 pb-4"
+        >
+          <button
+            onClick={() => router.push('/subscriptions')}
+            className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-4 text-left transition-all active:scale-[0.97] hover:shadow-md"
+          >
+            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center mb-3">
+              <Repeat className="w-5 h-5 text-emerald-600" />
+            </div>
+            <p className="text-sm font-bold text-gray-900">{t('subscriptions.title')}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">{t('subscriptions.bannerTitle')}</p>
+            <div className="flex items-center gap-1 mt-2 text-emerald-600">
+              <span className="text-[10px] font-semibold">{t('subscriptions.subtitle')}</span>
+              <ChevronRight className="w-3 h-3" />
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push('/quality')}
+            className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl p-4 text-left transition-all active:scale-[0.97] hover:shadow-md"
+          >
+            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mb-3">
+              <FlaskConical className="w-5 h-5 text-purple-600" />
+            </div>
+            <p className="text-sm font-bold text-gray-900">{t('quality.title')}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">{t('quality.areaScore')}</p>
+            <div className="flex items-center gap-1 mt-2 text-purple-600">
+              <span className="text-[10px] font-semibold">{t('quality.subtitle')}</span>
+              <ChevronRight className="w-3 h-3" />
+            </div>
+          </button>
         </motion.div>
       </main>
 

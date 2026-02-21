@@ -53,6 +53,7 @@ function docToSupplier(id: string, data: Record<string, any>): Supplier {
     waterTypes: (data.waterTypes as WaterType[]) ?? [],
     rating: data.rating ?? { average: 0, count: 0 },
     bankDetails: data.bankDetails ?? undefined,
+    supportsSubscription: data.supportsSubscription ?? false,
   };
 }
 
