@@ -1,45 +1,75 @@
 <p align="center">
-  <img src="jalseva/public/icons/icon-192x192.png" alt="JalSeva Logo" width="96" height="96" />
+  <img src="jalseva/public/icons/icon-192.png" alt="JalSeva Logo" width="120" height="120" />
 </p>
 
 <h1 align="center">JalSeva (जलसेवा)</h1>
 
 <p align="center">
-  <strong>Uber for Water Tankers — built for Bharat</strong>
-</p>
-
-<p align="center">
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#features">Features</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#deployment">Deployment</a> ·
-  <a href="#scaling">Scaling</a> ·
-  <a href="#api-reference">API</a> ·
-  <a href="#contributing">Contributing</a>
+  <sub>A <a href="https://dmj.one">dmj.one</a> project — Team Dhurandhar | SPRINT 2026</sub>
 </p>
 
 ---
 
-**JalSeva** is an open-source digital marketplace that connects water-tanker suppliers with customers across India. Real-time booking, live GPS tracking, dynamic pricing, and UPI payments — in a voice-first, icon-heavy PWA designed for users with limited literacy.
+## The Problem
 
-> Supports 22 Indian languages via Gemini AI. Accessible by default — Hindi locale, ARIA labels, RTL-ready, `prefers-reduced-motion` support.
+163 million Indians lack access to clean water. In thousands of towns across Bharat, families depend on water tankers — but the system is broken. No transparency. No tracking. No accountability. You call a number, hope someone picks up, and wait. Sometimes for hours. Sometimes they never come.
+
+**We thought we could do better.**
+
+---
+
+## The Solution
+
+**JalSeva** is a complete water tanker delivery platform. Think of it as three things:
+
+1. **A booking app** — customers order water in 3 taps, or just speak in their language
+2. **A business tool** — suppliers get real-time orders, route navigation, and earnings analytics
+3. **An operations hub** — admins verify suppliers, manage commissions, and monitor every delivery live
+
+But here's the thing — **these are not three separate apps.** This is one platform. One codebase. One `docker compose up`.
+
+It just works.
+
+---
+
+## What Makes It Different
+
+Most apps are built for people who speak English, read well, and have fast phones. That's not Bharat.
+
+JalSeva is **voice-first**. Speak in Hindi, Tamil, Bengali — any of 22 Indian languages — and Gemini AI handles the rest. The interface is icon-driven, screen-reader accessible, and works offline as a PWA.
+
+> Your grandmother who can't read English? She can order water with her voice. That's the bar we set.
+
+---
+
+## Three Taps. That's It.
+
+**Tap one** — pick your location.
+**Tap two** — choose your tanker size.
+**Tap three** — pay with UPI.
+
+Then watch your tanker arrive in real time on the map. Get notified at every step. Rate the delivery when it's done.
+
+For suppliers, it's just as simple — accept orders, follow navigation, get paid. No paperwork. No middlemen.
 
 ---
 
 ## Features
 
-| Area | Highlights |
+| | What It Does |
 |---|---|
-| **Customer App** | Voice ordering via Gemini AI, 3-tap booking, live map tracking, UPI payments |
-| **Supplier Dashboard** | Real-time order notifications, route navigation, earnings analytics |
-| **Admin Panel** | Supplier verification, commission management, live ops map, analytics |
-| **WhatsApp Bot** | Conversational ordering in any Indian language |
-| **ONDC / Beckn** | Open Network for Digital Commerce integration (staging sandbox) |
-| **Accessibility** | `lang="hi-IN"`, skip-to-content, screen reader support, RTL, reduced motion |
+| **Customer App** | Voice ordering, 3-tap booking, live GPS tracking, UPI payments |
+| **Supplier Dashboard** | Real-time notifications, route navigation, earnings analytics |
+| **Admin Panel** | Supplier verification, commission management, live ops map |
+| **WhatsApp Bot** | Order water through a conversation — in any Indian language |
+| **ONDC / Beckn** | Open Network for Digital Commerce integration |
+| **Accessibility** | Hindi-first, ARIA labels, screen reader support, RTL-ready, reduced motion |
 
 ---
 
-## Tech Stack
+## Under the Hood
+
+Great products hide their complexity. Here's what's running beneath the surface:
 
 | Layer | Technology |
 |---|---|
@@ -97,22 +127,35 @@ Resilience layers at every level:
   └── Graceful shutdown (30s drain, parallel flushes, zero-downtime)
 ```
 
-### Performance Features
+### Performance
 
-| Feature | Impact |
+We obsessed over every millisecond:
+
+| What We Built | Why It Matters |
 |---|---|
-| **Cluster mode** | One worker per CPU core via `server.cluster.js` — 2-4x throughput |
-| **L1 cache** | In-process cache on auth, pricing, payments — avoids Firestore/Redis round trips |
-| **Haversine tracking** | Sub-millisecond distance calculation (replaced blocking Maps API) |
-| **Circuit breakers** | Prevents cascade failures; 1-probe half-open recovery with backoff |
-| **Batch writer** | Coalesces Firestore writes; 50K buffer cap with backpressure |
-| **Bounded queries** | All Firestore scans use `.limit()` — no unbounded reads |
-| **Nginx caching** | Static assets cached 1 year; pricing API cached 30s at edge |
-| **Gzip compression** | 60-80% payload reduction on text responses |
+| **Cluster mode** | One worker per CPU core — 2-4x throughput, automatic |
+| **L1 cache** | In-process cache bypasses Firestore and Redis entirely for hot paths |
+| **Haversine tracking** | Sub-millisecond distance math — replaced blocking Maps API calls |
+| **Circuit breakers** | One service goes down? Everything else keeps running |
+| **Batch writer** | 50K write buffer with backpressure — Firestore never chokes |
+| **Bounded queries** | Every Firestore scan has a `.limit()` — no runaway reads, ever |
+| **Nginx edge cache** | Static assets cached 1 year. Pricing API cached 30s at edge |
+| **Gzip compression** | 60-80% smaller payloads on every response |
 
 ---
 
-## Quick Start
+## Getting Started
+
+Four commands. That's all.
+
+```bash
+git clone https://github.com/divyamohan1993/jalseva.git
+cd jalseva/jalseva
+cp .env.example .env    # Add your API keys
+npm install && npm run dev
+```
+
+Open **http://localhost:3000**. You're running JalSeva.
 
 ### Prerequisites
 
@@ -121,43 +164,22 @@ Resilience layers at every level:
 - A Firebase project with Firestore & Auth enabled
 - Google Maps & Gemini API keys
 
-### Installation
-
-```bash
-# Clone
-git clone https://github.com/divyamohan1993/jalseva.git
-cd jalseva/jalseva
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys (see Environment Variables below)
-
-# Start dev server
-npm run dev
-```
-
-The app runs at **http://localhost:3000**.
-
-### Docker (Single Container)
+### Prefer Docker?
 
 ```bash
 cd jalseva/jalseva
 docker compose up --build
 ```
 
-This starts a single container with cluster mode (auto-detects CPU cores). Suitable for development and single-VM production.
+One container. Cluster mode. Auto-detects your CPU cores. Done.
 
-### Docker (Scaled Mode — Production)
+### Production Scale?
 
 ```bash
-cd jalseva/jalseva
 docker compose --profile scaled up --build
 ```
 
-This starts **Nginx + 4 app containers**, each running cluster mode internally. Handles ~20K+ RPS on a single VM.
+Nginx + 4 app containers. Each running cluster mode internally. **20,000+ requests per second** on a single VM.
 
 ---
 
@@ -256,91 +278,56 @@ All routes are under `/api/`. Authentication is via Firebase Auth token in the `
 
 ---
 
-## Deployment
+## One More Thing.
 
-### Option 1: Single VM (MVP)
+Scaling. The part everyone gets wrong.
 
-Best for: getting started, city-level deployments.
+Most platforms need a rewrite to go from one city to national scale. JalSeva doesn't. **Zero code changes** — every scaling step is just an infrastructure decision:
 
-```bash
-# On your VM (e.g., GCP e2-medium)
-git clone https://github.com/divyamohan1993/jalseva.git
-cd jalseva/jalseva
-cp .env.example .env
-# Fill in .env with your API keys
-
-docker compose up -d --build
-```
-
-The app is live on port 3000. Cluster mode auto-detects your CPU cores.
-
-| VM Type | vCPUs | RAM | Estimated RPS | Cost |
-|---|---|---|---|---|
-| e2-medium | 2 | 4 GB | 5-10K | ~$25/mo |
-| e2-standard-4 | 4 | 16 GB | 15-25K | ~$100/mo |
-
-### Option 2: Scaled Mode (Regional)
-
-Best for: multi-state, higher throughput.
-
-```bash
-docker compose --profile scaled up -d --build
-```
-
-Starts Nginx + 4 app containers. Handles ~20K+ RPS on a single VM.
-
-### Option 3: Multi-VM (National)
-
-Best for: all-India scale, 50K+ RPS.
-
-1. Deploy scaled mode on 2+ VMs
-2. Put a GCP HTTP(S) Load Balancer in front
-3. Add Cloud CDN for static assets (one checkbox)
-4. Upgrade Upstash to Memorystore Redis for <1ms latency
-
-| Setup | RPS | Cost |
+| Scale | Code Change? | What You Do |
 |---|---|---|
+| **1 city** (MVP) | None | Single VM — `docker compose up` |
+| **1 state** | None | Bigger VM |
+| **Multi-state** | None | 2 VMs + load balancer |
+| **National** | None | GKE Autopilot + Memorystore Redis |
+
+Here's what that looks like in practice:
+
+| Setup | Requests/sec | Cost |
+|---|---|---|
+| 1x e2-medium (2 vCPU, 4 GB) | 5-10K | ~$25/mo |
 | 1x e2-standard-4, scaled mode | ~20K | ~$100/mo |
 | 2x e2-standard-4 + GCP LB | ~40-60K | ~$250/mo |
 | GKE Autopilot (auto-scales) | 50K+ | Pay per use |
 
----
+**$25 a month to serve an entire city.** That's the starting point.
 
-## Scaling
+### How?
 
-The architecture is designed to scale from a single $25/mo VM to national-level traffic with **zero code changes**. Every scaling step is an infrastructure decision:
+Eight things, working together:
 
-| Scale | Code Change? | What to Do |
-|---|---|---|
-| MVP (1 city) | No | Single VM, `docker compose up` |
-| 1 state | No | Bigger VM |
-| Multi-state | No | 2 VMs + load balancer |
-| National | No | GKE Autopilot + Memorystore Redis |
-
-### What Makes This Possible
-
-- **Cluster mode** — uses all CPU cores automatically
-- **L1 caching** — reduces external service calls by 80%+
-- **Circuit breakers** — isolated failures, no cascading crashes
-- **Batch writer** — coalesces Firestore writes under load
-- **Bounded queries** — no runaway reads, predictable memory usage
-- **Nginx** — rate limiting, compression, static caching at edge
-- **Graceful shutdown** — zero dropped requests during redeployments
-- **Stateless containers** — scale horizontally by adding more
+- **Cluster mode** — every CPU core is used, automatically
+- **L1 caching** — 80%+ fewer calls to external services
+- **Circuit breakers** — failures stay isolated, never cascade
+- **Batch writer** — Firestore writes coalesce under load
+- **Bounded queries** — no runaway reads, predictable memory
+- **Nginx edge** — rate limiting, compression, static caching
+- **Graceful shutdown** — zero dropped requests during deploys
+- **Stateless containers** — need more throughput? Add another
 
 ---
 
-## Accessibility
+## Built for Everyone
 
-JalSeva is built for Bharat — including users with disabilities, limited literacy, and diverse language needs:
+JalSeva is built for all of Bharat — including users with disabilities, limited literacy, and diverse language needs:
 
-- **Language**: `lang="hi-IN"` default, 22 Indian languages via Gemini AI
-- **Screen readers**: ARIA labels, `role` attributes, `sr-only` text throughout
-- **Keyboard**: Skip-to-content link, logical tab order
-- **Motion**: Respects `prefers-reduced-motion` system setting
-- **RTL**: Ready for Urdu and other right-to-left scripts
-- **Voice-first**: Microphone-based ordering for low-literacy users
-- **Icons**: Large, color-coded visual indicators (green/yellow/red status)
+- **22 languages** — Hindi default, with Gemini AI powering real-time translation
+- **Voice-first** — microphone-based ordering for users who can't read
+- **Screen readers** — ARIA labels, `role` attributes, `sr-only` text throughout
+- **Keyboard navigation** — skip-to-content, logical tab order
+- **Reduced motion** — respects `prefers-reduced-motion` system setting
+- **RTL support** — ready for Urdu and other right-to-left scripts
+- **Icon-driven UI** — large, color-coded visual indicators at every step
 
 ---
 
@@ -349,34 +336,27 @@ JalSeva is built for Bharat — including users with disabilities, limited liter
 ```bash
 cd jalseva/jalseva
 
-# Run tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Lint
-npm run lint
-
-# Build
-npm run build
+npm test             # Run all tests
+npm run test:watch   # Watch mode
+npm run lint         # Lint with Biome
+npm run build        # Production build
 ```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+We'd love your help. Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ---
 
 ## Security
 
-If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md). **Do not open a public issue.**
+Found a vulnerability? Follow our [Security Policy](SECURITY.md). **Do not open a public issue** — email **contact@dmj.one** instead.
 
 ---
 
-## Credits
+## The Team
 
 | Role | Name | Contribution |
 |------|------|-------------|
@@ -413,5 +393,5 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 ---
 
 <p align="center">
-  Made with &#10084; for Bharat by Divya Mohan
+  Made with &#10084; for Bharat by <a href="https://dmj.one">dmj.one</a> — Team Dhurandhar
 </p>

@@ -1,56 +1,55 @@
-# Contributor Covenant Code of Conduct
+# Code of Conduct
 
-## Our Pledge
+JalSeva exists because 163 million people in India don't have reliable access to clean water. That mission is bigger than any one of us.
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, caste, religion, or sexual identity
-and orientation.
+To build something this important, we need a community where everyone — regardless of who they are or where they come from — feels safe to contribute, challenge ideas, and do their best work.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+This is how we do that.
 
-## Our Standards
+---
 
-Examples of behavior that contributes to a positive environment:
+## The Standard
 
-- Using welcoming and inclusive language
-- Being respectful of differing viewpoints and experiences
-- Giving and gracefully accepting constructive feedback
-- Accepting responsibility and apologizing to those affected by our mistakes
-- Focusing on what is best for the community
+**Be excellent to each other.** That means:
 
-Examples of unacceptable behavior:
+- Use welcoming and inclusive language
+- Respect differing viewpoints and experiences
+- Give and gracefully accept constructive feedback
+- Take responsibility — and apologize when you get it wrong
+- Focus on what's best for the community and the mission
 
-- The use of sexualized language or imagery, and sexual attention or advances of any kind
-- Trolling, insulting or derogatory comments, and personal or political attacks
+**What we won't tolerate:**
+
+- Sexualized language or imagery, and unwelcome sexual attention
+- Trolling, insults, derogatory comments, personal or political attacks
 - Public or private harassment
-- Publishing others' private information without their explicit permission
-- Other conduct which could reasonably be considered inappropriate in a professional setting
+- Publishing others' private information without explicit permission
+- Any conduct that would be considered inappropriate in a professional setting
 
-## Enforcement Responsibilities
-
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
-
-## Scope
-
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
+---
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the project maintainers at **divyamohan1993@gmail.com**.
+Community leaders are responsible for clarifying and enforcing these standards. They will take fair corrective action in response to behavior they deem inappropriate, threatening, offensive, or harmful.
 
-All complaints will be reviewed and investigated promptly and fairly.
+### Scope
+
+This Code of Conduct applies in all community spaces — issues, PRs, discussions, and any public space where you represent JalSeva.
+
+### Reporting
+
+If you experience or witness unacceptable behavior, report it to the project maintainers at **contact@dmj.one**. All complaints will be reviewed promptly, fairly, and confidentially.
+
+---
+
+## Why This Matters
+
+We're building technology that serves people who are often overlooked — low-literacy users, rural communities, people who have never used an app before. The way we treat each other in this community should reflect the same care we put into the product.
+
+**Build with respect. Ship with purpose.**
+
+---
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/),
-version 2.1, available at
-[https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
+Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/) v2.1.
