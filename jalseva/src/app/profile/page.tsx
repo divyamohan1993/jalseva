@@ -711,7 +711,7 @@ export default function ProfilePage() {
               icon={HelpCircle}
               label={t('profile.helpSupport')}
               onClick={() => {
-                window.open('mailto:support@jalseva.in?subject=Help%20Request', '_blank');
+                window.open('mailto:contact@dmj.one?subject=Help%20Request', '_blank');
                 toast.info(t('toast.openingEmail'));
               }}
             />

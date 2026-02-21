@@ -1,11 +1,12 @@
 <p align="center">
-  <img src="jalseva/public/icons/icon-192x192.png" alt="JalSeva Logo" width="96" height="96" />
+  <img src="jalseva/public/icons/icon-192.png" alt="JalSeva Logo" width="96" height="96" />
 </p>
 
 <h1 align="center">JalSeva (जलसेवा)</h1>
 
 <p align="center">
-  <strong>Uber for Water Tankers — built for Bharat</strong>
+  <strong>An intelligent water tanker delivery platform for Bharat</strong><br />
+  <sub>A <a href="https://dmj.one">dmj.one</a> project — Team Dhurandhar | SPRINT 2026</sub>
 </p>
 
 <p align="center">
@@ -20,7 +21,7 @@
 
 ---
 
-**JalSeva** is an open-source digital marketplace that connects water-tanker suppliers with customers across India. Real-time booking, live GPS tracking, dynamic pricing, and UPI payments — in a voice-first, icon-heavy PWA designed for users with limited literacy.
+**JalSeva** is an open-source platform that bridges the gap between water-tanker suppliers and customers across India. It provides real-time booking, live GPS tracking, dynamic pricing, and UPI payments — all through a voice-first, icon-driven Progressive Web App designed for accessibility and inclusivity.
 
 > Supports 22 Indian languages via Gemini AI. Accessible by default — Hindi locale, ARIA labels, RTL-ready, `prefers-reduced-motion` support.
 
@@ -413,5 +414,5 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 ---
 
 <p align="center">
-  Made with &#10084; for Bharat by Divya Mohan
+  Made with &#10084; for Bharat by <a href="https://dmj.one">dmj.one</a> — Team Dhurandhar
 </p>

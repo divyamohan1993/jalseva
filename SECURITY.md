@@ -13,7 +13,7 @@ If you discover a security vulnerability in JalSeva, **please do not open a publ
 
 Report it responsibly:
 
-1. **Email:** Send details to **divyamohan1993@gmail.com** with the subject line `[SECURITY] JalSeva Vulnerability Report`.
+1. **Email:** Send details to **contact@dmj.one** with the subject line `[SECURITY] JalSeva Vulnerability Report`.
 2. Include:
    - A description of the vulnerability
    - Steps to reproduce
