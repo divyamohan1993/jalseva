@@ -72,10 +72,10 @@ EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 ENV PORT=3000
 
-# CLUSTER_WORKERS=0 means use all CPU cores
-# CLUSTER_WORKERS=1 means single process (original behavior)
-# Set CLUSTER_WORKERS=1 or omit for backwards compatibility
-ENV CLUSTER_WORKERS=1
+# CLUSTER_WORKERS=0 means use all CPU cores (recommended for production)
+# CLUSTER_WORKERS=1 means single process (development only)
+# CLUSTER_WORKERS=N means exactly N workers
+ENV CLUSTER_WORKERS=0
 
 # Start: use cluster mode if CLUSTER_WORKERS != 1, else single process
 CMD ["sh", "-c", "if [ \"$CLUSTER_WORKERS\" = \"1\" ]; then node server.js; else node server.cluster.js; fi"]

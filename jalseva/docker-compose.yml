@@ -7,9 +7,9 @@
 #    - Nginx + 4 app workers via cluster mode in one container
 #    - Handles ~10-20K RPS on a 4-core VM
 #
-# 2. SCALED: `docker compose --profile scaled up --scale app-worker=N`
-#    - Nginx + N separate app containers
-#    - Handles ~5K RPS per container
+# 2. SCALED: `docker compose --profile scaled up`
+#    - Nginx + 4 separate app containers (each using cluster mode internally)
+#    - Handles ~5K RPS per container × 4 = ~20K RPS per VM
 #    - Use for 50K+ RPS across multiple VMs
 #
 # Both modes keep the existing single-container workflow working:
@@ -33,6 +33,7 @@ services:
     environment:
       - NODE_ENV=production
       - CLUSTER_WORKERS=${CLUSTER_WORKERS:-0}
+    stop_grace_period: 35s
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
@@ -65,6 +66,12 @@ services:
     depends_on:
       app-1:
         condition: service_healthy
+      app-2:
+        condition: service_healthy
+      app-3:
+        condition: service_healthy
+      app-4:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
       interval: 15s
@@ -78,6 +85,7 @@ services:
 
   # ---------------------------------------------------------------------------
   # App Replicas (for scaled mode behind Nginx)
+  # All replicas use PORT=3000 inside their own container network namespace.
   # ---------------------------------------------------------------------------
   app-1:
     build:
@@ -95,6 +103,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - INSTANCE_ID=app-1
+    stop_grace_period: 35s
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
@@ -115,15 +124,16 @@ services:
     profiles:
       - scaled
     expose:
-      - "3001"
+      - "3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
-      - PORT=3001
+      - PORT=3000
       - INSTANCE_ID=app-2
+    stop_grace_period: 35s
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -142,15 +152,16 @@ services:
     profiles:
       - scaled
     expose:
-      - "3002"
+      - "3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
-      - PORT=3002
+      - PORT=3000
       - INSTANCE_ID=app-3
+    stop_grace_period: 35s
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -169,15 +180,16 @@ services:
     profiles:
       - scaled
     expose:
-      - "3003"
+      - "3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
-      - PORT=3003
+      - PORT=3000
       - INSTANCE_ID=app-4
+    stop_grace_period: 35s
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3

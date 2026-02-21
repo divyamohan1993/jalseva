@@ -27,7 +27,7 @@ const path = require('node:path');
 const MAX_WORKERS = parseInt(process.env.CLUSTER_WORKERS || '0', 10) || os.cpus().length;
 const RESTART_DELAY_MS = 1000;
 const MAX_RESTART_DELAY_MS = 30000;
-const GRACEFUL_SHUTDOWN_TIMEOUT_MS = parseInt(process.env.SHUTDOWN_TIMEOUT || '10000', 10);
+const GRACEFUL_SHUTDOWN_TIMEOUT_MS = parseInt(process.env.SHUTDOWN_TIMEOUT || '30000', 10);
 
 // ---------------------------------------------------------------------------
 // Primary Process
@@ -46,9 +46,12 @@ if (cluster.isPrimary) {
   }
 
   function forkWorker(index) {
+    // All workers share the same PORT. Node.js cluster module distributes
+    // incoming connections across workers via round-robin (default on Linux).
+    // Previously each worker got PORT+index, meaning only worker 0 received
+    // traffic since Docker only exposes the base port.
     const worker = cluster.fork({
       WORKER_INDEX: index.toString(),
-      PORT: (parseInt(process.env.PORT || '3000', 10) + index).toString(),
     });
     worker._index = index;
     console.log(`[Cluster] Worker ${worker.process.pid} started (index: ${index})`);
