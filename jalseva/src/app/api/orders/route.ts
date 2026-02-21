@@ -241,6 +241,9 @@ export async function POST(request: NextRequest) {
         const orderId = orderRef.id;
         const now = new Date().toISOString();
 
+        // Generate delivery OTP (inspired by Tankerwala/BWSSB verification)
+        const deliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
+
         const order = {
           id: orderId,
           customerId,
@@ -253,6 +256,9 @@ export async function POST(request: NextRequest) {
             method: paymentMethod,
             status: 'pending' as const,
             amount: zonedPrice.total,
+          },
+          deliveryVerification: {
+            otp: deliveryOtp,
           },
           nearbySupplierIds: nearbySuppliers.map((s) => s.id),
           createdAt: now,
@@ -273,6 +279,7 @@ export async function POST(request: NextRequest) {
     // --- Demo mode: create order without Firestore ---
     const orderId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const now = new Date().toISOString();
+    const demoDeliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
 
     const order = {
       id: orderId,
@@ -286,6 +293,9 @@ export async function POST(request: NextRequest) {
         method: paymentMethod,
         status: 'pending' as const,
         amount: price.total,
+      },
+      deliveryVerification: {
+        otp: demoDeliveryOtp,
       },
       createdAt: now,
     };
