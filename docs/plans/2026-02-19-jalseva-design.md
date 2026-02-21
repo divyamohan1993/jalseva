@@ -8,9 +8,9 @@
 
 Every day in India, millions of families wait for water. Not from a tap — from a tanker. They call a number, hope someone picks up, and wait. Sometimes for hours. Sometimes the tanker never comes.
 
-There's no tracking. No pricing transparency. No accountability. And no one is building the technology to fix it.
+There's no tracking. No pricing transparency. No accountability.
 
-**Until now.**
+JalSeva is built to address this gap.
 
 ---
 
@@ -35,7 +35,7 @@ Think of it as three things in one:
 
 ## The Tech Stack
 
-Every technology choice was made for a reason:
+Technology choices and rationale:
 
 | Layer | Technology | Why |
 |---|---|---|
@@ -119,7 +119,7 @@ Request → Nginx rate limit → Circuit breaker → L1 cache → Redis → Fire
 
 ### Customer App (/)
 
-The bar: **your grandmother who can't read English can order water with her voice.**
+Designed for users with limited literacy who can order water using voice commands.
 
 - Big microphone button on home screen for voice ordering
 - Visual water type selection with icons (RO / Mineral / Tanker)
@@ -134,7 +134,7 @@ The bar: **your grandmother who can't read English can order water with her voic
 
 ### Supplier App (/supplier)
 
-Simple. Get orders. Deliver water. Get paid.
+Suppliers receive orders, deliver water, and collect payment.
 
 - Phone OTP signup + document upload (Aadhaar, RC, License)
 - Dashboard: today's orders, earnings, rating score
@@ -146,7 +146,7 @@ Simple. Get orders. Deliver water. Get paid.
 
 ### Admin Panel (/admin)
 
-Complete visibility. Total control.
+Full operational visibility and management controls.
 
 - Supplier approval workflow with document verification
 - Commission management (per region, water type, tier)
@@ -158,7 +158,7 @@ Complete visibility. Total control.
 
 ### WhatsApp Bot
 
-Order water without downloading an app. In any language.
+Allows ordering water without downloading an app, with support for any Indian language.
 
 - Gemini 3 Flash powered conversational ordering
 - Any Indian language supported
@@ -171,7 +171,7 @@ Order water without downloading an app. In any language.
 
 ## Data Model (Firestore)
 
-Clean. Flat. Fast.
+Flat document structure optimized for query performance.
 
 ```
 users/{userId}
@@ -214,7 +214,7 @@ pricing/{zoneId}
 
 ## API Endpoints
 
-19 endpoints. Every one bounded, cached, and circuit-broken.
+19 endpoints, all with bounded queries, caching, and circuit breakers.
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -256,15 +256,13 @@ JalSeva implements both BAP (Buyer App) and BPP (Seller App) on India's Open Net
 | `/cancel` → `/on_cancel` | Cancel the order |
 | `/rating` → `/on_rating` | Rate the service |
 
-Connected to the ONDC Staging sandbox. Production-ready architecture.
-
-**No other water delivery platform has done this yet.** JalSeva will be the first.
+Connected to the ONDC Staging sandbox with production-ready architecture. JalSeva would be among the first water delivery platforms to integrate with ONDC.
 
 ---
 
 ## Revenue Model
 
-Four streams. All built in.
+Four revenue streams, all implemented in the platform.
 
 | Stream | How It Works |
 |---|---|
@@ -277,9 +275,9 @@ Four streams. All built in.
 
 ## Deployment and Scaling
 
-### One More Thing.
+### Scaling Strategy
 
-Here's what most platforms get wrong: they build for one city and then spend months rewriting for scale. JalSeva doesn't need a rewrite. **Zero code changes** between any scaling stage:
+JalSeva requires **zero code changes** between scaling stages:
 
 | Mode | Command | Throughput |
 |---|---|---|
@@ -297,7 +295,7 @@ Here's what most platforms get wrong: they build for one city and then spend mon
 | Multi-state | 2x e2-standard-4 + GCP LB | 40-60K | ~$250/mo |
 | National | GKE Autopilot + Memorystore | 50K+ | Pay per use |
 
-**$25 a month to serve an entire city.** Every step after that is just turning a dial.
+Starting cost is approximately **$25/month** for a single-city MVP deployment.
 
 ### What We Optimized (and How Much It Mattered)
 
@@ -315,7 +313,7 @@ Here's what most platforms get wrong: they build for one city and then spend mon
 
 ## Accessibility
 
-Built for all of Bharat. Not as an afterthought — as a design principle.
+Accessibility is a core design principle, not an afterthought.
 
 | What | How |
 |---|---|

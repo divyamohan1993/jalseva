@@ -8,15 +8,15 @@
 
 The Indian water tanker delivery market is worth **$8.4 billion** and growing at **21% CAGR**.
 
-Yet **70-80% of it is unorganized.** No national player. No technology standard. No one has cracked it.
+**70-80% of the market is unorganized** with no national player and no technology standard.
 
-Here's the landscape — and here's why JalSeva wins.
+Below is the competitive landscape analysis.
 
 ---
 
 ## The Competition
 
-We researched every player in the space. Five categories. Here's what we found.
+Research covers five categories of players in the space.
 
 ### Category 1: Direct Competitors — Water Tanker Apps
 
@@ -100,7 +100,7 @@ Here's the picture that matters. Every competitor's capabilities, side by side:
 | **Voice-First UX** | Microphone primary | — | — | — | IoT button | — | — | — |
 | **Open Source** | ISC License | — | — | — | — | — | — | — |
 
-**No competitor combines even three of JalSeva's six USPs.** Most have zero.
+No competitor combines more than two of JalSeva's six differentiators.
 
 ---
 
@@ -118,7 +118,7 @@ India has 300M+ users with limited literacy. JalSeva's voice-first design — bi
 
 **No water delivery service has integrated with ONDC yet.** JalSeva will be the first water delivery platform on India's Open Network — discoverable by 300K+ ONDC sellers and buyers via Paytm, PhonePe, Google, and other buyer apps.
 
-This isn't a feature. It's a moat.
+This represents a significant first-mover advantage.
 
 ### 4. Technology That's a Generation Ahead
 
@@ -148,7 +148,7 @@ JalSeva runs from **$25/mo** (MVP, one city) to **$250/mo** (multi-state) with *
 
 ## What We Should Steal
 
-Good artists borrow. Great artists steal. Here's what competitors got right that we should learn from:
+Features from competitors worth adopting:
 
 ### Water Quality Verification (from BookWater + GoWatr + BWSSB)
 
@@ -184,7 +184,7 @@ Good artists borrow. Great artists steal. Here's what competitors got right that
 
 ## The Market
 
-The numbers tell the story:
+Key market figures:
 
 | Metric | Value |
 |---|---|
@@ -197,9 +197,7 @@ The numbers tell the story:
 | Average tanker order value | **INR 840** |
 | Industry commission standard | **10-15%** |
 
-An $8.4B market. 70-80% unorganized. Growing at 21%. No national player.
-
-**That's the opportunity.**
+The $8.4B market is 70-80% unorganized, growing at 21% CAGR, with no national player.
 
 ---
 
@@ -227,7 +225,7 @@ An $8.4B market. 70-80% unorganized. Growing at 21%. No national player.
 
 ## The Playbook
 
-Six moves. In order.
+Six prioritized actions:
 
 1. **Launch in Bangalore first.** Highest concentration of competitors validates demand. Our technology superiority will be immediately obvious.
 
