@@ -354,13 +354,19 @@ export async function GET(request: NextRequest) {
 
         if (page > 1) {
           const skipCount = (page - 1) * limit;
+          let skipQuery = adminDb.collection('orders') as FirebaseFirestore.Query;
+          if (customerId) {
+            skipQuery = skipQuery.where('customerId', '==', customerId);
+          } else if (supplierId) {
+            skipQuery = skipQuery.where('supplierId', '==', supplierId);
+          }
+          if (status) {
+            skipQuery = skipQuery.where('status', '==', status);
+          }
+          skipQuery = skipQuery.orderBy('createdAt', 'desc').limit(skipCount);
+
           const skipSnapshot = await firestoreBreaker.execute(
-            () => adminDb
-              .collection('orders')
-              .where(customerId ? 'customerId' : 'supplierId', '==', customerId || supplierId)
-              .orderBy('createdAt', 'desc')
-              .limit(skipCount)
-              .get(),
+            () => skipQuery.get(),
             () => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)
           );
 

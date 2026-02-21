@@ -106,10 +106,14 @@ export class LRUCache<T = unknown> {
   /** Remove expired entries (runs periodically) */
   private evictExpired(): void {
     const now = Date.now();
+    const expired: string[] = [];
     for (const [key, entry] of this.map) {
       if (now > entry.expiresAt) {
-        this.map.delete(key);
+        expired.push(key);
       }
+    }
+    for (const key of expired) {
+      this.map.delete(key);
     }
   }
 }

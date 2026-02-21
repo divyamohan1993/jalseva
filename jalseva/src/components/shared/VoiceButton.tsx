@@ -130,7 +130,20 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
   }, [stopRecognition]);
 
   if (!isSupported) {
-    return null;
+    return (
+      <div className={cn('relative inline-flex items-center justify-center', className)}>
+        <button
+          disabled
+          className={cn(
+            'relative z-10 rounded-full flex items-center justify-center shadow-lg bg-gray-300 text-gray-500 cursor-not-allowed',
+            config.button,
+          )}
+          aria-label="Voice input not supported in this browser"
+        >
+          <MicOff size={config.icon} />
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -197,6 +210,7 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
         <motion.p
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
+          aria-live="polite"
           className="absolute -bottom-6 text-xs text-red-500 font-medium whitespace-nowrap"
         >
           Listening...

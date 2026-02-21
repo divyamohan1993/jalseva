@@ -3,7 +3,7 @@
 // =============================================================================
 // Provides AI-powered features: voice command processing, demand prediction,
 // text translation (replaces Bhashini API), and WhatsApp chatbot responses.
-// Uses gemini-2.0-flash for all AI tasks including multilingual translation
+// Uses gemini-3.0-flash for all AI tasks including multilingual translation
 // that would otherwise require Bhashini API credentials.
 //
 // Uses the @google/genai SDK (the successor to the deprecated
@@ -58,7 +58,7 @@ const safetySettings = [
 // ---------------------------------------------------------------------------
 
 /** The model used for all AI tasks. */
-const MODEL = 'gemini-2.0-flash';
+const MODEL = 'gemini-3.0-flash';
 
 /**
  * Sends a prompt to the Gemini model and returns the raw text response.
