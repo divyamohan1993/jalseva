@@ -672,14 +672,14 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => openEditZone(zone)}
-                            className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors"
+                            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                             title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setDeleteConfirmZone(zone.id)}
-                            className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -722,7 +722,7 @@ export default function SettingsPage() {
             <p className="text-sm font-medium text-gray-700 mb-3">
               Base Prices (INR)
             </p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input
                 label="RO Water"
                 type="number"
@@ -811,7 +811,7 @@ export default function SettingsPage() {
                   key={level}
                   onClick={() => setZoneForm({ demandLevel: level })}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-all',
+                    'px-3 py-1.5 min-h-[44px] rounded-lg text-sm font-medium capitalize transition-all focus:outline-none focus:ring-2 focus:ring-blue-500',
                     zoneForm.demandLevel === level
                       ? level === 'low'
                         ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-300'

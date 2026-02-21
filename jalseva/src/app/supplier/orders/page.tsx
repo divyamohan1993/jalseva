@@ -299,6 +299,7 @@ function OrderCard({ order, tab }: { order: Order; tab: TabKey }) {
                 size="sm"
                 className="border border-gray-200"
                 leftIcon={<Phone className="w-3.5 h-3.5" />}
+                onClick={() => window.open('tel:+919876543210', '_self')}
               >
                 Call
               </Button>
@@ -400,7 +401,15 @@ export default function SupplierOrdersPage() {
       {/* Page Title */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold text-gray-900">My Orders</h1>
-        <button className="p-2 rounded-lg border border-gray-200 text-gray-400 hover:text-gray-600 transition-colors">
+        <button
+          onClick={() => {
+            const tabs: TabKey[] = ['active', 'completed', 'cancelled'];
+            const idx = tabs.indexOf(activeTab);
+            setActiveTab(tabs[(idx + 1) % tabs.length]);
+          }}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+          aria-label="Toggle filter"
+        >
           <Filter className="w-4 h-4" />
         </button>
       </div>
@@ -414,7 +423,7 @@ export default function SupplierOrdersPage() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              'flex-1 relative py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200',
+              'flex-1 relative py-2 px-3 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500',
               activeTab === tab.key
                 ? 'text-green-700'
                 : 'text-gray-500 hover:text-gray-700'

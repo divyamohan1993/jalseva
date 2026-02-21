@@ -29,6 +29,7 @@ import {
   CreditCard,
   Building,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
@@ -203,7 +204,10 @@ function VehicleSection() {
             </span>
           </div>
         </div>
-        <button className="mt-3 pt-3 border-t border-gray-100 w-full flex items-center justify-center gap-1 text-sm text-green-600 font-medium hover:text-green-700 transition-colors">
+        <button
+          onClick={() => toast.info('Vehicle details can be updated via registration.\nवाहन विवरण पंजीकरण के माध्यम से अपडेट किया जा सकता है।')}
+          className="mt-3 pt-3 border-t border-gray-100 w-full flex items-center justify-center gap-1 text-sm text-green-600 font-medium hover:text-green-700 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg"
+        >
           <Edit3 className="w-3.5 h-3.5" />
           Edit Vehicle Details
         </button>
@@ -283,7 +287,10 @@ function DocumentsSection() {
                 Please re-upload a valid certificate to continue receiving
                 mineral water orders.
               </p>
-              <button className="mt-1.5 text-[10px] text-red-700 font-bold underline">
+              <button
+                onClick={() => toast.info('Document re-upload will be available via registration.\nदस्तावेज़ पुनः अपलोड पंजीकरण के माध्यम से उपलब्ध होगा।')}
+                className="mt-1.5 text-[10px] text-red-700 font-bold underline min-h-[44px] focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+              >
                 Re-upload Document
               </button>
             </div>
@@ -313,7 +320,11 @@ function ServiceAreaSection() {
               Radius: {MOCK_PROFILE.serviceRadius} km
             </p>
           </div>
-          <button className="p-2 rounded-lg border border-gray-200 text-gray-400 hover:text-green-600 transition-colors">
+          <button
+            onClick={() => toast.info('Service area can be updated during re-verification.\nसेवा क्षेत्र पुनः सत्यापन के दौरान अपडेट किया जा सकता है।')}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-label="Edit service area"
+          >
             <Edit3 className="w-4 h-4" />
           </button>
         </div>
@@ -439,7 +450,10 @@ function BankDetailsSection() {
             </span>
           </div>
         </div>
-        <button className="mt-3 pt-3 border-t border-gray-100 w-full flex items-center justify-center gap-1 text-sm text-green-600 font-medium hover:text-green-700 transition-colors">
+        <button
+          onClick={() => toast.info('Bank details can be updated via registration.\nबैंक विवरण पंजीकरण के माध्यम से अपडेट किया जा सकता है।')}
+          className="mt-3 pt-3 border-t border-gray-100 w-full flex items-center justify-center gap-1 text-sm text-green-600 font-medium hover:text-green-700 transition-colors min-h-[44px] focus:outline-none focus:ring-2 focus:ring-green-500 rounded-lg"
+        >
           <Edit3 className="w-3.5 h-3.5" />
           Update Bank Details
         </button>
@@ -486,7 +500,10 @@ export default function SupplierProfilePage() {
       {/* Settings & Logout                                                */}
       {/* ================================================================ */}
       <section className="space-y-2">
-        <button className="w-full flex items-center justify-between py-3 px-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <button
+          onClick={() => toast.info('Account settings can be managed from the app.\nखाता सेटिंग्स ऐप से प्रबंधित की जा सकती हैं।')}
+          className="w-full flex items-center justify-between py-3 px-4 min-h-[48px] bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
           <div className="flex items-center gap-3">
             <Settings className="w-5 h-5 text-gray-400" />
             <span className="text-sm font-medium text-gray-700">Settings</span>

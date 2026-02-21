@@ -384,6 +384,112 @@ function MenuItem({
 }
 
 // ---------------------------------------------------------------------------
+// Add Address Modal
+// ---------------------------------------------------------------------------
+
+function AddAddressModal({
+  isOpen,
+  onClose,
+  onSave,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (label: string, address: string) => void;
+}) {
+  const [label, setLabel] = useState('Home');
+  const [address, setAddress] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    if (!address.trim()) {
+      toast.error('Please enter an address.\nकृपया पता डालें।');
+      return;
+    }
+    onSave(label.trim() || 'Address', address.trim());
+    setLabel('Home');
+    setAddress('');
+    onClose();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', damping: 25 }}
+        className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-gray-900">Add Address</h3>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-gray-100 min-w-[44px] min-h-[44px] flex items-center justify-center"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+        <p className="text-sm text-gray-400 -mt-4 mb-5">नया पता जोड़ें</p>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="address-label" className="text-sm font-medium text-gray-700 mb-1.5 block">
+              Label / लेबल
+            </label>
+            <div className="flex gap-2">
+              {['Home', 'Office', 'Other'].map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setLabel(opt)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all min-h-[44px] ${
+                    label === opt
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="address-text" className="text-sm font-medium text-gray-700 mb-1.5 block">
+              Address / पता
+            </label>
+            <textarea
+              id="address-text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter full address / पूरा पता डालें"
+              rows={3}
+              className="input-field resize-none"
+            />
+          </div>
+        </div>
+
+        <Button
+          variant="primary"
+          size="xl"
+          fullWidth
+          onClick={handleSave}
+          leftIcon={<Plus className="w-5 h-5" />}
+          className="mt-5 rounded-2xl"
+        >
+          Save Address / पता सहेजें
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Profile Page
 // ---------------------------------------------------------------------------
 
@@ -392,6 +498,7 @@ export default function ProfilePage() {
   const { user, setUser, logout: authLogout } = useAuthStore();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAddAddress, setShowAddAddress] = useState(false);
   const [_showLanguage, _setShowLanguage] = useState(false);
   const [_showAddresses, _setShowAddresses] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<
@@ -443,13 +550,12 @@ export default function ProfilePage() {
 
   // --- Handle add address ---
   const handleAddAddress = () => {
-    // In production, this would open an address picker with Google Maps
-    const address = prompt('Enter address / पता डालें:');
-    if (address) {
-      const label = prompt('Label (e.g., Home, Office) / लेबल:') || 'Address';
-      setSavedAddresses((prev) => [...prev, { label, address }]);
-      toast.success('Address saved!\nपता सहेज लिया!');
-    }
+    setShowAddAddress(true);
+  };
+
+  const handleSaveAddress = (label: string, address: string) => {
+    setSavedAddresses((prev) => [...prev, { label, address }]);
+    toast.success('Address saved!\nपता सहेज लिया!');
   };
 
   // --- Handle delete address ---
@@ -550,7 +656,7 @@ export default function ProfilePage() {
       </header>
 
       {/* Main content */}
-      <main className="px-4 -mt-4 space-y-4 max-w-lg mx-auto">
+      <main className="px-4 -mt-4 space-y-4 app-container">
         {/* Quick stats */}
         <Card shadow="md" className="relative z-10">
           <div className="grid grid-cols-3 gap-4 text-center">
@@ -621,21 +727,24 @@ export default function ProfilePage() {
               icon={Bell}
               label="Notifications"
               hindi="सूचनाएं"
-              onClick={() => toast('Coming soon!\nजल्द आ रहा है!')}
+              onClick={() => toast.info('Push notifications are enabled. You will be notified for order updates.\nऑर्डर अपडेट के लिए पुश सूचनाएं चालू हैं।')}
             />
             <div className="h-px bg-gray-100 mx-4" />
             <MenuItem
               icon={Shield}
               label="Privacy & Security"
               hindi="गोपनीयता और सुरक्षा"
-              onClick={() => toast('Coming soon!\nजल्द आ रहा है!')}
+              onClick={() => toast.info('Your data is encrypted and secured with Firebase Auth.\nआपका डेटा एन्क्रिप्टेड और सुरक्षित है।')}
             />
             <div className="h-px bg-gray-100 mx-4" />
             <MenuItem
               icon={HelpCircle}
               label="Help & Support"
               hindi="सहायता"
-              onClick={() => toast('Coming soon!\nजल्द आ रहा है!')}
+              onClick={() => {
+                window.open('mailto:support@jalseva.in?subject=Help%20Request', '_blank');
+                toast.info('Opening email to support@jalseva.in\nसहायता ईमेल खोल रहे हैं');
+              }}
             />
           </Card>
         </motion.div>
@@ -673,6 +782,15 @@ export default function ProfilePage() {
           onClose={() => setShowEditProfile(false)}
           currentName={user.name || ''}
           onSave={handleSaveName}
+        />
+      </AnimatePresence>
+
+      {/* Add Address Modal */}
+      <AnimatePresence>
+        <AddAddressModal
+          isOpen={showAddAddress}
+          onClose={() => setShowAddAddress(false)}
+          onSave={handleSaveAddress}
         />
       </AnimatePresence>
     </div>

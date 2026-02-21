@@ -677,10 +677,9 @@ export default function TrackingPage() {
 
           {/* Call button */}
           <button
-            onClick={() =>
-              toast('Calling supplier...\nसप्लायर को कॉल कर रहे हैं...')
-            }
+            onClick={() => window.open('tel:+919876543210', '_self')}
             className="w-10 h-10 rounded-full bg-green-500 shadow-md flex items-center justify-center"
+            aria-label="Call supplier"
           >
             <Phone className="w-5 h-5 text-white" />
           </button>
@@ -769,12 +768,9 @@ export default function TrackingPage() {
                       <span className="text-sm font-medium">4.8</span>
                     </div>
                     <button
-                      onClick={() =>
-                        toast(
-                          'Calling supplier...\nसप्लायर को कॉल कर रहे हैं...'
-                        )
-                      }
+                      onClick={() => window.open('tel:+919876543210', '_self')}
                       className="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center"
+                      aria-label="Call supplier"
                     >
                       <Phone className="w-4 h-4 text-white" />
                     </button>

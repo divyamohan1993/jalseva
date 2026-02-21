@@ -155,7 +155,7 @@ const OrderStatusCard: React.FC<OrderStatusCardProps> = ({
             {showCall && (
               <button
                 onClick={onCall}
-                className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 transition-colors"
+                className="w-11 h-11 rounded-full bg-green-100 flex items-center justify-center hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
                 aria-label="Call supplier"
               >
                 <Phone size={16} className="text-green-700" />

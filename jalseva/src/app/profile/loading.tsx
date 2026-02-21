@@ -10,7 +10,7 @@ export default function ProfileLoading() {
           </div>
         </div>
       </div>
-      <main className="px-4 -mt-4 space-y-4 max-w-lg mx-auto">
+      <main className="px-4 -mt-4 space-y-4 app-container">
         <div className="bg-white rounded-2xl p-4 shadow-md">
           <div className="grid grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (

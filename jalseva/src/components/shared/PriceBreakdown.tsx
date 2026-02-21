@@ -49,7 +49,8 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-center gap-1 py-2 text-xs text-blue-600 font-medium hover:bg-gray-50 transition-colors border-t border-gray-100"
+        className="w-full flex items-center justify-center gap-1 py-2 min-h-[44px] text-xs text-blue-600 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors border-t border-gray-100"
+        aria-expanded={expanded}
       >
         {expanded ? 'Hide' : 'View'} breakdown
         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

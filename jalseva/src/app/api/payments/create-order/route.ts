@@ -11,6 +11,7 @@ import { adminDb } from '@/lib/firebase-admin';
 import { createOrder as createRazorpayOrder, simulateCheckout } from '@/lib/razorpay';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
 import { batchWriter } from '@/lib/batch-writer';
+import { hotCache } from '@/lib/cache';
 
 // ---------------------------------------------------------------------------
 // POST - Create a simulated Razorpay order
@@ -40,28 +41,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Verify order exists ---
-    const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await firestoreBreaker.execute(
-      () => orderRef.get(),
-      () => null
-    );
+    // --- Verify order exists (L1 cache first) ---
+    const orderCacheKey = `order:${orderId}`;
+    let order = hotCache.get(orderCacheKey) as Record<string, unknown> | undefined;
 
-    if (!orderDoc || !orderDoc.exists) {
-      return NextResponse.json(
-        { error: 'Order not found.' },
-        { status: 404 }
+    if (!order) {
+      const orderRef = adminDb.collection('orders').doc(orderId);
+      const orderDoc = await firestoreBreaker.execute(
+        () => orderRef.get(),
+        () => null
       );
+
+      if (!orderDoc || !orderDoc.exists) {
+        return NextResponse.json(
+          { error: 'Order not found.' },
+          { status: 404 }
+        );
+      }
+
+      order = orderDoc.data()!;
+      hotCache.set(orderCacheKey, order, 120);
     }
 
-    const order = orderDoc.data()!;
-
     // Prevent duplicate payment orders
-    if (order.payment?.razorpayOrderId) {
+    const payment = order.payment as Record<string, unknown> | undefined;
+    if (payment?.razorpayOrderId) {
       return NextResponse.json(
         {
           error: 'A payment order already exists for this order.',
-          razorpayOrderId: order.payment.razorpayOrderId,
+          razorpayOrderId: payment.razorpayOrderId,
         },
         { status: 409 }
       );
@@ -75,7 +83,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (order.payment?.status === 'paid') {
+    if (payment?.status === 'paid') {
       return NextResponse.json(
         { error: 'This order has already been paid.' },
         { status: 400 }

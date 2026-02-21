@@ -9,6 +9,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { haversineDistance } from '@/lib/maps';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
 import { batchWriter } from '@/lib/batch-writer';
+import { supplierIndex } from '@/lib/geohash';
 import type {
   WaterType,
   PaymentMethod,
@@ -168,30 +169,50 @@ export async function POST(request: NextRequest) {
           if (zone.perKmRate) perKmRate = zone.perKmRate;
         }
 
-        // Find nearby available suppliers
-        const suppliersSnapshot = await adminDb
-          .collection('suppliers')
-          .where('isOnline', '==', true)
-          .where('waterTypes', 'array-contains', waterType)
-          .where('verificationStatus', '==', 'verified')
-          .get();
-
+        // Find nearby available suppliers (geohash index first, Firestore fallback)
         const nearbySuppliers: Array<{ id: string; distance: number }> = [];
 
-        suppliersSnapshot.forEach((doc) => {
-          const supplier = doc.data();
-          if (supplier.currentLocation) {
-            const distanceMeters = haversineDistance(
-              deliveryLocation,
-              supplier.currentLocation as GeoLocation
-            );
+        if (supplierIndex.size > 0) {
+          // O(k) geohash lookup instead of O(n) Firestore scan
+          const candidates = supplierIndex.findNearby(
+            deliveryLocation.lat, deliveryLocation.lng, DEFAULT_SEARCH_RADIUS_KM,
+            (data) => {
+              if (!data.isOnline || data.verificationStatus !== 'verified') return false;
+              if (Array.isArray(data.waterTypes)) return data.waterTypes.includes(waterType);
+              return true;
+            }
+          );
+          for (const c of candidates) {
+            const distanceMeters = haversineDistance(deliveryLocation, { lat: c.lat, lng: c.lng });
             const distanceKm = distanceMeters / 1000;
-
             if (distanceKm <= DEFAULT_SEARCH_RADIUS_KM) {
-              nearbySuppliers.push({ id: doc.id, distance: distanceKm });
+              nearbySuppliers.push({ id: c.id, distance: distanceKm });
             }
           }
-        });
+        } else {
+          // Fallback: Firestore scan (cold start) - capped to prevent unbounded reads
+          const suppliersSnapshot = await adminDb
+            .collection('suppliers')
+            .where('isOnline', '==', true)
+            .where('waterTypes', 'array-contains', waterType)
+            .where('verificationStatus', '==', 'verified')
+            .limit(500)
+            .get();
+
+          suppliersSnapshot.forEach((doc) => {
+            const supplier = doc.data();
+            if (supplier.currentLocation) {
+              const distanceMeters = haversineDistance(
+                deliveryLocation,
+                supplier.currentLocation as GeoLocation
+              );
+              const distanceKm = distanceMeters / 1000;
+              if (distanceKm <= DEFAULT_SEARCH_RADIUS_KM) {
+                nearbySuppliers.push({ id: doc.id, distance: distanceKm });
+              }
+            }
+          });
+        }
 
         nearbySuppliers.sort((a, b) => a.distance - b.distance);
 

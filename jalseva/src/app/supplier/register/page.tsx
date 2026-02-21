@@ -1111,12 +1111,12 @@ export default function SupplierRegisterPage() {
       {/* Header                                                           */}
       {/* ================================================================ */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between px-4 h-14 max-w-lg mx-auto">
+        <div className="flex items-center justify-between px-4 h-14 app-container">
           <div className="flex items-center gap-2">
             {currentStep > 1 && (
               <button
                 onClick={goBack}
-                className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
               </button>
@@ -1137,7 +1137,7 @@ export default function SupplierRegisterPage() {
       {/* ================================================================ */}
       {/* Progress Indicator                                               */}
       {/* ================================================================ */}
-      <div className="max-w-lg mx-auto px-4 py-4">
+      <div className="app-container px-4 py-4">
         <ProgressIndicator
           currentStep={currentStep}
           onStepClick={(step) => {
@@ -1149,7 +1149,7 @@ export default function SupplierRegisterPage() {
       {/* ================================================================ */}
       {/* Step Content                                                     */}
       {/* ================================================================ */}
-      <div className="max-w-lg mx-auto px-4 pb-32">
+      <div className="app-container px-4 pb-32">
         <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
       </div>
 
@@ -1157,7 +1157,7 @@ export default function SupplierRegisterPage() {
       {/* Bottom Action Bar                                                */}
       {/* ================================================================ */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-        <div className="max-w-lg mx-auto px-4 py-3 flex gap-3">
+        <div className="app-container px-4 py-3 flex gap-3">
           {currentStep > 1 && (
             <Button
               variant="ghost"

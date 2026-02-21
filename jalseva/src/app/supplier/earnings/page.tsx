@@ -442,7 +442,7 @@ export default function SupplierEarningsPage() {
             key={p}
             onClick={() => setPeriod(p)}
             className={cn(
-              'flex-1 relative py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200',
+              'flex-1 relative py-2 px-3 min-h-[44px] rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500',
               period === p
                 ? 'text-green-700'
                 : 'text-gray-500 hover:text-gray-700'
@@ -494,7 +494,7 @@ export default function SupplierEarningsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-white/10 rounded-lg p-2.5 text-center">
             <p className="text-xl font-bold text-white">{summary.orders}</p>
             <p className="text-[10px] text-green-200 font-medium">Orders</p>

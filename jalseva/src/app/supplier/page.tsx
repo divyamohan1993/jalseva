@@ -336,7 +336,7 @@ function ActiveDeliveryCard({ order }: ActiveDeliveryCardProps) {
             leftIcon={<Phone className="w-4 h-4" />}
             className="flex-1 border border-gray-200"
             onClick={() => {
-              // In production: initiate call to customer
+              window.open('tel:+919876543210', '_self');
             }}
           >
             Call

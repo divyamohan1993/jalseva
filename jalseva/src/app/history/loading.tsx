@@ -6,7 +6,7 @@ export default function HistoryLoading() {
           <div className="h-6 w-24 bg-slate-200 rounded-lg animate-pulse" />
         </div>
       </header>
-      <main className="px-4 pt-4 space-y-3 max-w-lg mx-auto">
+      <main className="px-4 pt-4 space-y-3 app-container">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
             <div className="flex justify-between">

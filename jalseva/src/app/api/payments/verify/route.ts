@@ -10,6 +10,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { verifyPayment } from '@/lib/razorpay';
 import { firestoreBreaker } from '@/lib/circuit-breaker';
+import { batchWriter } from '@/lib/batch-writer';
+import { hotCache } from '@/lib/cache';
 
 // ---------------------------------------------------------------------------
 // POST - Verify Razorpay payment signature
@@ -78,24 +80,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // --- Verify order exists ---
-    const orderRef = adminDb.collection('orders').doc(orderId);
-    const orderDoc = await firestoreBreaker.execute(
-      () => orderRef.get(),
-      () => null
-    );
+    // --- Verify order exists (L1 cache first to avoid Firestore latency) ---
+    const orderCacheKey = `order:${orderId}`;
+    let order = hotCache.get(orderCacheKey) as Record<string, unknown> | undefined;
 
-    if (!orderDoc || !orderDoc.exists) {
-      return NextResponse.json(
-        { error: 'Order not found.' },
-        { status: 404 }
+    if (!order) {
+      const orderRef = adminDb.collection('orders').doc(orderId);
+      const orderDoc = await firestoreBreaker.execute(
+        () => orderRef.get(),
+        () => null
       );
+
+      if (!orderDoc || !orderDoc.exists) {
+        return NextResponse.json(
+          { error: 'Order not found.' },
+          { status: 404 }
+        );
+      }
+
+      order = orderDoc.data()!;
+      hotCache.set(orderCacheKey, order, 120);
     }
 
-    const order = orderDoc.data()!;
-
     // Verify the Razorpay order ID matches
-    if (order.payment?.razorpayOrderId !== razorpay_order_id) {
+    const orderPayment = order.payment as Record<string, unknown> | undefined;
+    if (orderPayment?.razorpayOrderId !== razorpay_order_id) {
       return NextResponse.json(
         { error: 'Razorpay order ID does not match the JalSeva order.' },
         { status: 400 }
@@ -107,6 +116,7 @@ export async function POST(request: NextRequest) {
     // before returning success to the client.
     const now = new Date().toISOString();
     const paymentDocId = `pay_${orderId}_${Date.now()}`;
+    const orderRef = adminDb.collection('orders').doc(orderId);
 
     await firestoreBreaker.execute(async () => {
       const batch = adminDb.batch();
@@ -125,7 +135,7 @@ export async function POST(request: NextRequest) {
         supplierId: order.supplierId || null,
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
-        amount: order.payment?.amount || 0,
+        amount: (orderPayment?.amount as number) || 0,
         currency: 'INR',
         status: 'paid',
         createdAt: now,

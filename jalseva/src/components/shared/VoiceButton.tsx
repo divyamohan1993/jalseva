@@ -167,7 +167,7 @@ const VoiceButton: React.FC<VoiceButtonProps> = ({
         onClick={handleClick}
         disabled={state === 'processing'}
         className={cn(
-          'relative z-10 rounded-full flex items-center justify-center shadow-lg transition-colors',
+          'relative z-10 rounded-full flex items-center justify-center shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
           config.button,
           state === 'idle' &&
             'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',

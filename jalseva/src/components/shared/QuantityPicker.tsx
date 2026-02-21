@@ -141,7 +141,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
           disabled={jarCount <= MIN_JARS}
           className={cn(
             'w-14 h-14 rounded-2xl flex items-center justify-center transition-all',
-            'border-2 shadow-sm active:shadow-none',
+            'border-2 shadow-sm active:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
             jarCount <= MIN_JARS
               ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
               : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100'
@@ -166,7 +166,7 @@ const QuantityPicker: React.FC<QuantityPickerProps> = ({
           disabled={jarCount >= MAX_JARS}
           className={cn(
             'w-14 h-14 rounded-2xl flex items-center justify-center transition-all',
-            'border-2 shadow-sm active:shadow-none',
+            'border-2 shadow-sm active:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
             jarCount >= MAX_JARS
               ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
               : 'border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100'
