@@ -22,7 +22,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
 import { cancelOrder } from '@/actions/orders';
 import { formatCurrency } from '@/lib/utils';
-import type { Order, OrderStatus } from '@/types';
+import type { Order } from '@/types';
 
 // ---------------------------------------------------------------------------
 // Searching animation component
@@ -241,36 +241,6 @@ export default function BookingPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [searching]);
-
-  // --- Simulate finding a supplier (for demo/dev) ---
-  useEffect(() => {
-    if (!searching || !currentOrder) return;
-
-    // After 8 seconds, if still searching and in dev, simulate finding
-    const timeout = setTimeout(() => {
-      if (searching && currentOrder?.status === 'searching') {
-        const updated: Order = {
-          ...currentOrder,
-          status: 'accepted' as OrderStatus,
-          supplierId: 'supplier_demo_123',
-          acceptedAt: new Date(),
-          tracking: {
-            supplierLocation: {
-              lat: (currentOrder.deliveryLocation?.lat || 28.6) + 0.01,
-              lng: (currentOrder.deliveryLocation?.lng || 77.2) + 0.01,
-            },
-            eta: 900,
-            distance: 3200,
-          },
-        };
-        setCurrentOrder(updated);
-        setSearching(false);
-        setSupplierFound(true);
-      }
-    }, 8000);
-
-    return () => clearTimeout(timeout);
-  }, [searching, currentOrder, setCurrentOrder]);
 
   // --- Cancel order (React 19 useTransition + Server Action) ---
   const handleCancel = () => {

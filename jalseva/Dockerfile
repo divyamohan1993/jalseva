@@ -1,81 +1,72 @@
-# ================================
-# Stage 1: Install dependencies
-# ================================
+# syntax=docker/dockerfile:1
+# =====================================================================
+# JalSeva - Cloud Run-ready Dockerfile (pnpm, Next.js standalone)
+# =====================================================================
+
+# ---- Stage 1: dependencies -----------------------------------------------------
 FROM node:22-alpine AS deps
-
 RUN apk add --no-cache libc6-compat
-
+RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
 WORKDIR /app
 
-# Copy package files for dependency caching
-COPY package.json package-lock.json* ./
+COPY package.json pnpm-lock.yaml .npmrc* ./
+RUN pnpm install --frozen-lockfile
 
-# Install dependencies
-RUN npm ci --only=production && \
-    cp -R node_modules /prod_node_modules && \
-    npm ci
-
-# ================================
-# Stage 2: Build the application
-# ================================
+# ---- Stage 2: build ------------------------------------------------------------
 FROM node:22-alpine AS builder
-
+RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
 WORKDIR /app
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Public env vars baked into the client bundle at build time.
+ARG NEXT_PUBLIC_FIREBASE_API_KEY
+ARG NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
+ARG NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+ARG NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+ARG NEXT_PUBLIC_FIREBASE_APP_ID
+ARG NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+ARG NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_sim_jalseva
 
-# Copy source code
-COPY . .
-
-# Set Next.js telemetry to disabled during build
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=$NEXT_PUBLIC_FIREBASE_API_KEY
+ENV NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=$NEXT_PUBLIC_FIREBASE_PROJECT_ID
+ENV NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
+ENV NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=$NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+ENV NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=$NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+ENV NEXT_PUBLIC_RAZORPAY_KEY_ID=$NEXT_PUBLIC_RAZORPAY_KEY_ID
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
-# Build the application
-RUN npm run build
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN pnpm run build
 
-# ================================
-# Stage 3: Production runner
-# ================================
+# ---- Stage 3: runtime ----------------------------------------------------------
 FROM node:22-alpine AS runner
-
 WORKDIR /app
 
-# Set to production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Cloud Run: 1 vCPU per instance; clustering inside the container is wasted.
+# Cloud Run auto-scales by instance count instead.
+ENV CLUSTER_WORKERS=1
+ENV HOSTNAME=0.0.0.0
+# Cloud Run injects $PORT at runtime; default 8080.
+ENV PORT=8080
 
-# Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copy public assets
 COPY --from=builder /app/public ./public
-
-# Set correct permissions for prerender cache
-RUN mkdir .next && chown nextjs:nodejs .next
-
-# Copy standalone output
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy cluster server for multi-core mode
-COPY --from=builder --chown=nextjs:nodejs /app/server.cluster.js ./server.cluster.js
-
-# Switch to non-root user
 USER nextjs
+EXPOSE 8080
 
-# Expose the port
-EXPOSE 3000
-
-# Set hostname to listen on all interfaces
-ENV HOSTNAME="0.0.0.0"
-ENV PORT=3000
-
-# CLUSTER_WORKERS=0 means use all CPU cores (recommended for production)
-# CLUSTER_WORKERS=1 means single process (development only)
-# CLUSTER_WORKERS=N means exactly N workers
-ENV CLUSTER_WORKERS=0
-
-# Start: use cluster mode if CLUSTER_WORKERS != 1, else single process
-CMD ["sh", "-c", "if [ \"$CLUSTER_WORKERS\" = \"1\" ]; then node server.js; else node server.cluster.js; fi"]
+# Next.js standalone server reads $PORT and $HOSTNAME.
+CMD ["node", "server.js"]

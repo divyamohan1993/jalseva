@@ -63,27 +63,37 @@ These are fair game for security research:
 
 Security is layered. If one layer fails, the next one catches it. Here's what's running:
 
+### Identity & Credentials
+
+| Defense | How It Works |
+|---|---|
+| **Phone OTP auth** | Real Firebase Phone Authentication via `signInWithPhoneNumber` + invisible reCAPTCHA. |
+| **Server-side ID-token verification** | The session cookie is set only after `adminAuth.verifyIdToken(token, /*checkRevoked*/ true)` succeeds — cookies cannot be forged client-side. |
+| **No private keys in container** | The Firebase Admin SDK uses Application Default Credentials via the Cloud Run service account `jalseva-runtime@<project>.iam.gserviceaccount.com`. Zero `*.json` keys exist in the image, env, or build logs. |
+| **Public-key restriction** | The Maps and Firebase web keys are in the client bundle by design. Mitigated via HTTP-referrer allowlist (Maps) and Firebase authorized-domains list. |
+| **Least-privilege IAM** | Runtime SA has only `roles/datastore.user`, `roles/firebaseauth.admin`, `roles/iam.serviceAccountTokenCreator`. |
+
 ### Application Layer
 
 | Defense | How It Works |
 |---|---|
-| **Rate limiting** | Redis-backed per-IP limiter (`src/lib/rate-limiter.ts`) — stops brute force |
-| **Circuit breakers** | Isolate external service failures — no cascading crashes (`src/lib/circuit-breaker.ts`) |
-| **Bounded queries** | Every Firestore read uses `.limit()` — no memory exhaustion, ever |
-| **Input validation** | Request body validation on every API route |
-| **Auth verification** | Firebase Admin SDK token verification on all protected routes |
-| **Batch writer cap** | 50K buffer limit with backpressure — prevents OOM under load |
+| **Rate limiting (in-memory)** | Per-IP token-bucket (`src/lib/rate-limiter.ts`) — 100 burst / 50 sustained — runs in Next.js middleware before any application logic. |
+| **Firestore security rules** | Per-document access control (`firestore.rules`); see in-repo for the deployed ruleset. |
+| **Circuit breakers** | Isolate external service failures (`src/lib/circuit-breaker.ts`) — no cascading crashes. |
+| **Bounded queries** | Every Firestore read uses `.limit()` — no memory exhaustion, ever. |
+| **Input validation** | Request-body validation on every API route; explicit state-machine enforcement on `/api/orders/[id]`. |
+| **Batch writer cap** | 50 K buffer limit with backpressure — prevents OOM under load. |
 
 ### Infrastructure Layer
 
 | Defense | How It Works |
 |---|---|
-| **Nginx rate limiting** | 100 req/sec per IP, 60K req/sec global cap — DDoS mitigation at the edge |
-| **Security headers** | `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy` |
-| **Non-root container** | Docker runs as `nextjs:nodejs` (UID 1001) — principle of least privilege |
-| **Server tokens off** | Nginx hides version information — no fingerprinting |
-| **Request size limits** | 10MB max body, 128KB buffer — no payload bombs |
-| **Graceful shutdown** | 30s drain period — zero dropped connections during deploys |
+| **Cloud Run isolation** | Each instance runs in a gVisor sandbox; container is read-only filesystem except `/tmp`. |
+| **Edge rate limiting** | Middleware-level global cap (60 K burst / 50 K sustained per instance) blocks DDoS before app logic runs. |
+| **Security headers** | `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` restricting cam/mic/geo to first-party only. |
+| **Non-root container** | Docker runs as `nextjs:nodejs` (UID 1001) — principle of least privilege. |
+| **No JSON service-account keys** | Runtime IAM via GCE metadata server; project has no downloadable SA keys for the runtime. |
+| **Graceful shutdown** | Cloud Run revision swap drains in-flight requests before terminating. |
 
 ### Development Practices
 

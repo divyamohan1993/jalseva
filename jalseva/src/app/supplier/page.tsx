@@ -5,6 +5,8 @@ import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
+import { toast } from 'sonner';
+import { useSupplier } from '@/hooks/useSupplier';
 import {
   IndianRupee,
   ClipboardList,
@@ -39,64 +41,6 @@ const WATER_TYPE_LABELS: Record<WaterType, string> = {
 
 const ORDER_COUNTDOWN_SECONDS = 30;
 
-// =============================================================================
-// Mock data for demo (replace with real API calls in production)
-// =============================================================================
-
-const MOCK_INCOMING_ORDERS: Order[] = [
-  {
-    id: 'ord_inc_1',
-    customerId: 'cust_1',
-    waterType: 'tanker',
-    quantityLitres: 5000,
-    price: {
-      base: 800,
-      distance: 150,
-      surge: 0,
-      total: 950,
-      commission: 95,
-      supplierEarning: 855,
-    },
-    status: 'searching',
-    deliveryLocation: {
-      lat: 28.6139,
-      lng: 77.209,
-      address: '42, Sector 15, Vasundhara, Ghaziabad',
-    },
-    payment: { method: 'upi', status: 'pending', amount: 950 },
-    createdAt: new Date(),
-  },
-];
-
-const _MOCK_ACTIVE_ORDER: Order = {
-  id: 'ord_active_1',
-  customerId: 'cust_2',
-  supplierId: 'sup_1',
-  waterType: 'ro',
-  quantityLitres: 2000,
-  price: {
-    base: 500,
-    distance: 100,
-    surge: 50,
-    total: 650,
-    commission: 65,
-    supplierEarning: 585,
-  },
-  status: 'en_route',
-  deliveryLocation: {
-    lat: 28.5355,
-    lng: 77.391,
-    address: '12, Green Park, New Delhi',
-  },
-  tracking: {
-    supplierLocation: { lat: 28.54, lng: 77.38 },
-    eta: 480,
-    distance: 2400,
-  },
-  payment: { method: 'upi', status: 'paid', amount: 650 },
-  createdAt: new Date(Date.now() - 15 * 60 * 1000),
-  acceptedAt: new Date(Date.now() - 12 * 60 * 1000),
-};
 
 // =============================================================================
 // IncomingOrderCard component
@@ -400,86 +344,49 @@ function StatCard({ icon, label, value, subtext, color }: StatCardProps) {
 // =============================================================================
 
 export default function SupplierDashboard() {
-  const _router = useRouter();
+  const router = useRouter();
   const { isOnline, todayEarnings, pendingOrders, activeOrder, supplier } =
     useSupplierStore();
-  const { removePendingOrder, setActiveOrder } =
-    useSupplierStore();
 
-  // Demo state - in production these come from the store / API
-  const [incomingOrders, setIncomingOrders] = useState<Order[]>([]);
-  const [demoActiveOrder, setDemoActiveOrder] = useState<Order | null>(null);
-  const [stats] = useState({
-    todayEarnings: todayEarnings || 2450,
-    todayOrders: 7,
-    rating: supplier?.rating.average ?? 4.6,
-    pendingCount: 2,
-  });
+  // Real Firestore-backed accept / reject + live listeners
+  const { acceptOrder, rejectOrder } = useSupplier();
 
-  // Load demo incoming orders when online
-  useEffect(() => {
-    if (isOnline && pendingOrders.length === 0 && incomingOrders.length === 0) {
-      // Simulate incoming order after 1 second when going online
-      const timer = setTimeout(() => {
-        setIncomingOrders(MOCK_INCOMING_ORDERS);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-    if (!isOnline) {
-      setIncomingOrders([]);
-    }
-  }, [isOnline, pendingOrders.length, incomingOrders.length]);
+  const stats = {
+    todayEarnings,
+    todayOrders: 0,
+    rating: supplier?.rating.average ?? 5,
+    pendingCount: pendingOrders.length + (activeOrder ? 1 : 0),
+  };
 
-  // Use store active order or demo
-  const currentActiveOrder = activeOrder || demoActiveOrder;
+  const currentActiveOrder = activeOrder;
+  const allIncomingOrders: Order[] = pendingOrders;
 
-  // --------------------------------------------------------------------------
-  // Order accept / reject handlers
-  // --------------------------------------------------------------------------
   const handleAcceptOrder = useCallback(
-    (orderId: string) => {
-      const order = incomingOrders.find((o) => o.id === orderId);
-      if (order) {
-        const acceptedOrder: Order = {
-          ...order,
-          status: 'en_route',
-          acceptedAt: new Date(),
-          supplierId: supplier?.id || 'sup_1',
-          tracking: {
-            supplierLocation: supplier?.currentLocation || {
-              lat: 28.54,
-              lng: 77.38,
-            },
-            eta: 600,
-            distance: 3200,
-          },
-        };
-        setActiveOrder(acceptedOrder);
-        setDemoActiveOrder(acceptedOrder);
-        setIncomingOrders((prev) => prev.filter((o) => o.id !== orderId));
-        removePendingOrder(orderId);
+    async (orderId: string) => {
+      try {
+        await acceptOrder(orderId);
+        toast.success('Order accepted. Start navigation when ready.');
+        router.push(`/supplier/delivery/${orderId}`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Could not accept order.');
       }
     },
-    [incomingOrders, supplier, setActiveOrder, removePendingOrder]
+    [acceptOrder, router]
   );
 
   const handleRejectOrder = useCallback(
-    (orderId: string) => {
-      setIncomingOrders((prev) => prev.filter((o) => o.id !== orderId));
-      removePendingOrder(orderId);
+    async (orderId: string) => {
+      try {
+        await rejectOrder(orderId);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Could not reject order.');
+      }
     },
-    [removePendingOrder]
+    [rejectOrder]
   );
 
-  // Combine store pending orders and demo orders
-  const allIncomingOrders =
-    pendingOrders.length > 0 ? pendingOrders : incomingOrders;
-
-  // --------------------------------------------------------------------------
-  // Current area (from supplier profile or geolocation)
-  // --------------------------------------------------------------------------
   const currentArea =
-    supplier?.serviceArea?.center?.address || 'Vasundhara, Ghaziabad';
+    supplier?.serviceArea?.center?.address || 'Service area not set';
 
   return (
     <div className="px-4 py-4 space-y-5">

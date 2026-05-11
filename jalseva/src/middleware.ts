@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { apiLimiter, globalLimiter } from '@/lib/rate-limiter';
 
-const PUBLIC_PATHS = new Set(['/', '/login']);
+const PUBLIC_PATHS = new Set(['/', '/login', '/demo', '/pitch', '/report']);
 const PUBLIC_PREFIXES = ['/api/', '/manifest.json', '/sw.js', '/icons/', '/_next/', '/favicon'];
 const STATIC_EXTENSIONS = new Set(['.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.ico', '.woff2', '.woff', '.avif', '.webp']);
 

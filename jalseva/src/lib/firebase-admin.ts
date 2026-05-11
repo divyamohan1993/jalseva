@@ -10,6 +10,7 @@ import {
   initializeApp,
   getApps,
   cert,
+  applicationDefault,
   type App,
   type ServiceAccount,
 } from 'firebase-admin/app';
@@ -35,20 +36,23 @@ function getAdminApp(): App {
     return _adminApp;
   }
 
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const projectId =
+    process.env.FIREBASE_ADMIN_PROJECT_ID ||
+    process.env.GOOGLE_CLOUD_PROJECT ||
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const storageBucket = process.env.FIREBASE_ADMIN_STORAGE_BUCKET;
 
-  if (!projectId || !clientEmail || !privateKey) {
-    // Initialize without credentials for build-time / demo mode
-    console.warn('Firebase Admin credentials not configured. Initializing without credentials.');
-    _adminApp = initializeApp({ projectId: projectId || 'jalseva-demo' });
-  } else {
+  if (clientEmail && privateKey && projectId) {
     const serviceAccount: ServiceAccount = { projectId, clientEmail, privateKey };
-    _adminApp = initializeApp({
-      credential: cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_ADMIN_STORAGE_BUCKET,
-    });
+    _adminApp = initializeApp({ credential: cert(serviceAccount), storageBucket });
+  } else if (projectId && (process.env.K_SERVICE || process.env.GOOGLE_CLOUD_PROJECT)) {
+    // Cloud Run / GCP: use ADC via metadata server. No JSON key needed.
+    _adminApp = initializeApp({ credential: applicationDefault(), projectId, storageBucket });
+  } else {
+    // Build-time / local without creds — initialise minimally so imports don't crash.
+    _adminApp = initializeApp({ projectId: projectId || 'jalseva-demo' });
   }
 
   return _adminApp;

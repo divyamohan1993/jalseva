@@ -1,9 +1,9 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useRef, } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { motion, } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   ArrowLeft,
   Navigation,
@@ -19,12 +19,15 @@ import {
   ExternalLink,
   Flag,
   PackageCheck,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn, formatCurrency } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
 import { useSupplierStore } from '@/store/supplierStore';
-import type { Order, WaterType } from '@/types';
+import type { Order, WaterType, OrderStatus } from '@/types';
 
 // =============================================================================
 // Constants
@@ -44,85 +47,41 @@ const DELIVERY_STEPS: { key: DeliveryStatus; label: string; icon: typeof Navigat
   { key: 'delivered', label: 'Delivered', icon: PackageCheck },
 ];
 
-// =============================================================================
-// Mock Data (replaced by real data from store/API in production)
-// =============================================================================
-
-const MOCK_ORDER: Order = {
-  id: 'ord_active_1',
-  customerId: 'cust_2',
-  supplierId: 'sup_1',
-  waterType: 'tanker',
-  quantityLitres: 5000,
-  price: {
-    base: 800,
-    distance: 150,
-    surge: 0,
-    total: 950,
-    commission: 95,
-    supplierEarning: 855,
-  },
-  status: 'en_route',
-  deliveryLocation: {
-    lat: 28.6139,
-    lng: 77.209,
-    address: '42, Sector 15, Vasundhara, Ghaziabad, UP 201012',
-  },
-  tracking: {
-    supplierLocation: { lat: 28.62, lng: 77.21 },
-    eta: 480,
-    distance: 3200,
-  },
-  payment: { method: 'upi', status: 'paid', amount: 950 },
-  createdAt: new Date(Date.now() - 20 * 60 * 1000),
-  acceptedAt: new Date(Date.now() - 15 * 60 * 1000),
-};
-
-const MOCK_CUSTOMER = {
-  name: 'Amit Sharma',
-  phone: '+91 98765 43210',
-  address: '42, Sector 15, Vasundhara, Ghaziabad, UP 201012',
-  landmark: 'Near Water Tank, Gate No. 3',
-};
+// Map order status -> UI delivery step
+function statusToStep(status: OrderStatus | undefined): DeliveryStatus {
+  if (status === 'arriving') return 'arrived';
+  if (status === 'delivered') return 'delivered';
+  return 'navigate';
+}
 
 // =============================================================================
 // Navigation Info Bar
 // =============================================================================
 
-function NavigationInfoBar({
-  eta,
-  distance,
-}: {
-  eta: number | null;
-  distance: number | null;
-}) {
+function NavigationInfoBar({ eta, distance }: { eta: number | null; distance: number | null }) {
   const etaMinutes = eta ? Math.ceil(eta / 60) : null;
-  const distanceKm = distance ? (distance / 1000).toFixed(1) : null;
+  const distanceKm = distance != null ? (distance / 1000).toFixed(1) : null;
 
   return (
     <div className="absolute top-4 left-4 right-4 z-10 flex gap-2">
-      {etaMinutes && (
+      {etaMinutes != null && (
         <div className="flex-1 bg-white/95 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-gray-100">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-green-600" />
             <div>
               <p className="text-xs text-gray-400">ETA</p>
-              <p className="text-lg font-bold text-gray-900">
-                {etaMinutes} min
-              </p>
+              <p className="text-lg font-bold text-gray-900">{etaMinutes} min</p>
             </div>
           </div>
         </div>
       )}
-      {distanceKm && (
+      {distanceKm != null && (
         <div className="flex-1 bg-white/95 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-gray-100">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-blue-600" />
             <div>
               <p className="text-xs text-gray-400">Distance</p>
-              <p className="text-lg font-bold text-gray-900">
-                {distanceKm} km
-              </p>
+              <p className="text-lg font-bold text-gray-900">{distanceKm} km</p>
             </div>
           </div>
         </div>
@@ -135,14 +94,8 @@ function NavigationInfoBar({
 // Delivery Status Stepper
 // =============================================================================
 
-function DeliveryStatusStepper({
-  currentStatus,
-}: {
-  currentStatus: DeliveryStatus;
-}) {
-  const currentIndex = DELIVERY_STEPS.findIndex(
-    (s) => s.key === currentStatus
-  );
+function DeliveryStatusStepper({ currentStatus }: { currentStatus: DeliveryStatus }) {
+  const currentIndex = DELIVERY_STEPS.findIndex((s) => s.key === currentStatus);
 
   return (
     <div className="flex items-center justify-between px-2">
@@ -160,25 +113,13 @@ function DeliveryStatusStepper({
                   isCompleted
                     ? 'bg-green-500 text-white'
                     : isCurrent
-                    ? 'bg-green-100 text-green-600 ring-2 ring-green-400 ring-offset-2'
-                    : 'bg-gray-100 text-gray-400'
+                      ? 'bg-green-100 text-green-600 ring-2 ring-green-400 ring-offset-2'
+                      : 'bg-gray-100 text-gray-400'
                 )}
-                animate={
-                  isCurrent
-                    ? { scale: [1, 1.08, 1] }
-                    : { scale: 1 }
-                }
-                transition={
-                  isCurrent
-                    ? { duration: 2, repeat: Infinity, ease: 'easeInOut' }
-                    : {}
-                }
+                animate={isCurrent ? { scale: [1, 1.08, 1] } : { scale: 1 }}
+                transition={isCurrent ? { duration: 2, repeat: Infinity, ease: 'easeInOut' } : {}}
               >
-                {isCompleted ? (
-                  <CheckCircle2 className="w-5 h-5" />
-                ) : (
-                  <Icon className="w-5 h-5" />
-                )}
+                {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </motion.div>
               <span
                 className={cn(
@@ -186,15 +127,14 @@ function DeliveryStatusStepper({
                   isCurrent
                     ? 'text-green-600 font-semibold'
                     : isCompleted
-                    ? 'text-green-500'
-                    : 'text-gray-400'
+                      ? 'text-green-500'
+                      : 'text-gray-400'
                 )}
               >
                 {step.label}
               </span>
             </div>
 
-            {/* Connector */}
             {i < DELIVERY_STEPS.length - 1 && (
               <div
                 className={cn(
@@ -266,12 +206,8 @@ function DeliveryPhotoUpload({
           <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-2">
             <Camera className="w-6 h-6 text-gray-400" />
           </div>
-          <p className="text-sm font-medium text-gray-600">
-            Take delivery photo
-          </p>
-          <p className="text-[10px] text-gray-400 mt-0.5">
-            Required for delivery confirmation
-          </p>
+          <p className="text-sm font-medium text-gray-600">Take delivery photo</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Required for delivery confirmation</p>
         </label>
       )}
     </div>
@@ -279,7 +215,7 @@ function DeliveryPhotoUpload({
 }
 
 // =============================================================================
-// Active Delivery Page
+// Active Delivery Page (Live)
 // =============================================================================
 
 export default function ActiveDeliveryPage() {
@@ -287,74 +223,255 @@ export default function ActiveDeliveryPage() {
   const params = useParams();
   const orderId = params.orderId as string;
 
+  const user = useAuthStore((s) => s.user);
   const { activeOrder, setActiveOrder } = useSupplierStore();
 
-  // Use store order or mock
-  const order = activeOrder?.id === orderId ? activeOrder : MOCK_ORDER;
+  // --------------------------------------------------------------------------
+  // State
+  // --------------------------------------------------------------------------
+  const [order, setOrder] = useState<Order | null>(activeOrder?.id === orderId ? activeOrder : null);
+  const [loadingOrder, setLoadingOrder] = useState(!order);
+  const [orderError, setOrderError] = useState<string | null>(null);
+
+  const [deliveryPhoto, setDeliveryPhoto] = useState<string | null>(null);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
+  const [showDeliveredSuccess, setShowDeliveredSuccess] = useState(false);
+
+  const deliveryStatus = statusToStep(order?.status);
+
+  // GPS broadcast state
+  const watchIdRef = useRef<number | null>(null);
+  const lastBroadcastAt = useRef<number>(0);
+  const [gpsState, setGpsState] = useState<'idle' | 'requesting' | 'active' | 'error'>('idle');
+  const [lastBroadcastMs, setLastBroadcastMs] = useState<number>(0);
 
   // --------------------------------------------------------------------------
-  // Local State
+  // Fetch order on mount if not in store
   // --------------------------------------------------------------------------
-  const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>('navigate');
-  const [deliveryPhoto, setDeliveryPhoto] = useState<string | null>(null);
-  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(true);
-  const [isConfirmingDelivery, setIsConfirmingDelivery] = useState(false);
-  const [showDeliveredSuccess, setShowDeliveredSuccess] = useState(false);
+  useEffect(() => {
+    if (order && order.id === orderId) return;
+    if (!orderId) return;
+
+    let cancelled = false;
+    setLoadingOrder(true);
+    setOrderError(null);
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`, { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error(`Failed to load order (${res.status})`);
+        }
+        const data: Order = await res.json();
+        if (!cancelled) {
+          setOrder(data);
+          setActiveOrder(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setOrderError(err instanceof Error ? err.message : 'Failed to load order');
+        }
+      } finally {
+        if (!cancelled) setLoadingOrder(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
+
+  // Keep local order in sync with store-driven realtime updates from useSupplier hook
+  useEffect(() => {
+    if (activeOrder && activeOrder.id === orderId) {
+      setOrder(activeOrder);
+    }
+  }, [activeOrder, orderId]);
+
+  // --------------------------------------------------------------------------
+  // GPS broadcast: navigator.geolocation.watchPosition → POST /api/tracking
+  // --------------------------------------------------------------------------
+  const broadcastLocation = useCallback(
+    async (lat: number, lng: number) => {
+      if (!order || !user) return;
+      try {
+        const res = await fetch('/api/tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: order.id,
+            supplierId: user.id,
+            location: { lat, lng },
+          }),
+        });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          console.warn('[supplier-delivery] tracking POST failed:', res.status, detail);
+        } else {
+          setLastBroadcastMs(Date.now());
+        }
+      } catch (err) {
+        console.warn('[supplier-delivery] tracking POST error:', err);
+      }
+    },
+    [order, user]
+  );
+
+  useEffect(() => {
+    // Only broadcast while delivery is active
+    if (!order || !user) return;
+    const trackableStatuses: OrderStatus[] = ['accepted', 'en_route', 'arriving'];
+    if (!trackableStatuses.includes(order.status)) return;
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGpsState('error');
+      return;
+    }
+
+    setGpsState('requesting');
+
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsState('active');
+        const now = Date.now();
+        // Throttle to once every 5s; coalescer further reduces Firestore writes
+        if (now - lastBroadcastAt.current < 5000) return;
+        lastBroadcastAt.current = now;
+        broadcastLocation(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        console.warn('[supplier-delivery] geolocation error:', err);
+        setGpsState('error');
+        toast.error(`Location unavailable: ${err.message}`);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 15000,
+      }
+    );
+    watchIdRef.current = id;
+
+    return () => {
+      if (watchIdRef.current != null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [order, user, broadcastLocation]);
+
+  // --------------------------------------------------------------------------
+  // Status update helpers (PUT /api/orders/:id with status transition)
+  // --------------------------------------------------------------------------
+  const updateOrderStatus = useCallback(
+    async (next: OrderStatus): Promise<boolean> => {
+      if (!order) return false;
+      setIsStatusUpdating(true);
+      try {
+        const res = await fetch(`/api/orders/${order.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: next }),
+        });
+        if (!res.ok) {
+          const detail = await res.text().catch(() => '');
+          throw new Error(detail || `update failed (${res.status})`);
+        }
+        const updated: Order = await res.json().catch(() => ({
+          ...order,
+          status: next,
+        }));
+        setOrder(updated);
+        setActiveOrder(updated);
+        return true;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Status update failed');
+        return false;
+      } finally {
+        setIsStatusUpdating(false);
+      }
+    },
+    [order, setActiveOrder]
+  );
 
   // --------------------------------------------------------------------------
   // Handlers
   // --------------------------------------------------------------------------
-  const handleStartNavigation = () => {
-    // Open Google Maps with directions
+  const handleStartNavigation = async () => {
+    if (!order) return;
+    // Bump to en_route on first navigation start
+    if (order.status === 'accepted') {
+      await updateOrderStatus('en_route');
+    }
     const dest = order.deliveryLocation;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${dest.lat},${dest.lng}&travelmode=driving`;
     window.open(url, '_blank');
   };
 
   const handleCallCustomer = () => {
-    window.open(`tel:${MOCK_CUSTOMER.phone}`, '_self');
+    // We don't currently denormalise customer phone onto the order; the
+    // supplier can use in-app messaging or the customer can reach out.
+    toast('Customer phone is hidden by privacy; use in-app chat.');
   };
 
-  const handleMarkArrived = () => {
-    setDeliveryStatus('arrived');
+  const handleMarkArrived = async () => {
+    await updateOrderStatus('arriving');
   };
 
   const handlePhotoUpload = (file: File) => {
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setDeliveryPhoto(reader.result as string);
-    };
+    reader.onloadend = () => setDeliveryPhoto(reader.result as string);
     reader.readAsDataURL(file);
   };
 
   const handleMarkDelivered = async () => {
-    setIsConfirmingDelivery(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setDeliveryStatus('delivered');
-    setIsConfirmingDelivery(false);
+    const ok = await updateOrderStatus('delivered');
+    if (!ok) return;
     setShowDeliveredSuccess(true);
-
-    // Clear active order and navigate back after success animation
+    if (watchIdRef.current != null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
     setTimeout(() => {
       setActiveOrder(null);
       router.replace('/supplier');
     }, 3000);
   };
 
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  const _etaMinutes = order.tracking?.eta
-    ? Math.ceil(order.tracking.eta / 60)
-    : null;
-  const _distanceKm = order.tracking?.distance
-    ? (order.tracking.distance / 1000).toFixed(1)
-    : null;
+  const handleGoBack = () => router.back();
 
   // --------------------------------------------------------------------------
-  // Delivered Success Overlay
+  // Loading / error states
+  // --------------------------------------------------------------------------
+  if (loadingOrder) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-10 h-10 animate-spin text-blue-500 mx-auto" />
+          <p className="text-sm text-gray-500">Loading order…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (orderError || !order) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white px-6">
+        <div className="text-center space-y-3 max-w-sm">
+          <X className="w-10 h-10 text-red-500 mx-auto" />
+          <p className="text-base font-semibold text-gray-900">
+            {orderError || 'Order not found'}
+          </p>
+          <Button variant="primary" onClick={() => router.replace('/supplier')}>
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // --------------------------------------------------------------------------
+  // Delivered success overlay
   // --------------------------------------------------------------------------
   if (showDeliveredSuccess) {
     return (
@@ -413,9 +530,7 @@ export default function ActiveDeliveryPage() {
 
   return (
     <div className="fixed inset-0 bg-gray-100 flex flex-col">
-      {/* ================================================================ */}
-      {/* Top Bar                                                          */}
-      {/* ================================================================ */}
+      {/* Top Bar */}
       <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4">
         <button
           onClick={handleGoBack}
@@ -428,39 +543,42 @@ export default function ActiveDeliveryPage() {
           <div
             className={cn(
               'w-2 h-2 rounded-full',
-              deliveryStatus === 'delivered' ? 'bg-green-500' : 'bg-blue-500 animate-pulse'
+              gpsState === 'active'
+                ? 'bg-green-500 animate-pulse'
+                : gpsState === 'error'
+                  ? 'bg-red-500'
+                  : 'bg-yellow-500 animate-pulse'
             )}
           />
           <span className="text-sm font-semibold text-gray-900">
-            {deliveryStatus === 'navigate'
-              ? 'Navigating'
-              : deliveryStatus === 'arrived'
-              ? 'At Location'
-              : 'Delivered'}
+            {gpsState === 'active'
+              ? `GPS live${lastBroadcastMs ? ` · ${Math.max(0, Math.round((Date.now() - lastBroadcastMs) / 1000))}s ago` : ''}`
+              : gpsState === 'error'
+                ? 'GPS denied'
+                : gpsState === 'requesting'
+                  ? 'GPS requesting…'
+                  : 'GPS idle'}
           </span>
         </div>
 
         <button
           onClick={handleCallCustomer}
           className="w-10 h-10 rounded-full bg-green-500 shadow-lg flex items-center justify-center hover:bg-green-600 transition-colors"
+          aria-label="Contact customer"
         >
           <Phone className="w-5 h-5 text-white" />
         </button>
       </header>
 
-      {/* ================================================================ */}
-      {/* Map Area (placeholder)                                           */}
-      {/* ================================================================ */}
+      {/* Map area placeholder (deep-link to Google Maps) */}
       <div className="flex-1 relative bg-gradient-to-br from-green-50 via-blue-50 to-green-50">
-        {/* Navigation Info Overlay */}
         {deliveryStatus === 'navigate' && (
           <NavigationInfoBar
-            eta={order.tracking?.eta || null}
-            distance={order.tracking?.distance || null}
+            eta={order.tracking?.eta ?? null}
+            distance={order.tracking?.distance ?? null}
           />
         )}
 
-        {/* Map placeholder content */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-gray-400">
             <div className="relative">
@@ -470,19 +588,17 @@ export default function ActiveDeliveryPage() {
               >
                 <Navigation className="w-12 h-12 text-green-500" />
               </motion.div>
-              {/* Simulated route line */}
               <div className="absolute top-14 left-1/2 -translate-x-1/2 w-0.5 h-20 bg-gradient-to-b from-green-400 to-transparent" />
               <div className="absolute top-36 left-1/2 -translate-x-1/2">
                 <MapPin className="w-6 h-6 text-red-500" />
               </div>
             </div>
             <span className="text-xs font-medium text-gray-500 mt-20">
-              Live map with route
+              Open turn-by-turn navigation
             </span>
           </div>
         </div>
 
-        {/* Open in Google Maps FAB */}
         {deliveryStatus === 'navigate' && (
           <button
             onClick={handleStartNavigation}
@@ -494,29 +610,19 @@ export default function ActiveDeliveryPage() {
         )}
       </div>
 
-      {/* ================================================================ */}
-      {/* Bottom Sheet                                                     */}
-      {/* ================================================================ */}
-      <motion.div
-        className="bg-white rounded-t-3xl shadow-xl border-t border-gray-100 z-30"
-        initial={{ y: 0 }}
-        animate={{ y: 0 }}
-      >
-        {/* Drag Handle */}
-        <button
-          onClick={() => setIsBottomSheetExpanded(!isBottomSheetExpanded)}
-          className="w-full flex justify-center py-2"
-        >
+      {/* Bottom Sheet */}
+      <motion.div className="bg-white rounded-t-3xl shadow-xl border-t border-gray-100 z-30">
+        <div className="w-full flex justify-center py-2">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
-        </button>
+        </div>
 
         <div className="px-4 pb-6 max-h-[55vh] overflow-y-auto">
-          {/* Status Stepper */}
+          {/* Stepper */}
           <div className="mb-4">
             <DeliveryStatusStepper currentStatus={deliveryStatus} />
           </div>
 
-          {/* Customer Info */}
+          {/* Customer summary */}
           <Card padding="md" shadow="sm" className="mb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -524,11 +630,9 @@ export default function ActiveDeliveryPage() {
                   <User className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {MOCK_CUSTOMER.name}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {MOCK_CUSTOMER.phone}
+                  <p className="text-sm font-semibold text-gray-900">Customer</p>
+                  <p className="text-xs text-gray-400 font-mono">
+                    #{order.customerId.slice(0, 10)}
                   </p>
                 </div>
               </div>
@@ -541,7 +645,7 @@ export default function ActiveDeliveryPage() {
                   <Phone className="w-4 h-4 text-green-600" />
                 </button>
                 <button
-                  onClick={() => window.open(`sms:${MOCK_CUSTOMER.phone}`, '_self')}
+                  onClick={handleCallCustomer}
                   className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                   aria-label="Message customer"
                 >
@@ -551,22 +655,23 @@ export default function ActiveDeliveryPage() {
             </div>
           </Card>
 
-          {/* Delivery Address */}
+          {/* Address */}
           <Card padding="md" shadow="sm" className="mb-3">
             <div className="flex items-start gap-2 mb-2">
               <MapPin className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-gray-900">
-                  {MOCK_CUSTOMER.address}
+                  {order.deliveryLocation.address ||
+                    `${order.deliveryLocation.lat.toFixed(5)}, ${order.deliveryLocation.lng.toFixed(5)}`}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  Landmark: {MOCK_CUSTOMER.landmark}
+                  Drop coordinates broadcast live
                 </p>
               </div>
             </div>
           </Card>
 
-          {/* Order Details */}
+          {/* Order details */}
           <Card padding="md" shadow="sm" className="mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -588,12 +693,8 @@ export default function ActiveDeliveryPage() {
               </div>
             </div>
             <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-400">
-              <span>
-                Total: {formatCurrency(order.price.total)}
-              </span>
-              <span>
-                Payment: {order.payment.method.toUpperCase()}
-              </span>
+              <span>Total: {formatCurrency(order.price.total)}</span>
+              <span>Payment: {order.payment.method.toUpperCase()}</span>
               <span
                 className={cn(
                   'px-1.5 py-0.5 rounded-full font-medium',
@@ -607,11 +708,7 @@ export default function ActiveDeliveryPage() {
             </div>
           </Card>
 
-          {/* ============================================================ */}
-          {/* Action Area based on delivery status                         */}
-          {/* ============================================================ */}
-
-          {/* Navigate State */}
+          {/* Action area */}
           {deliveryStatus === 'navigate' && (
             <div className="space-y-3">
               <Button
@@ -620,6 +717,7 @@ export default function ActiveDeliveryPage() {
                 fullWidth
                 onClick={handleStartNavigation}
                 leftIcon={<Navigation className="w-6 h-6" />}
+                loading={isStatusUpdating}
                 className="text-lg"
               >
                 Start Navigation
@@ -629,6 +727,7 @@ export default function ActiveDeliveryPage() {
                 size="lg"
                 fullWidth
                 onClick={handleMarkArrived}
+                loading={isStatusUpdating}
                 leftIcon={<Flag className="w-5 h-5" />}
               >
                 I Have Arrived
@@ -636,7 +735,6 @@ export default function ActiveDeliveryPage() {
             </div>
           )}
 
-          {/* Arrived State */}
           {deliveryStatus === 'arrived' && (
             <div className="space-y-3">
               <div className="p-3 bg-yellow-50 rounded-xl border border-yellow-100 flex items-start gap-2">
@@ -651,7 +749,6 @@ export default function ActiveDeliveryPage() {
                 </div>
               </div>
 
-              {/* Photo Upload */}
               <DeliveryPhotoUpload
                 photo={deliveryPhoto}
                 onUpload={handlePhotoUpload}
@@ -664,12 +761,8 @@ export default function ActiveDeliveryPage() {
                 fullWidth
                 onClick={handleMarkDelivered}
                 disabled={!deliveryPhoto}
-                loading={isConfirmingDelivery}
-                leftIcon={
-                  !isConfirmingDelivery ? (
-                    <PackageCheck className="w-6 h-6" />
-                  ) : undefined
-                }
+                loading={isStatusUpdating}
+                leftIcon={!isStatusUpdating ? <PackageCheck className="w-6 h-6" /> : undefined}
                 className="text-lg"
               >
                 Mark as Delivered
@@ -683,21 +776,15 @@ export default function ActiveDeliveryPage() {
             </div>
           )}
 
-          {/* Delivered State (brief, before redirect) */}
           {deliveryStatus === 'delivered' && (
             <div className="text-center py-4">
               <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-2" />
-              <p className="text-lg font-bold text-gray-900">
-                Delivery Confirmed!
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Redirecting to dashboard...
-              </p>
+              <p className="text-lg font-bold text-gray-900">Delivery Confirmed!</p>
+              <p className="text-sm text-gray-500 mt-1">Redirecting to dashboard...</p>
             </div>
           )}
         </div>
 
-        {/* Safe area */}
         <div className="h-safe-area-inset-bottom bg-white" />
       </motion.div>
     </div>

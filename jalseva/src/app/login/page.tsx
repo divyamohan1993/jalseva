@@ -5,8 +5,14 @@ import type React from 'react';
 import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
+import {
+  signInWithPhoneNumber,
+  RecaptchaVerifier,
+  type ConfirmationResult,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
-import { setAuthCookie } from '@/actions/auth';
+import { signInWithIdToken } from '@/actions/auth';
 import { Button } from '@/components/ui/Button';
 import {
   Droplets,
@@ -14,28 +20,14 @@ import {
   ArrowLeft,
   Shield,
   CheckCircle2,
-  AlertTriangle,
-  Eye,
+  Info,
+  User as UserIcon,
+  Truck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 type Step = 'phone' | 'otp' | 'success';
-
-// ---------------------------------------------------------------------------
-// Generate a random 6-digit OTP
-// ---------------------------------------------------------------------------
-
-function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// ---------------------------------------------------------------------------
-// Login Page (Demo Mode — OTP displayed on screen)
-// ---------------------------------------------------------------------------
+type Role = 'customer' | 'supplier';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,64 +35,80 @@ export default function LoginPage() {
   const { setUser, setLoading, setInitialized } = useAuthStore();
 
   const [step, setStep] = useState<Step>('phone');
+  const [role, setRole] = useState<Role>('customer');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const [generatedOtp, setGeneratedOtp] = useState('');
   const [isPendingSend, startSendTransition] = useTransition();
   const [isPendingVerify, startVerifyTransition] = useTransition();
   const [countdown, setCountdown] = useState(0);
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const confirmationResultRef = useRef<ConfirmationResult | null>(null);
 
-  // --- Auto-detect phone from URL params (for WhatsApp deeplinks) ---
+  // --- Auto-detect phone & role from URL params ---
   useEffect(() => {
     const phone = searchParams.get('phone');
     if (phone) {
       const cleaned = phone.replace(/\D/g, '').replace(/^91/, '');
-      if (cleaned.length === 10) {
-        setPhoneNumber(cleaned);
-      }
+      if (cleaned.length === 10) setPhoneNumber(cleaned);
     }
+    const roleParam = searchParams.get('role');
+    if (roleParam === 'supplier' || roleParam === 'customer') setRole(roleParam);
   }, [searchParams]);
 
   // --- Countdown timer ---
   useEffect(() => {
     if (countdown <= 0) return;
-    const timer = setInterval(() => {
-      setCountdown((prev) => prev - 1);
-    }, 1000);
+    const timer = setInterval(() => setCountdown((p) => p - 1), 1000);
     return () => clearInterval(timer);
   }, [countdown]);
 
-  // --- Send OTP (Demo: generate and display) ---
+  // --- Build / reset the invisible reCAPTCHA verifier ---
+  const ensureRecaptcha = (): RecaptchaVerifier => {
+    if (recaptchaVerifierRef.current) return recaptchaVerifierRef.current;
+    recaptchaVerifierRef.current = new RecaptchaVerifier(
+      auth,
+      'recaptcha-container',
+      { size: 'invisible' }
+    );
+    return recaptchaVerifierRef.current;
+  };
+
+  // --- Send OTP via Firebase Phone Auth ---
   const handleSendOtp = () => {
     if (phoneNumber.length !== 10) {
-      toast.error(
-        'Please enter a valid 10-digit phone number.\nकृपया सही फ़ोन नंबर डालें।'
-      );
+      toast.error('Please enter a valid 10-digit phone number.\nकृपया सही फ़ोन नंबर डालें।');
       return;
     }
 
     startSendTransition(async () => {
-      // Simulate a short delay for realism
-      await new Promise((r) => setTimeout(r, 800));
-
-      const newOtp = generateOtp();
-      setGeneratedOtp(newOtp);
-      setStep('otp');
-      setCountdown(60);
-
-      toast.success('OTP generated for demo!\nडेमो के लिए OTP बनाया गया!');
-
-      // Focus first OTP input
-      setTimeout(() => otpRefs.current[0]?.focus(), 300);
+      try {
+        const verifier = ensureRecaptcha();
+        const e164 = `+91${phoneNumber}`;
+        const confirmation = await signInWithPhoneNumber(auth, e164, verifier);
+        confirmationResultRef.current = confirmation;
+        setStep('otp');
+        setCountdown(60);
+        toast.success('OTP sent.\nOTP भेजा गया।');
+        setTimeout(() => otpRefs.current[0]?.focus(), 200);
+      } catch (error) {
+        console.error('[login] signInWithPhoneNumber failed:', error);
+        // Reset verifier so user can retry
+        try {
+          recaptchaVerifierRef.current?.clear();
+        } catch {}
+        recaptchaVerifierRef.current = null;
+        const message =
+          error instanceof Error ? error.message : 'Could not send OTP. Please try again.';
+        toast.error(message);
+      }
     });
   };
 
   // --- OTP input handling ---
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) {
-      // Handle paste
       const digits = value.replace(/\D/g, '').slice(0, 6);
       const newOtp = [...otp];
       for (let i = 0; i < digits.length && index + i < 6; i++) {
@@ -109,21 +117,15 @@ export default function LoginPage() {
       setOtp(newOtp);
       const nextIndex = Math.min(index + digits.length, 5);
       otpRefs.current[nextIndex]?.focus();
-
-      if (newOtp.every((d) => d !== '')) {
-        handleVerifyOtp(newOtp.join(''));
-      }
+      if (newOtp.every((d) => d !== '')) handleVerifyOtp(newOtp.join(''));
       return;
     }
 
     const newOtp = [...otp];
-    newOtp[index] = value;
+    newOtp[index] = value.replace(/\D/g, '');
     setOtp(newOtp);
 
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
     if (value && index === 5 && newOtp.every((d) => d !== '')) {
       handleVerifyOtp(newOtp.join(''));
     }
@@ -138,65 +140,65 @@ export default function LoginPage() {
     }
   };
 
-  // --- Verify OTP (Demo: compare with generated OTP) ---
+  // --- Verify OTP via Firebase + set server cookie via ID-token-verifying action ---
   const handleVerifyOtp = (otpValue?: string) => {
     const code = otpValue || otp.join('');
     if (code.length !== 6) {
-      toast.error(
-        'Please enter the complete 6-digit OTP.\nकृपया पूरा 6 अंक का OTP डालें।'
-      );
+      toast.error('Please enter the complete 6-digit OTP.\nकृपया पूरा 6 अंक का OTP डालें।');
+      return;
+    }
+
+    const confirmation = confirmationResultRef.current;
+    if (!confirmation) {
+      toast.error('Session expired. Please request a new OTP.');
+      setStep('phone');
+      setOtp(['', '', '', '', '', '']);
       return;
     }
 
     startVerifyTransition(async () => {
       setLoading(true);
+      try {
+        const credential = await confirmation.confirm(code);
+        const idToken = await credential.user.getIdToken();
 
-      // Simulate verification delay
-      await new Promise((r) => setTimeout(r, 600));
+        const result = await signInWithIdToken(idToken, role);
+        if (!result.success) {
+          throw new Error(result.error || 'sign_in_failed');
+        }
 
-      if (code !== generatedOtp) {
-        toast.error('Wrong OTP. Please try again.\nगलत OTP। दोबारा कोशिश करें।');
+        setUser({
+          id: result.uid,
+          phone: result.phone || `+91${phoneNumber}`,
+          name: '',
+          role: result.role,
+          language: 'en',
+          rating: { average: 5, count: 0 },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        setInitialized(true);
+        setStep('success');
+        toast.success('Login successful!\nलॉगिन सफल!');
+
+        setTimeout(() => {
+          const fallback = result.role === 'supplier' ? '/supplier' : '/';
+          const redirect = searchParams.get('redirect') || fallback;
+          router.push(redirect);
+        }, 1200);
+      } catch (error) {
+        console.error('[login] verify failed:', error);
+        const msg = error instanceof Error ? error.message : 'verify_failed';
+        if (msg.includes('invalid-verification-code') || msg.includes('verify_failed')) {
+          toast.error('Wrong OTP. Please try again.\nगलत OTP। दोबारा कोशिश करें।');
+        } else {
+          toast.error(msg);
+        }
         setOtp(['', '', '', '', '', '']);
         otpRefs.current[0]?.focus();
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // OTP matches — create demo user
-      const demoUserId = `demo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      const demoUser = {
-        id: demoUserId,
-        phone: `+91${phoneNumber}`,
-        name: '',
-        role: 'customer' as const,
-        language: 'en',
-        rating: { average: 5, count: 0 },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      // Persist demo user to localStorage so it survives page refresh
-      try {
-        localStorage.setItem('jalseva_demo_user', JSON.stringify(demoUser));
-      } catch {
-        // localStorage might be unavailable
-      }
-
-      // Set auth cookie via Server Action for middleware auth
-      await setAuthCookie(demoUserId);
-
-      setUser(demoUser);
-      setInitialized(true);
-      setStep('success');
-      toast.success('Login successful!\nलॉगिन सफल!');
-
-      // Redirect after success animation
-      setTimeout(() => {
-        const redirect = searchParams.get('redirect') || '/';
-        router.push(redirect);
-      }, 1500);
-
-      setLoading(false);
     });
   };
 
@@ -204,18 +206,22 @@ export default function LoginPage() {
   const handleResendOtp = () => {
     if (countdown > 0) return;
     setOtp(['', '', '', '', '', '']);
-    const newOtp = generateOtp();
-    setGeneratedOtp(newOtp);
-    setCountdown(60);
-    toast.success('New OTP generated!\nनया OTP बनाया गया!');
-    setTimeout(() => otpRefs.current[0]?.focus(), 100);
+    try {
+      recaptchaVerifierRef.current?.clear();
+    } catch {}
+    recaptchaVerifierRef.current = null;
+    confirmationResultRef.current = null;
+    setStep('phone');
+    setCountdown(0);
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* --- Water-themed header decoration --- */}
+      {/* Invisible reCAPTCHA host */}
+      <div id="recaptcha-container" />
+
+      {/* --- Water-themed header --- */}
       <div className="relative bg-water h-48 overflow-hidden">
-        {/* Water bubbles */}
         {[0, 1, 2, 3, 4, 5].map((n) => (
           <motion.div
             key={n}
@@ -226,10 +232,7 @@ export default function LoginPage() {
               left: `${10 + Math.random() * 80}%`,
               bottom: -20,
             }}
-            animate={{
-              y: [0, -250],
-              opacity: [0.6, 0],
-            }}
+            animate={{ y: [0, -250], opacity: [0.6, 0] }}
             transition={{
               duration: 3 + Math.random() * 2,
               repeat: Infinity,
@@ -239,7 +242,6 @@ export default function LoginPage() {
           />
         ))}
 
-        {/* Back button */}
         <button
           onClick={() => router.back()}
           className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center safe-top"
@@ -247,7 +249,6 @@ export default function LoginPage() {
           <ArrowLeft className="w-5 h-5 text-white" />
         </button>
 
-        {/* Logo centered */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <motion.div
             initial={{ scale: 0 }}
@@ -276,28 +277,51 @@ export default function LoginPage() {
             >
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Enter your phone number
+                  Sign in with phone
                 </h2>
-                <p className="text-gray-500 mt-1">अपना फ़ोन नंबर डालें</p>
+                <p className="text-gray-500 mt-1">फ़ोन से साइन इन करें</p>
               </div>
 
-              {/* Demo notice */}
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              {/* Role toggle */}
+              <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => setRole('customer')}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    role === 'customer'
+                      ? 'bg-white text-blue-700 shadow-sm'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  <UserIcon className="w-4 h-4" />
+                  Customer / ग्राहक
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('supplier')}
+                  className={`flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    role === 'supplier'
+                      ? 'bg-white text-emerald-700 shadow-sm'
+                      : 'text-gray-500'
+                  }`}
+                >
+                  <Truck className="w-4 h-4" />
+                  Supplier / सप्लायर
+                </button>
+              </div>
+
+              {/* Demo notice with test numbers */}
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-800">
-                      Demo Mode / डेमो मोड
-                    </p>
-                    <p className="text-xs text-amber-700 mt-1">
-                      OTP verification requires multiple third-party SMS gateway
-                      verifications. For hassle-free demo purposes, the OTP will
-                      be displayed on screen.
-                    </p>
-                    <p className="text-xs text-amber-600 mt-1">
-                      OTP सत्यापन के लिए कई तृतीय-पक्ष SMS गेटवे सत्यापन
-                      आवश्यक हैं। डेमो की सुविधा के लिए, OTP स्क्रीन पर
-                      दिखाया जाएगा।
+                  <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+                  <div className="text-xs text-blue-800 space-y-1">
+                    <p className="font-semibold">Demo test numbers (no SMS sent):</p>
+                    <p className="font-mono">+91 99999 00001 → OTP 123456</p>
+                    <p className="font-mono">+91 99999 00002 → OTP 654321</p>
+                    <p className="font-mono">+91 99999 00003 → OTP 111111</p>
+                    <p className="text-blue-700/80 mt-2">
+                      For any other number, a real OTP SMS will be sent via
+                      Firebase.
                     </p>
                   </div>
                 </div>
@@ -319,16 +343,13 @@ export default function LoginPage() {
                     inputMode="numeric"
                     maxLength={10}
                     value={phoneNumber}
-                    onChange={(e) =>
-                      setPhoneNumber(e.target.value.replace(/\D/g, ''))
-                    }
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                     placeholder="XXXXX XXXXX"
                     className="flex-1 px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-lg font-medium tracking-wider placeholder:text-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
                   />
                 </div>
               </div>
 
-              {/* Send OTP button */}
               <Button
                 variant="primary"
                 size="xl"
@@ -344,9 +365,7 @@ export default function LoginPage() {
 
               <div className="flex items-center gap-2 justify-center text-xs text-gray-400">
                 <Shield className="w-3.5 h-3.5" />
-                <span>
-                  Your number is safe with us / आपका नंबर सुरक्षित है
-                </span>
+                <span>Your number is safe with us / आपका नंबर सुरक्षित है</span>
               </div>
             </motion.div>
           )}
@@ -363,48 +382,9 @@ export default function LoginPage() {
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-900">Enter OTP</h2>
                 <p className="text-gray-500 mt-1">OTP डालें</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Sent to +91 {phoneNumber}
-                </p>
+                <p className="text-sm text-gray-400 mt-2">Sent to +91 {phoneNumber}</p>
               </div>
 
-              {/* DEMO OTP Display */}
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', delay: 0.1 }}
-                className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-2 border-dashed border-blue-300 rounded-2xl p-5"
-              >
-                <div className="flex items-center gap-2 justify-center mb-3">
-                  <Eye className="w-5 h-5 text-blue-600" />
-                  <p className="text-sm font-bold text-blue-800">
-                    Demo OTP / डेमो OTP
-                  </p>
-                </div>
-                <div className="flex justify-center gap-2">
-                  {Array.from(generatedOtp, (digit, pos) => ({ digit, pos })).map(({ digit, pos }) => (
-                    <motion.span
-                      key={pos}
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.1 * pos }}
-                      className="w-11 h-14 bg-white rounded-xl border-2 border-blue-200 flex items-center justify-center text-2xl font-bold text-blue-700 shadow-sm"
-                    >
-                      {digit}
-                    </motion.span>
-                  ))}
-                </div>
-                <p className="text-xs text-center text-blue-600/70 mt-3">
-                  OTP verification requires multiple third-party SMS gateway
-                  verifications. Displayed live for hassle-free demo.
-                </p>
-                <p className="text-xs text-center text-blue-500/60 mt-1">
-                  OTP सत्यापन के लिए कई तृतीय-पक्ष SMS गेटवे सत्यापन आवश्यक
-                  हैं। डेमो की सुविधा के लिए लाइव दिखाया गया है।
-                </p>
-              </motion.div>
-
-              {/* OTP inputs */}
               <div className="flex justify-center gap-3">
                 {Array.from(otp, (digit, pos) => ({ digit, pos })).map(({ digit, pos }) => (
                   <input
@@ -427,7 +407,6 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              {/* Verify button */}
               <Button
                 variant="primary"
                 size="xl"
@@ -440,12 +419,10 @@ export default function LoginPage() {
                 Verify OTP / OTP सत्यापित करें
               </Button>
 
-              {/* Resend */}
               <div className="text-center">
                 {countdown > 0 ? (
                   <p className="text-sm text-gray-400">
-                    Resend OTP in {countdown}s / {countdown} सेकंड में दोबारा
-                    भेजें
+                    Resend OTP in {countdown}s
                   </p>
                 ) : (
                   <button
@@ -457,12 +434,15 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* Change number */}
               <button
                 onClick={() => {
                   setStep('phone');
                   setOtp(['', '', '', '', '', '']);
-                  setGeneratedOtp('');
+                  try {
+                    recaptchaVerifierRef.current?.clear();
+                  } catch {}
+                  recaptchaVerifierRef.current = null;
+                  confirmationResultRef.current = null;
                 }}
                 className="w-full text-center text-sm text-gray-400 hover:text-gray-600 min-h-[44px]"
               >
@@ -486,9 +466,7 @@ export default function LoginPage() {
               >
                 <CheckCircle2 className="w-20 h-20 text-green-500" />
               </motion.div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Login Successful!
-              </h2>
+              <h2 className="text-2xl font-bold text-gray-900">Login Successful!</h2>
               <p className="text-gray-500">लॉगिन सफल!</p>
               <p className="text-sm text-gray-400">Redirecting...</p>
             </motion.div>

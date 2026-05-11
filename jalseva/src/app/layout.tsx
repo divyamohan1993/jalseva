@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Toaster } from 'sonner';
 import { Providers } from './providers';
+import { RouteCapstoneCredit } from '@/components/RouteCapstoneCredit';
 import './globals.css';
 
 // ---------------------------------------------------------------------------
@@ -57,6 +58,7 @@ export default function RootLayout({
         </a>
         <Providers>
           {children}
+          <RouteCapstoneCredit />
           <Toaster
             position="top-center"
             richColors

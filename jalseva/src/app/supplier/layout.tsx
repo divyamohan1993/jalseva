@@ -12,9 +12,11 @@ import {
   Droplets,
   Power,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { useSupplierStore } from '@/store/supplierStore';
+import { useSupplier } from '@/hooks/useSupplier';
 
 // =============================================================================
 // Bottom Navigation Items
@@ -39,7 +41,11 @@ export default function SupplierLayout({
   const router = useRouter();
   const pathname = usePathname();
   const { user, initialized } = useAuthStore();
-  const { supplier, isOnline, setOnline } = useSupplierStore();
+  const { supplier, isOnline } = useSupplierStore();
+
+  // Activate Firestore listeners (supplier profile, pending orders, active
+  // order, today's earnings) and grab the live toggleOnline action.
+  const { toggleOnline } = useSupplier();
 
   // --------------------------------------------------------------------------
   // Auth & Role Guard
@@ -47,26 +53,14 @@ export default function SupplierLayout({
   useEffect(() => {
     if (!initialized) return;
 
-    // Not logged in -> redirect to login
     if (!user) {
       router.replace('/login');
       return;
     }
 
-    // Logged in but not a supplier -> redirect to registration
-    // Skip redirect if already on the register page
     if (user.role !== 'supplier' && !pathname.startsWith('/supplier/register')) {
       router.replace('/supplier/register');
       return;
-    }
-
-    // Is a supplier but profile not loaded & not on register page
-    if (
-      user.role === 'supplier' &&
-      !supplier &&
-      !pathname.startsWith('/supplier/register')
-    ) {
-      // Supplier profile hasn't loaded yet -- we allow rendering while it loads
     }
   }, [initialized, user, supplier, pathname, router]);
 
@@ -90,10 +84,15 @@ export default function SupplierLayout({
   }
 
   // --------------------------------------------------------------------------
-  // Online / Offline Toggle Handler
+  // Online / Offline Toggle Handler (writes to Firestore via useSupplier hook)
   // --------------------------------------------------------------------------
-  const handleToggleOnline = () => {
-    setOnline(!isOnline);
+  const handleToggleOnline = async () => {
+    try {
+      await toggleOnline();
+    } catch (err) {
+      console.error('[supplier-layout] toggleOnline failed:', err);
+      toast.error('Could not change status. Please try again.');
+    }
   };
 
   // Determine active nav item

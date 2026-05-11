@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------- Helpers --------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+    function isParticipant(orderData) {
+      return isSignedIn() &&
+        (request.auth.uid == orderData.customerId ||
+         request.auth.uid == orderData.supplierId);
+    }
+
+    // -------- Users --------
+    // Signed-in users can read profile metadata (names show on cards, etc.)
+    // and write only their own profile. Admin-only fields like role escalation
+    // are guarded server-side via the firebase-admin SDK in signInWithIdToken.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSelf(uid);
+      allow delete: if false;
+    }
+
+    // -------- Suppliers --------
+    // All signed-in users can read supplier docs (needed for nearby search +
+    // showing supplier name/rating on orders). A supplier can write only its
+    // own doc (online toggle, currentLocation, vehicle, etc.). The server
+    // creates the initial doc via the Admin SDK on supplier sign-in.
+    match /suppliers/{uid} {
+      allow read: if isSignedIn();
+      allow create, update: if isSelf(uid);
+      allow delete: if false;
+    }
+
+    // -------- Orders --------
+    // Customer creates orders for themselves. Both customer and supplier on a
+    // given order may read it. Updates are restricted to participants; the
+    // strict state-machine is enforced server-side at /api/orders/[id].
+    match /orders/{orderId} {
+      allow read: if isSignedIn() &&
+        (resource == null || isParticipant(resource.data));
+      allow create: if isSignedIn() &&
+        request.resource.data.customerId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        (isParticipant(resource.data) ||
+         // Allow an online, signed-in supplier to claim a searching order
+         (resource.data.status == 'searching' &&
+          request.resource.data.supplierId == request.auth.uid));
+      allow delete: if false;
+    }
+
+    // -------- Payments --------
+    // Audit log. Read by participants only. Writes go through the server.
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.customerId ||
+         request.auth.uid == resource.data.supplierId);
+      allow create, update, delete: if false;
+    }
+
+    // -------- Ratings --------
+    match /ratings/{ratingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.customerId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
