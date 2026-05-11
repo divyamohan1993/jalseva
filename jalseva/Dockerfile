@@ -4,7 +4,7 @@
 # =====================================================================
 
 # ---- Stage 1: dependencies -----------------------------------------------------
-FROM node:22-alpine AS deps
+FROM node:26-alpine AS deps
 RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
 WORKDIR /app
@@ -13,7 +13,7 @@ COPY package.json pnpm-lock.yaml .npmrc* ./
 RUN pnpm install --frozen-lockfile
 
 # ---- Stage 2: build ------------------------------------------------------------
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
 WORKDIR /app
@@ -46,7 +46,7 @@ COPY . .
 RUN pnpm run build
 
 # ---- Stage 3: runtime ----------------------------------------------------------
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
