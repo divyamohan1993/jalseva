@@ -27,9 +27,9 @@
 
 ### It must work.
 
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
-- [ ] `npm test` passes
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm run build` passes
+- [ ] `pnpm test` passes
 - [ ] Tested locally in browser
 - [ ] Tested on mobile viewport — this is where our users are
 

@@ -70,6 +70,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // -------- Server-only metadata (SMS quota counter, etc.) --------
+    // Touched only by Firebase Admin SDK (which bypasses these rules);
+    // explicit deny here makes the intent unambiguous.
+    match /meta/{document=**} {
+      allow read, write: if false;
+    }
+
     // Default deny.
     match /{document=**} {
       allow read, write: if false;

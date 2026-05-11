@@ -22,9 +22,10 @@ cd jalseva/jalseva
 **Step 2.** Set up your environment.
 
 ```bash
-npm install
+corepack enable && corepack prepare pnpm@10.30.1 --activate
+pnpm install
 cp .env.example .env   # Add your API keys
-npm run dev
+pnpm run dev
 ```
 
 **Step 3.** Create a branch and start building.
@@ -38,8 +39,8 @@ That's it. You're running JalSeva at **http://localhost:3000** with hot reloadin
 ### Prerequisites
 
 - **Node.js** >= 20 (22 recommended)
-- **npm** >= 9
-- **Docker** and **Docker Compose** (for containerized development)
+- **pnpm** 10.x (via corepack; `npm` and `yarn` are not supported)
+- **Docker** (only required if you want to run the container image locally)
 
 ### Environment Variables
 
@@ -56,29 +57,22 @@ Razorpay, WhatsApp, and ONDC are simulated by default — no real keys needed fo
 
 ## Docker — If You Prefer Containers
 
-### Single container
+The production target is a single container on Google Cloud Run (`asia-east1`,
+`min-instances=0`, scale-to-zero). The legacy `docker-compose.yml` is kept for
+local profiling only; production no longer uses it.
 
 ```bash
-docker compose up --build
+docker build -t jalseva ./jalseva
+docker run --rm -p 8080:8080 -e PORT=8080 jalseva
 ```
 
-Runs on port 3000 with cluster mode. Done.
-
-### Scaled mode — Nginx + 4 containers
-
-```bash
-docker compose --profile scaled up --build
-```
-
-This is what production looks like. Use it to test performance locally.
-
-### Useful commands
+For a Cloud Run-equivalent deploy from your fork, use the bundled Cloud Build
+config:
 
 ```bash
-docker compose logs -f app         # View logs
-docker compose restart app         # Restart
-docker compose up --build          # Rebuild after dependency changes
-docker compose down                # Tear down
+gcloud builds submit ./jalseva --config=./jalseva/cloudbuild.yaml \
+  --region=asia-east1 \
+  --substitutions=_FIREBASE_API_KEY=...,_FIREBASE_PROJECT_ID=...,_MAPS_API_KEY=...,_GEMINI_API_KEY=...
 ```
 
 ---
@@ -88,7 +82,7 @@ docker compose down                # Tear down
 We keep things simple. Three rules:
 
 1. **TypeScript everywhere.** All new code must be typed. No `any` unless absolutely necessary.
-2. **Biome for formatting.** Run `npm run lint` before committing. Every time.
+2. **Biome for formatting.** Run `pnpm run lint` before committing. Every time.
 3. **Mobile first.** JalSeva's primary users are on low-end Android phones. If it doesn't work on mobile, it doesn't ship.
 
 ### Where Things Go
@@ -117,9 +111,9 @@ We keep things simple. Three rules:
 Run these three commands. All three must pass.
 
 ```bash
-npm run lint      # Code style
-npm run build     # Type checking
-npm test          # Tests
+pnpm run lint      # Code style
+pnpm run build     # Type checking
+pnpm test          # Tests
 ```
 
 If you're adding a feature, add tests. We use **Vitest** with **Testing Library**.

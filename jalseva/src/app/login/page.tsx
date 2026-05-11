@@ -29,6 +29,16 @@ import { toast } from 'sonner';
 type Step = 'phone' | 'otp' | 'success';
 type Role = 'customer' | 'supplier';
 
+// Firebase test phone numbers configured in the Auth admin config —
+// these never trigger real SMS and so do not consume the daily cap.
+const TEST_PHONE_NUMBERS = new Set([
+  '9999900001',
+  '9999900002',
+  '9999900003',
+  '9999900004',
+  '9999900005',
+]);
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -84,6 +94,30 @@ export default function LoginPage() {
 
     startSendTransition(async () => {
       try {
+        const isTestNumber = TEST_PHONE_NUMBERS.has(phoneNumber);
+
+        // Real numbers are gated by a project-wide daily counter so an idle
+        // demo cannot rack up SMS billing. Test numbers bypass the gate
+        // because they short-circuit inside Firebase without sending SMS.
+        if (!isTestNumber) {
+          const res = await fetch('/api/auth/sms-quota', { method: 'POST' });
+          if (!res.ok) {
+            const data = (await res.json().catch(() => ({}))) as {
+              limit?: number;
+              used?: number;
+              error?: string;
+            };
+            if (res.status === 429) {
+              toast.error(
+                `Daily SMS limit reached (${data.used ?? data.limit ?? 2}/${data.limit ?? 2}).\nPlease use a demo test number: +91 99999 00001 (OTP 123456).`
+              );
+            } else {
+              toast.error('SMS quota service unavailable. Try a demo test number.');
+            }
+            return;
+          }
+        }
+
         const verifier = ensureRecaptcha();
         const e164 = `+91${phoneNumber}`;
         const confirmation = await signInWithPhoneNumber(auth, e164, verifier);

@@ -8,6 +8,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — 2026-05-12 (afternoon)
+- **Project-wide Phone-Auth SMS cap** to prevent billing abuse:
+  - New API endpoint `/api/auth/sms-quota` (GET = read, POST = atomic increment in a Firestore transaction) that tracks SMS dispatches in `meta/phoneOtp/daily/{YYYY-MM-DD}.count`.
+  - Login page now hits POST `/api/auth/sms-quota` before invoking `signInWithPhoneNumber` for any non-test number. If the day's count has reached `PHONE_OTP_DAILY_LIMIT` (default `2`), the SMS is refused with a friendly message pointing the user at the demo test numbers.
+  - Test phone numbers (`+91 99999 00001`–`5`) bypass the counter because Firebase short-circuits them locally without dispatching SMS.
+  - `PHONE_OTP_DAILY_LIMIT=2` is set on Cloud Run via `cloudbuild.yaml`.
+- `meta/**` is explicitly denied in `firestore.rules` (server-only access via Admin SDK).
+
+### Changed — 2026-05-12 (afternoon)
+- `.github/workflows/ci.yml` rewritten to use **pnpm** with `pnpm/action-setup@v4` and `cache: pnpm`. The previous `npm ci` workflow was broken because the project ships `pnpm-lock.yaml`, not `package-lock.json`.
+- `.github/dependabot.yml` extended with grouped updates for Next/React, Firebase, lint/test tools, plus a Docker ecosystem block for the Dockerfile.
+- `.env.example` rewritten with explicit comments distinguishing build-time `NEXT_PUBLIC_*` from runtime server vars, documenting that `FIREBASE_ADMIN_CLIENT_EMAIL` / `FIREBASE_ADMIN_PRIVATE_KEY` should be **empty on Cloud Run** (Admin SDK uses ADC), and introducing `PHONE_OTP_DAILY_LIMIT`.
+- `CONTRIBUTING.md` and `.github/PULL_REQUEST_TEMPLATE.md` updated for pnpm + Cloud Run; the legacy `docker compose --profile scaled` flow is replaced with `gcloud builds submit ./jalseva --config=./jalseva/cloudbuild.yaml`.
+- GitHub repo metadata: description, homepage URL (`https://jalseva.dmj.one`) and 19 topics added via `gh repo edit`.
+
 ### Added — 2026-05-12
 - **Capstone metadata** throughout the application:
   - `RouteCapstoneCredit` component shown on most public routes, crediting Jatin Sharma (GF202219717), mentor Dr. Abhishek Tomar.

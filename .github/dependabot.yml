@@ -2,6 +2,7 @@ version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/jalseva"
+    versioning-strategy: "increase"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -9,6 +10,23 @@ updates:
       - "dependencies"
     commit-message:
       prefix: "deps"
+    groups:
+      next-react:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      firebase:
+        patterns:
+          - "firebase"
+          - "firebase-admin"
+      lint-and-test:
+        patterns:
+          - "@biomejs/biome"
+          - "vitest"
+          - "@testing-library/*"
+          - "jsdom"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -16,5 +34,15 @@ updates:
       interval: "weekly"
     labels:
       - "ci"
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: "docker"
+    directory: "/jalseva"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "ci"
+      - "docker"
     commit-message:
       prefix: "ci"
