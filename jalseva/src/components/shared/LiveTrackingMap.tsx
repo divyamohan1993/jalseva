@@ -113,19 +113,19 @@ export function LiveTrackingMap({
           setMapError(true);
           return;
         }
-        const { Loader } = await import('@googlemaps/js-api-loader');
-        const loader = new Loader({
-          apiKey,
-          version: 'weekly',
-          libraries: ['marker'],
-        });
+        // @googlemaps/js-api-loader v2 dropped the `Loader` class and uses
+        // a functional API: setOptions() + importLibrary().
+        const { setOptions, importLibrary } = await import(
+          '@googlemaps/js-api-loader'
+        );
+        setOptions({ key: apiKey, v: 'weekly' });
 
-        await (loader as any).importLibrary('maps');
+        await importLibrary('maps');
         // The marker library is optional — if the API key doesn't have it
         // enabled, fall through to the classic g.maps.Marker fallback below
         // rather than aborting the whole map.
         try {
-          await (loader as any).importLibrary('marker');
+          await importLibrary('marker');
         } catch (markerErr) {
           console.warn(
             '[LiveTrackingMap] marker library unavailable, using classic Marker:',
