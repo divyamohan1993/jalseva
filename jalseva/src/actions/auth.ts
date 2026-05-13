@@ -138,10 +138,14 @@ export async function clearAuthCookie() {
 
 const DEMO_USERS: Record<
   string,
-  { role: 'customer' | 'supplier'; name: string }
+  { role: 'customer' | 'supplier' | 'admin'; name: string }
 > = {
   '9999900001': { role: 'customer', name: 'Demo Customer' },
   '9999900002': { role: 'supplier', name: 'Demo Supplier' },
+  // Admin demo number is intentionally NOT advertised in the UI role
+  // toggle — knowing the phone number IS the gate. This avoids exposing
+  // an "Admin" tab to the public while still allowing showcase access.
+  '9999900003': { role: 'admin', name: 'Demo Admin' },
 };
 
 const DEMO_DELHI_HUB = {
@@ -221,17 +225,22 @@ export async function simulatedPhoneSignIn(
   }
 
   const reserved = DEMO_USERS[phone];
-  if (reserved && reserved.role !== chosenRole) {
+  // Admin demo numbers ignore the UI role toggle — the phone number itself
+  // is the gate. For customer/supplier reserved numbers, role mismatch is
+  // rejected with a clear message.
+  if (reserved && reserved.role !== 'admin' && reserved.role !== chosenRole) {
     return {
       success: false as const,
       error: `Number +91 ${phone} is reserved for the ${reserved.role} role. Switch the role tab and try again.`,
     };
   }
 
+  const finalRole: 'customer' | 'supplier' | 'admin' =
+    reserved?.role ?? chosenRole;
   const desiredName =
     reserved?.name ||
     (chosenRole === 'supplier' ? 'Supplier User' : 'Customer User');
-  const demo = { role: chosenRole, name: desiredName };
+  const demo = { role: finalRole, name: desiredName };
 
   const uid = `sim_${phone}`;
   const phoneE164 = `+91${phone}`;

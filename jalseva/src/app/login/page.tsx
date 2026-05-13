@@ -30,10 +30,13 @@ type Role = 'customer' | 'supplier';
 // Designated demo numbers — each permanently locked to one role.
 // They bypass the OTP step entirely and auto-register on first sign-in
 // with simulated government-backed documents (Aadhaar, RC, FSSAI, etc.).
+// The admin demo number is intentionally NOT advertised in the role
+// toggle — knowing the phone number is itself the gate.
 // -------------------------------------------------------------------
-const DEMO_NUMBERS: Record<string, Role> = {
+const DEMO_NUMBERS: Record<string, 'customer' | 'supplier' | 'admin'> = {
   '9999900001': 'customer',
   '9999900002': 'supplier',
+  '9999900003': 'admin',
 };
 
 // Random 6-digit OTP. Cryptographic strength is unnecessary here because
@@ -80,7 +83,7 @@ export default function LoginPage() {
   const completeSignIn = async (result: {
     uid: string;
     phone: string;
-    role: Role;
+    role: 'customer' | 'supplier' | 'admin';
     name?: string;
   }) => {
     const demoUser: User = {
@@ -105,7 +108,9 @@ export default function LoginPage() {
       `Signed in as ${result.role}.\nलॉगिन सफल!`,
     );
     setTimeout(() => {
-      const fallback = result.role === 'supplier' ? '/supplier' : '/';
+      let fallback = '/';
+      if (result.role === 'admin') fallback = '/admin';
+      else if (result.role === 'supplier') fallback = '/supplier';
       const redirect = searchParams.get('redirect') || fallback;
       router.push(redirect);
     }, 900);
@@ -369,11 +374,15 @@ export default function LoginPage() {
                     <p className="font-mono">
                       +91 99999 00002 → Supplier (no OTP needed)
                     </p>
+                    <p className="font-mono">
+                      +91 99999 00003 → Admin (no OTP needed)
+                    </p>
                     <p className="text-blue-700/80 mt-2">
                       Any other number: a 6-digit OTP is generated and
                       shown to you on screen. Suppliers auto-register with
                       simulated Aadhaar, vehicle RC, FSSAI and
-                      water-quality certificates.
+                      water-quality certificates. The admin number is
+                      role-locked and lands you on the /admin panel.
                     </p>
                   </div>
                 </div>

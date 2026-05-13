@@ -18,7 +18,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Designated demo numbers, auto-registered, role-locked**:
   - `+91 99999 00001` → permanently a **customer**.
   - `+91 99999 00002` → permanently a **supplier**, auto-provisioned with simulated **Aadhaar, vehicle RC, driving license, FSSAI license, NABL water-quality certificate** (all `verified: true`) and a simulated water-quality report (pH 7.2, TDS 145 ppm, FSSAI compliant).
-  - Same number cannot hold both roles — mismatched role attempts are rejected with a clear message.
+  - `+91 99999 00003` → permanently an **admin**, lands on `/admin`. The role toggle stays Customer / Supplier in the UI; the admin number is itself the gate so admin is never exposed as a selectable role to the public.
+  - Same number cannot hold a different role — mismatched attempts are rejected with a clear message.
+- **`.gcloudignore`** in `jalseva/` to skip `node_modules/`, `.next/`, `.git/` etc. from Cloud Build source uploads. Submission size drops from ~750 MB → ~1.8 MiB.
 - **`simulatedPhoneSignIn` server action** replaces the OTP-bound `signInWithIdToken` for the login path. Sets the `jalseva_auth` cookie, upserts the Firestore user/supplier docs when admin credentials are available, and degrades gracefully to cookie-only auth when they are not.
 
 ### Changed — 2026-05-13

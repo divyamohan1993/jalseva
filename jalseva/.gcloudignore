@@ -1,0 +1,46 @@
+# =============================================================================
+# .gcloudignore — files NOT uploaded to Cloud Build
+# =============================================================================
+# Without this file, gcloud builds submit tars the full source dir including
+# node_modules (~750 MB) which makes uploads slow + flaky. The Dockerfile
+# `pnpm install --frozen-lockfile` reproduces node_modules inside the builder
+# stage, so we don't ship them.
+
+# Dependencies — reproduced by the Dockerfile builder stage.
+node_modules/
+.pnpm-store/
+
+# Next.js build artefacts — the Dockerfile runs `pnpm run build` itself.
+.next/
+out/
+build/
+dist/
+
+# Local env files.
+.env
+.env.local
+.env.*.local
+
+# Tests, coverage, IDE, OS junk.
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# VCS metadata (Cloud Build doesn't need it).
+.git/
+.github/
+.gitignore
+
+# Generated service worker — Serwist re-generates during build.
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+
+# Logs.
+*.log
+npm-debug.log*
+pnpm-debug.log*
