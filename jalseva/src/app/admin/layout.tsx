@@ -55,7 +55,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // --------------------------------------------------------------------------
-  // Auth & Role Guard
+  // Auth & Role Guard — bounce wrong-role users to their canonical panel
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!initialized) return;
@@ -65,6 +65,10 @@ export default function AdminLayout({
       return;
     }
 
+    if (user.role === 'supplier') {
+      router.replace('/supplier');
+      return;
+    }
     if (user.role !== 'admin') {
       router.replace('/');
       return;

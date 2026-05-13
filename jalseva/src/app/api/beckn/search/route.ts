@@ -40,50 +40,70 @@ function buildBecknContext(
 }
 
 // ---------------------------------------------------------------------------
-// Demo Suppliers (used when Firestore has no real suppliers)
+// Demo Suppliers (generated relative to the user's location)
 // ---------------------------------------------------------------------------
+// Earlier this was a hardcoded list pinned to Connaught Place. That broke
+// the ETA + tracking experience for any user outside Delhi (haversine to
+// the user's actual delivery location → hundreds of km → 401-minute ETAs).
+// We now generate three plausible nearby suppliers around the customer's
+// GPS so the demo is sane wherever the user actually is.
 
-const DEMO_SUPPLIERS = [
-  {
-    id: 'sim_supplier_001',
-    data: {
-      userId: 'sim_user_001',
-      vehicle: { type: 'tanker', capacity: 5000 },
-      waterTypes: ['ro', 'mineral', 'tanker'],
-      currentLocation: { lat: 28.6139, lng: 77.2090, address: 'Connaught Place, Delhi' },
-      rating: { average: 4.5, count: 120 },
-      isOnline: true,
-      verificationStatus: 'verified',
+function buildDemoSuppliersNear(userLocation: GeoLocation | null) {
+  const base = userLocation || { lat: 28.6139, lng: 77.2090 }; // Delhi fallback
+  return [
+    {
+      id: 'sim_supplier_001',
+      data: {
+        userId: 'sim_user_001',
+        vehicle: { type: 'tanker', capacity: 5000 },
+        waterTypes: ['ro', 'mineral', 'tanker'],
+        currentLocation: {
+          lat: base.lat + 0.005,
+          lng: base.lng + 0.005,
+          address: 'Nearby Tanker Hub A',
+        },
+        rating: { average: 4.5, count: 120 },
+        isOnline: true,
+        verificationStatus: 'verified',
+      },
+      distance: 700,
     },
-    distance: 2000,
-  },
-  {
-    id: 'sim_supplier_002',
-    data: {
-      userId: 'sim_user_002',
-      vehicle: { type: 'mini-tanker', capacity: 2000 },
-      waterTypes: ['ro', 'mineral'],
-      currentLocation: { lat: 28.6280, lng: 77.2197, address: 'Karol Bagh, Delhi' },
-      rating: { average: 4.2, count: 85 },
-      isOnline: true,
-      verificationStatus: 'verified',
+    {
+      id: 'sim_supplier_002',
+      data: {
+        userId: 'sim_user_002',
+        vehicle: { type: 'mini-tanker', capacity: 2000 },
+        waterTypes: ['ro', 'mineral'],
+        currentLocation: {
+          lat: base.lat - 0.008,
+          lng: base.lng + 0.003,
+          address: 'Nearby Tanker Hub B',
+        },
+        rating: { average: 4.2, count: 85 },
+        isOnline: true,
+        verificationStatus: 'verified',
+      },
+      distance: 1100,
     },
-    distance: 3500,
-  },
-  {
-    id: 'sim_supplier_003',
-    data: {
-      userId: 'sim_user_003',
-      vehicle: { type: 'tanker', capacity: 10000 },
-      waterTypes: ['tanker'],
-      currentLocation: { lat: 28.5355, lng: 77.3910, address: 'Noida Sector 62' },
-      rating: { average: 4.8, count: 200 },
-      isOnline: true,
-      verificationStatus: 'verified',
+    {
+      id: 'sim_supplier_003',
+      data: {
+        userId: 'sim_user_003',
+        vehicle: { type: 'tanker', capacity: 10000 },
+        waterTypes: ['tanker'],
+        currentLocation: {
+          lat: base.lat + 0.012,
+          lng: base.lng - 0.004,
+          address: 'Nearby Tanker Hub C',
+        },
+        rating: { average: 4.8, count: 200 },
+        isOnline: true,
+        verificationStatus: 'verified',
+      },
+      distance: 1500,
     },
-    distance: 5000,
-  },
-];
+  ];
+}
 
 // ---------------------------------------------------------------------------
 // POST - Beckn Search (Simulated)
@@ -175,12 +195,15 @@ export async function POST(request: NextRequest) {
       console.warn('[Beckn Sim] Firestore query failed, using demo suppliers:', dbError);
     }
 
-    // Fall back to demo suppliers if none found
+    // Fall back to demo suppliers (generated near the user) if no real
+    // Firestore suppliers matched.
     if (matchingSuppliers.length === 0) {
-      matchingSuppliers = DEMO_SUPPLIERS.filter((s) =>
-        s.data.waterTypes.includes(waterType)
+      matchingSuppliers = buildDemoSuppliersNear(userLocation).filter((s) =>
+        s.data.waterTypes.includes(waterType),
       );
-      console.log(`[Beckn Sim] Using ${matchingSuppliers.length} demo suppliers for "${waterType}"`);
+      console.log(
+        `[Beckn Sim] Using ${matchingSuppliers.length} demo suppliers near user for "${waterType}"`,
+      );
     }
 
     // Sort by distance

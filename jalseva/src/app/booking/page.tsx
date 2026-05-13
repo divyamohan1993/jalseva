@@ -518,19 +518,17 @@ export default function BookingPage() {
         await confirmRes.json();
 
         // ─── 6. PATCH LOCAL ORDER ────────────────────────────────────
-        const supplierLocation: GeoLocation =
-          supplierGps.length === 2 && !Number.isNaN(supplierGps[0])
-            ? {
-                lat: supplierGps[0],
-                lng: supplierGps[1],
-                address: supplierLocRaw?.address?.street || '',
-              }
-            : {
-                // Fallback: shift ~1.5km north-east so the route is visible.
-                lat: currentOrder.deliveryLocation.lat + 0.013,
-                lng: currentOrder.deliveryLocation.lng + 0.013,
-                address: 'Nearby supplier hub',
-              };
+        // Always anchor the supplier ~1.5 km north-east of the customer's
+        // delivery location. The Beckn catalog's supplier GPS is a hint —
+        // using it verbatim breaks the demo when the customer is outside
+        // the supplier's hardcoded city (e.g. customer in Mumbai but the
+        // simulated supplier is "in" Delhi → 1000+ km ETA).
+        void supplierGps;
+        const supplierLocation: GeoLocation = {
+          lat: currentOrder.deliveryLocation.lat + 0.013,
+          lng: currentOrder.deliveryLocation.lng + 0.013,
+          address: supplierLocRaw?.address?.street || 'Nearby tanker hub',
+        };
 
         // Approximate distance (haversine) and ETA.
         const toRad = (x: number) => (x * Math.PI) / 180;

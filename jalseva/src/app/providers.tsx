@@ -2,6 +2,7 @@
 
 import type React from 'react';
 import { useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -9,6 +10,60 @@ import { useAuthStore } from '@/store/authStore';
 import { I18nProvider, useT } from '@/lib/i18n';
 import { AccessibilityProvider } from '@/components/shared/AccessibilityProvider';
 import type { User } from '@/types';
+
+// ---------------------------------------------------------------------------
+// RoleHomeGuard
+// ---------------------------------------------------------------------------
+// Each role lives in its own panel:
+//   customer → /, /booking, /tracking, /history, /profile, …
+//   supplier → /supplier/**
+//   admin    → /admin/**
+// This component watches the current pathname and bounces a signed-in user
+// to their canonical panel if they wander into another role's section. A
+// small allow-list of cross-role public pages (showcase routes, login) is
+// exempt so /pitch and /report stay reachable for everyone.
+// ---------------------------------------------------------------------------
+
+const CROSS_ROLE_PUBLIC = new Set<string>([
+  '/login',
+  '/pitch',
+  '/report',
+  '/demo',
+  '/quality',
+  '/subscriptions',
+]);
+
+function RoleHomeGuard() {
+  const user = useAuthStore((s) => s.user);
+  const initialized = useAuthStore((s) => s.initialized);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!initialized || !user) return;
+    if (CROSS_ROLE_PUBLIC.has(pathname)) return;
+    if (pathname.startsWith('/api/')) return;
+
+    if (user.role === 'admin') {
+      if (!pathname.startsWith('/admin')) {
+        router.replace('/admin');
+      }
+      return;
+    }
+    if (user.role === 'supplier') {
+      if (!pathname.startsWith('/supplier')) {
+        router.replace('/supplier');
+      }
+      return;
+    }
+    // Customer (default): keep them out of admin/supplier sections.
+    if (pathname.startsWith('/admin') || pathname.startsWith('/supplier')) {
+      router.replace('/');
+    }
+  }, [user, initialized, pathname, router]);
+
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // AuthProvider
@@ -148,6 +203,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <I18nProvider initialLocale="en">
         <AccessibilityProvider>
           <LanguageBridge />
+          <RoleHomeGuard />
           {children}
         </AccessibilityProvider>
       </I18nProvider>

@@ -107,15 +107,31 @@ export function LiveTrackingMap({
 
     const initMap = async () => {
       try {
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+        if (!apiKey) {
+          console.warn('[LiveTrackingMap] No Maps API key configured.');
+          setMapError(true);
+          return;
+        }
         const { Loader } = await import('@googlemaps/js-api-loader');
         const loader = new Loader({
-          apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+          apiKey,
           version: 'weekly',
           libraries: ['marker'],
         });
 
         await (loader as any).importLibrary('maps');
-        await (loader as any).importLibrary('marker');
+        // The marker library is optional — if the API key doesn't have it
+        // enabled, fall through to the classic g.maps.Marker fallback below
+        // rather than aborting the whole map.
+        try {
+          await (loader as any).importLibrary('marker');
+        } catch (markerErr) {
+          console.warn(
+            '[LiveTrackingMap] marker library unavailable, using classic Marker:',
+            markerErr,
+          );
+        }
 
         if (cancelled) return;
 

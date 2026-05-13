@@ -48,7 +48,7 @@ export default function SupplierLayout({
   const { toggleOnline } = useSupplier();
 
   // --------------------------------------------------------------------------
-  // Auth & Role Guard
+  // Auth & Role Guard — bounce wrong-role users to their canonical panel
   // --------------------------------------------------------------------------
   useEffect(() => {
     if (!initialized) return;
@@ -58,8 +58,12 @@ export default function SupplierLayout({
       return;
     }
 
-    if (user.role !== 'supplier' && !pathname.startsWith('/supplier/register')) {
-      router.replace('/supplier/register');
+    if (user.role === 'admin') {
+      router.replace('/admin');
+      return;
+    }
+    if (user.role !== 'supplier') {
+      router.replace('/');
       return;
     }
   }, [initialized, user, supplier, pathname, router]);
