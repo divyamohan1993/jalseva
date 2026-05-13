@@ -283,6 +283,11 @@ export function LiveTrackingMap({
     []
   );
 
+  // Track whether we've already fit bounds + drawn the initial route line
+  // so subsequent supplier-position updates only animate the marker and
+  // redraw the polyline — no fitBounds thrash, no DirectionsService spam.
+  const boundsFitRef = useRef(false);
+
   useEffect(() => {
     if (!googleMapRef.current || !supplierLocation || !mapLoaded) return;
 
@@ -293,7 +298,7 @@ export function LiveTrackingMap({
       // Animate to new position
       animateMarkerTo(supplierMarkerRef.current, supplierLocation);
     } else {
-      // Create supplier marker
+      // Create supplier marker (first tick only)
       const supplierPin = document.createElement('div');
       supplierPin.innerHTML = SUPPLIER_MARKER_SVG;
       supplierPin.style.cursor = 'pointer';
@@ -326,42 +331,49 @@ export function LiveTrackingMap({
 
     prevSupplierLocRef.current = supplierLocation;
 
-    // Fit bounds to show both markers
-    if (customerLocation && supplierLocation) {
-      const bounds = new g.maps.LatLngBounds();
-      bounds.extend(customerLocation);
-      bounds.extend(supplierLocation);
-      googleMapRef.current.fitBounds(bounds, {
-        top: 80,
-        right: 40,
-        bottom: 100,
-        left: 40,
-      });
+    // Update / create the route polyline between supplier and customer.
+    // Uses a straight line — cheaper than DirectionsService and avoids
+    // the deprecation log spam on every tick of the movement simulator.
+    if (customerLocation) {
+      const path = [supplierLocation, customerLocation];
+      if (routePolylineRef.current) {
+        routePolylineRef.current.setPath(path);
+      } else {
+        routePolylineRef.current = new g.maps.Polyline({
+          map: googleMapRef.current,
+          path,
+          strokeColor: '#0066FF',
+          strokeOpacity: 0.7,
+          strokeWeight: 5,
+          geodesic: true,
+        });
+      }
 
-      // Fetch route from Directions API
-      const directionsService = new g.maps.DirectionsService();
-      directionsService.route(
-        {
-          origin: supplierLocation,
-          destination: customerLocation,
-          travelMode: g.maps.TravelMode.DRIVING,
-        },
-        (result: any, status: string) => {
-          if (status === 'OK' && directionsRendererRef.current) {
-            directionsRendererRef.current.setDirections(result);
-          }
-        }
-      );
+      // Fit bounds only once (first time both markers are placed) so the
+      // map doesn't pan/zoom on every supplier tick.
+      if (!boundsFitRef.current) {
+        const bounds = new g.maps.LatLngBounds();
+        bounds.extend(customerLocation);
+        bounds.extend(supplierLocation);
+        googleMapRef.current.fitBounds(bounds, {
+          top: 80,
+          right: 40,
+          bottom: 100,
+          left: 40,
+        });
+        boundsFitRef.current = true;
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supplierLocation, customerLocation, mapLoaded]);
 
-    // Announce location update for screen readers
-    if (etaMinutes) {
-      announce(
-        `Water tanker is ${etaMinutes} minutes away.`,
-        'polite'
-      );
+  // Announce ETA changes to screen readers in a separate effect so the
+  // marker update path doesn't get re-fired by a changing etaMinutes value.
+  useEffect(() => {
+    if (etaMinutes && mapLoaded) {
+      announce(`Water tanker is ${etaMinutes} minutes away.`, 'polite');
     }
-  }, [supplierLocation, customerLocation, mapLoaded, etaMinutes, animateMarkerTo, announce]);
+  }, [etaMinutes, mapLoaded, announce]);
 
   // -----------------------------------------------------------------------
   // Fallback placeholder when Maps API is unavailable
