@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+import { clearAuthCookie } from '@/actions/auth';
 
 // =============================================================================
 // Navigation Configuration
@@ -118,8 +119,22 @@ export default function AdminLayout({
     return pathname.startsWith(href);
   };
 
-  const handleLogout = () => {
-    router.replace('/');
+  // Full logout: clear the localStorage demo user, the httpOnly cookie, and
+  // the Zustand store. Otherwise providers.tsx rehydrates the demo user on
+  // the next render and RoleHomeGuard bounces us back into /admin.
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('jalseva_demo_user');
+    } catch {
+      // localStorage may be unavailable
+    }
+    try {
+      await clearAuthCookie();
+    } catch {
+      // Server action may fail; we still clear local state
+    }
+    useAuthStore.getState().logout();
+    router.replace('/login');
   };
 
   // --------------------------------------------------------------------------

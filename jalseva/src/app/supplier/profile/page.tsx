@@ -34,6 +34,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
+import { clearAuthCookie } from '@/actions/auth';
 import type { VerificationStatus, WaterType } from '@/types';
 
 // =============================================================================
@@ -471,7 +472,19 @@ export default function SupplierProfilePage() {
   const { logout } = useAuthStore();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const handleLogout = () => {
+  // Full logout: localStorage + cookie + Zustand. Without all three, the
+  // providers.tsx hydration loop re-signs the demo user in immediately.
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('jalseva_demo_user');
+    } catch {
+      // localStorage may be unavailable
+    }
+    try {
+      await clearAuthCookie();
+    } catch {
+      // Server action may fail; we still clear local state
+    }
     logout();
     router.replace('/login');
   };
