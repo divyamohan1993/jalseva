@@ -233,10 +233,10 @@ export function LiveTrackingMap({
 
   const animateMarkerTo = useCallback(
     (marker: any, newPosition: LatLng) => {
-      if (!googleMapRef.current) return;
+      if (!googleMapRef.current || !marker) return;
 
       const g = (window as any).google;
-      if (!g) return;
+      if (!g || !newPosition || typeof newPosition.lat !== 'number') return;
 
       const startPos = prevSupplierLocRef.current || newPosition;
       const startLat = startPos.lat;
@@ -248,30 +248,37 @@ export function LiveTrackingMap({
       const startTime = performance.now();
 
       const animate = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
+        try {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
 
-        // Ease-in-out cubic
-        const eased =
-          progress < 0.5
-            ? 4 * progress * progress * progress
-            : 1 - (-2 * progress + 2) ** 3 / 2;
+          // Ease-in-out cubic
+          const eased =
+            progress < 0.5
+              ? 4 * progress * progress * progress
+              : 1 - (-2 * progress + 2) ** 3 / 2;
 
-        const lat = startLat + deltaLat * eased;
-        const lng = startLng + deltaLng * eased;
+          const lat = startLat + deltaLat * eased;
+          const lng = startLng + deltaLng * eased;
 
-        const pos = new g.maps.LatLng(lat, lng);
+          if (
+            marker.position !== undefined &&
+            typeof marker.position === 'object' &&
+            !(marker.position instanceof g.maps.LatLng)
+          ) {
+            // AdvancedMarkerElement
+            marker.position = { lat, lng };
+          } else if (typeof marker.setPosition === 'function') {
+            // Regular Marker
+            marker.setPosition(new g.maps.LatLng(lat, lng));
+          }
 
-        if (marker.position !== undefined && typeof marker.position === 'object' && !(marker.position instanceof g.maps.LatLng)) {
-          // AdvancedMarkerElement
-          marker.position = { lat, lng };
-        } else if (marker.setPosition) {
-          // Regular Marker
-          marker.setPosition(pos);
-        }
-
-        if (progress < 1) {
-          animationFrameRef.current = requestAnimationFrame(animate);
+          if (progress < 1) {
+            animationFrameRef.current = requestAnimationFrame(animate);
+          }
+        } catch (err) {
+          // Marker may have been destroyed mid-animation; swallow silently.
+          console.warn('[LiveTrackingMap] marker animation skipped:', err);
         }
       };
 
@@ -280,7 +287,7 @@ export function LiveTrackingMap({
       }
       animationFrameRef.current = requestAnimationFrame(animate);
     },
-    []
+    [],
   );
 
   // Track whether we've already fit bounds + drawn the initial route line
@@ -290,79 +297,112 @@ export function LiveTrackingMap({
 
   useEffect(() => {
     if (!googleMapRef.current || !supplierLocation || !mapLoaded) return;
+    if (
+      typeof supplierLocation.lat !== 'number' ||
+      typeof supplierLocation.lng !== 'number'
+    )
+      return;
 
     const g = (window as any).google;
     if (!g) return;
 
-    if (supplierMarkerRef.current) {
-      // Animate to new position
-      animateMarkerTo(supplierMarkerRef.current, supplierLocation);
-    } else {
-      // Create supplier marker (first tick only)
-      const supplierPin = document.createElement('div');
-      supplierPin.innerHTML = SUPPLIER_MARKER_SVG;
-      supplierPin.style.cursor = 'pointer';
-      supplierPin.title = 'Water tanker';
-
-      try {
-        supplierMarkerRef.current = new g.maps.marker.AdvancedMarkerElement({
-          map: googleMapRef.current,
-          position: supplierLocation,
-          content: supplierPin,
-          title: 'Water tanker',
-        });
-      } catch {
-        supplierMarkerRef.current = new g.maps.Marker({
-          map: googleMapRef.current,
-          position: supplierLocation,
-          icon: {
-            path: g.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 7,
-            fillColor: '#0066FF',
-            fillOpacity: 1,
-            strokeColor: '#FFFFFF',
-            strokeWeight: 2,
-            rotation: 0,
-          },
-          title: 'Water tanker',
-        });
-      }
-    }
-
-    prevSupplierLocRef.current = supplierLocation;
-
-    // Update / create the route polyline between supplier and customer.
-    // Uses a straight line — cheaper than DirectionsService and avoids
-    // the deprecation log spam on every tick of the movement simulator.
-    if (customerLocation) {
-      const path = [supplierLocation, customerLocation];
-      if (routePolylineRef.current) {
-        routePolylineRef.current.setPath(path);
+    // Defensive: wrap the whole marker/polyline update so a Google Maps
+    // SDK failure (e.g. the page being blocked by api-target restriction)
+    // doesn't bubble up into the React error boundary.
+    try {
+      if (supplierMarkerRef.current) {
+        animateMarkerTo(supplierMarkerRef.current, supplierLocation);
       } else {
-        routePolylineRef.current = new g.maps.Polyline({
-          map: googleMapRef.current,
-          path,
-          strokeColor: '#0066FF',
-          strokeOpacity: 0.7,
-          strokeWeight: 5,
-          geodesic: true,
-        });
+        const supplierPin = document.createElement('div');
+        supplierPin.innerHTML = SUPPLIER_MARKER_SVG;
+        supplierPin.style.cursor = 'pointer';
+        supplierPin.title = 'Water tanker';
+
+        try {
+          supplierMarkerRef.current = new g.maps.marker.AdvancedMarkerElement({
+            map: googleMapRef.current,
+            position: supplierLocation,
+            content: supplierPin,
+            title: 'Water tanker',
+          });
+        } catch {
+          supplierMarkerRef.current = new g.maps.Marker({
+            map: googleMapRef.current,
+            position: supplierLocation,
+            icon: {
+              path: g.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+              scale: 7,
+              fillColor: '#0066FF',
+              fillOpacity: 1,
+              strokeColor: '#FFFFFF',
+              strokeWeight: 2,
+              rotation: 0,
+            },
+            title: 'Water tanker',
+          });
+        }
       }
 
-      // Fit bounds only once (first time both markers are placed) so the
-      // map doesn't pan/zoom on every supplier tick.
-      if (!boundsFitRef.current) {
-        const bounds = new g.maps.LatLngBounds();
-        bounds.extend(customerLocation);
-        bounds.extend(supplierLocation);
-        googleMapRef.current.fitBounds(bounds, {
-          top: 80,
-          right: 40,
-          bottom: 100,
-          left: 40,
-        });
-        boundsFitRef.current = true;
+      prevSupplierLocRef.current = supplierLocation;
+
+      // Update / create the route polyline. setPath() may throw if the
+      // underlying MVCArray has been torn down (e.g. when the map died
+      // because of an ApiTargetBlocked/RefererNotAllowed error); recreate
+      // from scratch in that case.
+      if (
+        customerLocation &&
+        typeof customerLocation.lat === 'number' &&
+        typeof customerLocation.lng === 'number'
+      ) {
+        const path = [
+          { lat: supplierLocation.lat, lng: supplierLocation.lng },
+          { lat: customerLocation.lat, lng: customerLocation.lng },
+        ];
+        const createPolyline = () => {
+          routePolylineRef.current = new g.maps.Polyline({
+            map: googleMapRef.current,
+            path,
+            strokeColor: '#0066FF',
+            strokeOpacity: 0.7,
+            strokeWeight: 5,
+            geodesic: true,
+          });
+        };
+        if (routePolylineRef.current) {
+          try {
+            routePolylineRef.current.setPath(path);
+          } catch (err) {
+            console.warn(
+              '[LiveTrackingMap] polyline setPath failed, recreating:',
+              err,
+            );
+            try {
+              routePolylineRef.current.setMap?.(null);
+            } catch {
+              /* ignore */
+            }
+            routePolylineRef.current = null;
+            createPolyline();
+          }
+        } else {
+          createPolyline();
+        }
+
+        if (!boundsFitRef.current) {
+          const bounds = new g.maps.LatLngBounds();
+          bounds.extend(customerLocation);
+          bounds.extend(supplierLocation);
+          googleMapRef.current.fitBounds(bounds, {
+            top: 80,
+            right: 40,
+            bottom: 100,
+            left: 40,
+          });
+          boundsFitRef.current = true;
+        }
       }
+    } catch (err) {
+      console.warn('[LiveTrackingMap] supplier-marker effect skipped:', err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supplierLocation, customerLocation, mapLoaded]);
