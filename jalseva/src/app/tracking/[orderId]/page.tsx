@@ -558,6 +558,70 @@ export default function TrackingPage() {
     setEtaMinutes(Math.ceil(order.tracking.eta / 60));
   }, [order?.tracking?.eta]);
 
+  // --- Simulate supplier movement toward delivery (demo) ---
+  // Animates supplierLocation along a straight line from its starting point
+  // to the customer's delivery location, decrementing distance & ETA. Lets
+  // the map show the truck visibly closing in even when there's no real GPS
+  // backend wired up.
+  useEffect(() => {
+    if (!order) return;
+    if (
+      order.status !== 'accepted' &&
+      order.status !== 'en_route' &&
+      order.status !== 'arriving'
+    )
+      return;
+
+    const startLoc =
+      order.tracking?.supplierLocation || order.supplierLocation;
+    const endLoc = order.deliveryLocation;
+    if (!startLoc || !endLoc) return;
+
+    // Total simulated journey: 60s, 30 steps @ 2s each.
+    const totalSteps = 30;
+    const stepMs = 2000;
+    const initialDistance = order.tracking?.distance || 1500;
+    const initialEta = order.tracking?.eta || 600;
+    let step = 0;
+
+    const interval = setInterval(() => {
+      step += 1;
+      const t = Math.min(1, step / totalSteps);
+      const lat = startLoc.lat + (endLoc.lat - startLoc.lat) * t;
+      const lng = startLoc.lng + (endLoc.lng - startLoc.lng) * t;
+      const remainingDistance = Math.max(0, Math.round(initialDistance * (1 - t)));
+      const remainingEta = Math.max(0, Math.round(initialEta * (1 - t)));
+
+      const newTracking: TrackingInfo = {
+        supplierLocation: {
+          lat,
+          lng,
+          address: startLoc.address || '',
+        },
+        eta: remainingEta,
+        distance: remainingDistance,
+      };
+      updateTracking(newTracking);
+      setEtaMinutes(Math.ceil(remainingEta / 60));
+      setOrder((prev) =>
+        prev
+          ? {
+              ...prev,
+              tracking: newTracking,
+              supplierLocation: { lat, lng },
+            }
+          : prev,
+      );
+
+      if (step >= totalSteps) {
+        clearInterval(interval);
+      }
+    }, stepMs);
+
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id, order?.status]);
+
   // --- Cancel handler (React 19 useTransition + Server Action) ---
   const handleCancel = () => {
     if (!order) return;

@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useEffect, useRef, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -14,6 +14,11 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
+  Radio,
+  Network,
+  ScanSearch,
+  FileCheck2,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
@@ -22,7 +27,75 @@ import { useAuthStore } from '@/store/authStore';
 import { useOrderStore } from '@/store/orderStore';
 import { cancelOrder } from '@/actions/orders';
 import { formatCurrency } from '@/lib/utils';
-import type { Order } from '@/types';
+import type { Order, GeoLocation } from '@/types';
+
+// ---------------------------------------------------------------------------
+// ONDC simulation stages
+// ---------------------------------------------------------------------------
+
+type SearchStage =
+  | 'idle'
+  | 'broadcasting'
+  | 'matching'
+  | 'selecting'
+  | 'initializing'
+  | 'confirming'
+  | 'done'
+  | 'error';
+
+const STAGE_META: Record<
+  SearchStage,
+  { en: string; hi: string; icon: typeof Radio; beckn: string }
+> = {
+  idle: {
+    en: 'Preparing your order…',
+    hi: 'आपका ऑर्डर तैयार किया जा रहा है…',
+    icon: Loader2,
+    beckn: '',
+  },
+  broadcasting: {
+    en: 'Broadcasting on the ONDC network…',
+    hi: 'ONDC नेटवर्क पर भेजा जा रहा है…',
+    icon: Radio,
+    beckn: 'beckn: search',
+  },
+  matching: {
+    en: 'Suppliers responded. Picking best match…',
+    hi: 'सप्लायर मिले। सबसे अच्छा चुना जा रहा है…',
+    icon: ScanSearch,
+    beckn: 'beckn: on_search',
+  },
+  selecting: {
+    en: 'Confirming availability with supplier…',
+    hi: 'सप्लायर से उपलब्धता पुष्टि…',
+    icon: Network,
+    beckn: 'beckn: select / on_select',
+  },
+  initializing: {
+    en: 'Locking delivery and payment terms…',
+    hi: 'डिलीवरी और भुगतान तय किए जा रहे हैं…',
+    icon: FileCheck2,
+    beckn: 'beckn: init / on_init',
+  },
+  confirming: {
+    en: 'Confirming your booking on ONDC…',
+    hi: 'आपकी बुकिंग ONDC पर पुष्टि…',
+    icon: ShieldCheck,
+    beckn: 'beckn: confirm / on_confirm',
+  },
+  done: {
+    en: 'Supplier confirmed!',
+    hi: 'सप्लायर की पुष्टि हो गई!',
+    icon: CheckCircle2,
+    beckn: 'beckn: order.state=Accepted',
+  },
+  error: {
+    en: 'No supplier responded. Please try again.',
+    hi: 'कोई सप्लायर नहीं मिला। कृपया फिर से कोशिश करें।',
+    icon: X,
+    beckn: 'beckn: NACK',
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Searching animation component
@@ -116,7 +189,9 @@ function SupplierFoundCard({
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-900">Water Supplier</p>
               <p className="text-sm text-gray-500">
-                {order.supplierId ? `ID: ${order.supplierId.slice(0, 8)}...` : 'Assigned'}
+                {order.supplierId
+                  ? `ID: ${order.supplierId.slice(0, 8)}...`
+                  : 'Assigned'}
               </p>
             </div>
             <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 rounded-lg">
@@ -177,14 +252,20 @@ function SupplierFoundCard({
 export default function BookingPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { currentOrder, setCurrentOrder, updateOrderStatus } = useOrderStore();
+  const { currentOrder, setCurrentOrder, addOrder } = useOrderStore();
 
   const [searching, setSearching] = useState(true);
   const [supplierFound, setSupplierFound] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
+  const [stage, setStage] = useState<SearchStage>('idle');
+  const [matchedCount, setMatchedCount] = useState(0);
   const [isCancelling, startCancelTransition] = useTransition();
 
-  // --- Redirect if no active order or not logged in ---
+  // Track which orderId has already been simulated so we don't restart on
+  // every state update inside the effect.
+  const simulatedRef = useRef<string | null>(null);
+
+  // --- Redirect if no order or not logged in ---
   useEffect(() => {
     if (!user) {
       router.push('/login?redirect=/booking');
@@ -192,46 +273,320 @@ export default function BookingPage() {
     }
   }, [user, router]);
 
-  // --- Poll for order status updates ---
+  // --- ONDC simulation chain (search → select → init → confirm) ---
   useEffect(() => {
+    if (!user) return;
     if (!currentOrder) {
-      // No order - might have just navigated here; check if we should go back
-      const timer = setTimeout(() => {
-        if (!currentOrder) {
+      // No active order; nudge user back home shortly.
+      const fallback = setTimeout(() => {
+        if (!useOrderStore.getState().currentOrder) {
           toast.error('No active booking found.\nकोई बुकिंग नहीं मिली।');
           router.push('/');
         }
       }, 2000);
-      return () => clearTimeout(timer);
+      return () => clearTimeout(fallback);
     }
 
+    // If we revisit /booking after acceptance, short-circuit.
     if (currentOrder.status !== 'searching') {
       setSearching(false);
       setSupplierFound(true);
+      setStage('done');
       return;
     }
 
-    // Poll for updates
-    const pollInterval = setInterval(async () => {
+    // Only run the chain once per orderId.
+    if (simulatedRef.current === currentOrder.id) return;
+    simulatedRef.current = currentOrder.id;
+
+    const orderId = currentOrder.id;
+    const txnId = `txn-${orderId}`;
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
+    const baseCtx = (action: string, msgSuffix: string) => ({
+      domain: 'nic2004:65111',
+      country: 'IND',
+      city: 'std:011',
+      action,
+      core_version: '1.1.0',
+      bap_id: 'jalseva-sim.in',
+      bap_uri: 'https://jalseva-sim.in/api/beckn',
+      bpp_id: 'jalseva-bpp-sim.in',
+      bpp_uri: 'https://jalseva-sim.in/api/beckn',
+      transaction_id: txnId,
+      message_id: `msg-${msgSuffix}-${orderId}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    let cancelled = false;
+
+    (async () => {
       try {
-        const res = await fetch(`/api/orders/${currentOrder.id}`);
-        if (res.ok) {
-          const updatedOrder: Order = await res.json();
-          setCurrentOrder(updatedOrder);
+        // ─── 1. SEARCH ────────────────────────────────────────────────
+        setStage('broadcasting');
+        await wait(800);
+        const searchRes = await fetch('/api/beckn/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: baseCtx('search', 'search'),
+            message: {
+              intent: {
+                item: { descriptor: { name: currentOrder.waterType } },
+                fulfillment: {
+                  end: {
+                    location: {
+                      gps: `${currentOrder.deliveryLocation.lat},${currentOrder.deliveryLocation.lng}`,
+                    },
+                  },
+                },
+              },
+            },
+          }),
+        });
+        if (cancelled) return;
+        if (!searchRes.ok) throw new Error('search_failed');
+        const searchJson = await searchRes.json();
+        const providers: Array<{
+          id: string;
+          descriptor?: { name?: string };
+          locations?: Array<{
+            gps?: string;
+            address?: { street?: string };
+          }>;
+          items?: Array<{
+            id?: string;
+            descriptor?: { name?: string; code?: string };
+            price?: { value?: string };
+          }>;
+          rating?: string;
+        }> = searchJson?.message?.catalog?.['bpp/providers'] || [];
+        if (providers.length === 0) throw new Error('no_providers');
+        setMatchedCount(providers.length);
 
-          if (updatedOrder.status !== 'searching') {
-            setSearching(false);
-            setSupplierFound(true);
-            clearInterval(pollInterval);
-          }
-        }
-      } catch {
-        // Silent fail - will retry on next interval
+        // ─── 2. MATCH (rank by rating descending) ─────────────────────
+        setStage('matching');
+        await wait(800);
+        const ranked = providers
+          .slice()
+          .sort(
+            (a, b) =>
+              parseFloat(b.rating || '0') - parseFloat(a.rating || '0'),
+          );
+        const best = ranked[0];
+        const supplierId = best.id;
+        const supplierItem =
+          (best.items || []).find(
+            (it) => it.descriptor?.code === currentOrder.waterType,
+          ) || best.items?.[0];
+        const supplierLocRaw = best.locations?.[0];
+        const supplierGps =
+          supplierLocRaw?.gps?.split(',').map(Number) || [];
+
+        // ─── 3. SELECT ────────────────────────────────────────────────
+        setStage('selecting');
+        await wait(700);
+        const selectRes = await fetch('/api/beckn/select', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: baseCtx('select', 'select'),
+            message: {
+              order: {
+                provider: { id: supplierId },
+                items: [
+                  {
+                    id: supplierItem?.id,
+                    descriptor: supplierItem?.descriptor,
+                    price: {
+                      currency: 'INR',
+                      value: currentOrder.price.total.toString(),
+                    },
+                    quantity: { selected: { count: '1' } },
+                  },
+                ],
+              },
+            },
+          }),
+        });
+        if (cancelled) return;
+        if (!selectRes.ok) throw new Error('select_failed');
+        await selectRes.json();
+
+        // ─── 4. INIT ──────────────────────────────────────────────────
+        setStage('initializing');
+        await wait(700);
+        const initRes = await fetch('/api/beckn/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: baseCtx('init', 'init'),
+            message: {
+              order: {
+                provider: { id: supplierId },
+                items: [
+                  {
+                    id: supplierItem?.id,
+                    descriptor: supplierItem?.descriptor,
+                    price: {
+                      currency: 'INR',
+                      value: currentOrder.price.total.toString(),
+                    },
+                  },
+                ],
+                billing: {
+                  name: user.name || 'Customer',
+                  phone: user.phone || '',
+                },
+                fulfillment: {
+                  type: 'Delivery',
+                  end: {
+                    location: {
+                      gps: `${currentOrder.deliveryLocation.lat},${currentOrder.deliveryLocation.lng}`,
+                      address: {
+                        street: currentOrder.deliveryLocation.address || '',
+                        country: 'IND',
+                      },
+                    },
+                  },
+                },
+                payment: { type: 'POST-FULFILLMENT' },
+              },
+            },
+          }),
+        });
+        if (cancelled) return;
+        if (!initRes.ok) throw new Error('init_failed');
+        await initRes.json();
+
+        // ─── 5. CONFIRM ───────────────────────────────────────────────
+        setStage('confirming');
+        await wait(800);
+        const confirmRes = await fetch('/api/beckn/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: baseCtx('confirm', 'confirm'),
+            message: {
+              order: {
+                provider: { id: supplierId },
+                items: [
+                  {
+                    id: supplierItem?.id,
+                    descriptor: supplierItem?.descriptor,
+                    price: {
+                      currency: 'INR',
+                      value: currentOrder.price.total.toString(),
+                    },
+                    quantity: {
+                      count: Math.max(
+                        1,
+                        Math.round(currentOrder.quantityLitres / 500),
+                      ).toString(),
+                    },
+                  },
+                ],
+                billing: {
+                  name: user.name || 'Customer',
+                  phone: user.phone || '',
+                },
+                fulfillment: {
+                  type: 'Delivery',
+                  end: {
+                    location: {
+                      gps: `${currentOrder.deliveryLocation.lat},${currentOrder.deliveryLocation.lng}`,
+                      address: {
+                        street: currentOrder.deliveryLocation.address || '',
+                        country: 'IND',
+                      },
+                    },
+                  },
+                },
+                payment: { type: 'POST-FULFILLMENT' },
+                quote: {
+                  price: {
+                    currency: 'INR',
+                    value: currentOrder.price.total.toString(),
+                  },
+                },
+              },
+            },
+          }),
+        });
+        if (cancelled) return;
+        if (!confirmRes.ok) throw new Error('confirm_failed');
+        await confirmRes.json();
+
+        // ─── 6. PATCH LOCAL ORDER ────────────────────────────────────
+        const supplierLocation: GeoLocation =
+          supplierGps.length === 2 && !Number.isNaN(supplierGps[0])
+            ? {
+                lat: supplierGps[0],
+                lng: supplierGps[1],
+                address: supplierLocRaw?.address?.street || '',
+              }
+            : {
+                // Fallback: shift ~1.5km north-east so the route is visible.
+                lat: currentOrder.deliveryLocation.lat + 0.013,
+                lng: currentOrder.deliveryLocation.lng + 0.013,
+                address: 'Nearby supplier hub',
+              };
+
+        // Approximate distance (haversine) and ETA.
+        const toRad = (x: number) => (x * Math.PI) / 180;
+        const R = 6371000;
+        const dLat = toRad(
+          currentOrder.deliveryLocation.lat - supplierLocation.lat,
+        );
+        const dLng = toRad(
+          currentOrder.deliveryLocation.lng - supplierLocation.lng,
+        );
+        const aHav =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRad(supplierLocation.lat)) *
+            Math.cos(toRad(currentOrder.deliveryLocation.lat)) *
+            Math.sin(dLng / 2) ** 2;
+        const distance = 2 * R * Math.atan2(Math.sqrt(aHav), Math.sqrt(1 - aHav));
+        const etaSec = Math.max(60, Math.round(distance / 8.33));
+
+        if (cancelled) return;
+
+        const updated: Order = {
+          ...currentOrder,
+          status: 'accepted',
+          supplierId,
+          supplierLocation,
+          tracking: {
+            supplierLocation,
+            eta: etaSec,
+            distance: Math.round(distance),
+          },
+          beckn: {
+            transactionId: txnId,
+            messageId: `msg-confirm-${orderId}`,
+            bapId: 'jalseva-sim.in',
+            bppId: 'jalseva-bpp-sim.in',
+          },
+          acceptedAt: new Date(),
+        };
+
+        setCurrentOrder(updated);
+        addOrder(updated);
+        setStage('done');
+        setSearching(false);
+        setSupplierFound(true);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('[ONDC sim] failed:', err);
+        setStage('error');
       }
-    }, 3000);
+    })();
 
-    return () => clearInterval(pollInterval);
-  }, [currentOrder, setCurrentOrder, router]);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentOrder?.id, user?.id]);
 
   // --- Search timer ---
   useEffect(() => {
@@ -248,7 +603,6 @@ export default function BookingPage() {
 
     startCancelTransition(async () => {
       await cancelOrder(currentOrder.id);
-      updateOrderStatus(currentOrder.id, 'cancelled');
       setCurrentOrder(null);
       toast.success('Order cancelled.\nऑर्डर रद्द हो गया।');
       router.push('/');
@@ -268,6 +622,11 @@ export default function BookingPage() {
     const s = seconds % 60;
     return m > 0 ? `${m}m ${s}s` : `${s}s`;
   };
+
+  const StageIcon = STAGE_META[stage].icon;
+  const stageEn = STAGE_META[stage].en;
+  const stageHi = STAGE_META[stage].hi;
+  const stageBeckn = STAGE_META[stage].beckn;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -307,24 +666,40 @@ export default function BookingPage() {
                 <WaterDropAnimation />
               </div>
 
-              {/* Status text */}
+              {/* Stage text */}
               <div className="text-center space-y-2">
                 <motion.h2
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-xl font-bold text-gray-900"
+                  key={stage}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`text-xl font-bold ${stage === 'error' ? 'text-red-600' : 'text-gray-900'}`}
                 >
-                  Searching for nearest supplier...
+                  {stageEn}
                 </motion.h2>
-                <p className="text-gray-500">
-                  निकटतम सप्लायर ढूंढ रहे हैं...
+                <p
+                  className={`text-sm ${stage === 'error' ? 'text-red-500' : 'text-gray-500'}`}
+                >
+                  {stageHi}
                 </p>
-                <p className="text-sm text-gray-400 mt-3">
-                  This usually takes less than a minute
-                </p>
-                <p className="text-xs text-gray-400">
-                  आमतौर पर एक मिनट से कम समय लगता है
-                </p>
+
+                {/* Beckn protocol indicator */}
+                {stageBeckn && (
+                  <div className="flex items-center justify-center gap-1.5 pt-2">
+                    <StageIcon
+                      className={`w-3.5 h-3.5 ${stage === 'error' ? 'text-red-400' : 'text-blue-500'} ${stage !== 'done' && stage !== 'error' ? 'animate-pulse' : ''}`}
+                    />
+                    <span className="text-[11px] font-mono uppercase tracking-wide text-gray-400">
+                      {stageBeckn}
+                    </span>
+                  </div>
+                )}
+
+                {matchedCount > 0 && stage !== 'error' && (
+                  <p className="text-xs text-green-600 mt-1 font-medium">
+                    {matchedCount} supplier{matchedCount === 1 ? '' : 's'}{' '}
+                    responded
+                  </p>
+                )}
               </div>
 
               {/* Map placeholder */}
@@ -375,6 +750,27 @@ export default function BookingPage() {
                     </p>
                   </div>
                 </Card>
+              )}
+
+              {/* Retry button on error */}
+              {stage === 'error' && (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={() => {
+                    simulatedRef.current = null;
+                    setStage('idle');
+                    setSearchTime(0);
+                    // Bump key so the orchestration effect re-runs.
+                    if (currentOrder) {
+                      setCurrentOrder({ ...currentOrder });
+                    }
+                  }}
+                  className="rounded-2xl"
+                >
+                  Retry / फिर से कोशिश करें
+                </Button>
               )}
 
               {/* Cancel button */}

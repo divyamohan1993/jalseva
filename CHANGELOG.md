@@ -8,6 +8,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added — 2026-05-13
+- **Full simulated ONDC / Beckn protocol chain** so the booking flow never hangs on "Searching":
+  - New `POST /api/beckn/select` returning a simulated `on_select` with a firm quote, breakup, and serviceable fulfillment.
+  - New `POST /api/beckn/init` returning a simulated `on_init` that locks in billing, fulfillment, and payment terms.
+  - `/booking/page.tsx` now drives the full client-side chain (`search → select → init → confirm`) the moment a `searching` order lands. Each Beckn stage is announced on-screen ("Broadcasting on the ONDC network…", "Confirming your booking on ONDC…") with the protocol verb (`beckn: search`, `beckn: on_search`, etc.) so the simulation is visible, not invisible.
+  - On `on_confirm`, the Zustand order is patched to `accepted` with the matched supplier, supplier location, ETA, distance, and Beckn transaction metadata — unblocking the "Supplier Found" card and the tracking handoff.
+- **Simulated supplier movement** on `/tracking/[orderId]`: a 60-second linear-interpolation tween animates `tracking.supplierLocation` toward the customer's `deliveryLocation` in 2-second ticks, with `eta` and `distance` decrementing in sync. The map and the ETA pill stay in motion even when there's no real GPS backend.
+- **Designated demo numbers, auto-registered, role-locked**:
+  - `+91 99999 00001` → permanently a **customer**.
+  - `+91 99999 00002` → permanently a **supplier**, auto-provisioned with simulated **Aadhaar, vehicle RC, driving license, FSSAI license, NABL water-quality certificate** (all `verified: true`) and a simulated water-quality report (pH 7.2, TDS 145 ppm, FSSAI compliant).
+  - Same number cannot hold both roles — mismatched role attempts are rejected with a clear message.
+- **`simulatedPhoneSignIn` server action** replaces the OTP-bound `signInWithIdToken` for the login path. Sets the `jalseva_auth` cookie, upserts the Firestore user/supplier docs when admin credentials are available, and degrades gracefully to cookie-only auth when they are not.
+
+### Changed — 2026-05-13
+- **Phone Auth SMS sending is fully unlinked from the backend.** Firebase `signInWithPhoneNumber`, `RecaptchaVerifier`, and the `/api/auth/sms-quota` client call are removed from `/login`. SMS billing exposure is now zero.
+- `/login` generates a fresh 6-digit OTP **client-side** for every non-demo number and **displays it on screen** in a prominent amber card (with a Copy button). The user reads it and types it back into the OTP boxes; verification is local. No SMS, no Phone Auth, no abuse vector to drive up GCP cost.
+- Login page demo notice rewritten to call out the two role-locked numbers and the simulated-document auto-provisioning.
+
+### Fixed — 2026-05-13
+- **"Stuck on searching" bug**: booking page no longer relies on a polled `GET /api/orders/[orderId]` that returned `{success, order}` (mis-shaped vs. what the client expected) or 404'd silently in demo mode. The new ONDC orchestration drives the transition deterministically.
+- **Supplier login error**: the supplier role now reaches the dashboard cleanly. The demo bypass sets the cookie directly and avoids the previously-failing `adminAuth.verifyIdToken` path for demo flows.
+
 ### Added — 2026-05-12 (afternoon)
 - **Project-wide Phone-Auth SMS cap** to prevent billing abuse:
   - New API endpoint `/api/auth/sms-quota` (GET = read, POST = atomic increment in a Firestore transaction) that tracks SMS dispatches in `meta/phoneOtp/daily/{YYYY-MM-DD}.count`.
