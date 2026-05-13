@@ -12,15 +12,6 @@ import type React from 'react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  onSnapshot,
-  Timestamp,
-} from 'firebase/firestore';
-import {
   Package,
   DollarSign,
   Users,
@@ -32,7 +23,6 @@ import {
   Truck,
   AlertTriangle,
 } from 'lucide-react';
-import { db } from '@/lib/firebase';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Card, CardTitle, } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -128,143 +118,46 @@ export default function AdminDashboard() {
   const [_loading, setLoading] = useState(true);
 
   // --------------------------------------------------------------------------
-  // Firestore real-time listeners
+  // Poll /api/admin/dashboard (demo: backed by in-memory store, no Firestore)
   // --------------------------------------------------------------------------
   useEffect(() => {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayTimestamp = Timestamp.fromDate(todayStart);
+    let cancelled = false;
 
-    // --- Listen to today's orders for stats ---
-    const ordersQuery = query(
-      collection(db, 'orders'),
-      where('createdAt', '>=', todayTimestamp),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
-      const orders: Order[] = [];
-      let revenue = 0;
-
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const order: Order = {
-          id: doc.id,
-          customerId: data.customerId || '',
-          supplierId: data.supplierId || undefined,
-          waterType: data.waterType || 'ro',
-          quantityLitres: data.quantityLitres || 0,
-          price: data.price || { base: 0, distance: 0, surge: 0, total: 0, commission: 0, supplierEarning: 0 },
-          status: data.status || 'searching',
-          deliveryLocation: data.deliveryLocation || { lat: 0, lng: 0 },
-          supplierLocation: data.supplierLocation || undefined,
-          tracking: data.tracking || undefined,
-          payment: data.payment || { method: 'cash', status: 'pending', amount: 0 },
-          rating: data.rating || undefined,
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-          acceptedAt: data.acceptedAt?.toDate?.() || undefined,
-          deliveredAt: data.deliveredAt?.toDate?.() || undefined,
-          cancelledAt: data.cancelledAt?.toDate?.() || undefined,
-        };
-
-        orders.push(order);
-
-        if (order.status === 'delivered' && order.payment.status === 'paid') {
-          revenue += order.price.total;
+    async function fetchDashboard() {
+      try {
+        const res = await fetch('/api/admin/dashboard', { cache: 'no-store' });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled) return;
+        setOrdersToday(data.ordersToday || 0);
+        setRevenueToday(data.revenueToday || 0);
+        setActiveSuppliers(data.activeSuppliers || 0);
+        setTotalUsers(data.totalUsers || 0);
+        setRecentOrders(
+          (data.recentOrders || []).map((o: Order) => ({
+            ...o,
+            createdAt: new Date(o.createdAt),
+            acceptedAt: o.acceptedAt ? new Date(o.acceptedAt) : undefined,
+            deliveredAt: o.deliveredAt ? new Date(o.deliveredAt) : undefined,
+            cancelledAt: o.cancelledAt ? new Date(o.cancelledAt) : undefined,
+          })),
+        );
+        setPendingSuppliers(data.pendingSuppliers || []);
+        setLoading(false);
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('[admin dashboard] poll failed:', err);
+          setLoading(false);
         }
-      });
+      }
+    }
 
-      setOrdersToday(orders.length);
-      setRevenueToday(revenue);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error listening to orders:', error);
-      setLoading(false);
-    });
-
-    // --- Listen to recent orders (latest 10 regardless of date) ---
-    const recentQuery = query(
-      collection(db, 'orders'),
-      orderBy('createdAt', 'desc'),
-      limit(10)
-    );
-
-    const unsubRecent = onSnapshot(recentQuery, (snapshot) => {
-      const orders: Order[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        orders.push({
-          id: doc.id,
-          customerId: data.customerId || '',
-          supplierId: data.supplierId || undefined,
-          waterType: data.waterType || 'ro',
-          quantityLitres: data.quantityLitres || 0,
-          price: data.price || { base: 0, distance: 0, surge: 0, total: 0, commission: 0, supplierEarning: 0 },
-          status: data.status || 'searching',
-          deliveryLocation: data.deliveryLocation || { lat: 0, lng: 0 },
-          payment: data.payment || { method: 'cash', status: 'pending', amount: 0 },
-          createdAt: data.createdAt?.toDate?.() || new Date(),
-          acceptedAt: data.acceptedAt?.toDate?.() || undefined,
-          deliveredAt: data.deliveredAt?.toDate?.() || undefined,
-          cancelledAt: data.cancelledAt?.toDate?.() || undefined,
-        });
-      });
-      setRecentOrders(orders);
-    });
-
-    // --- Listen to pending suppliers ---
-    const pendingQuery = query(
-      collection(db, 'suppliers'),
-      where('verificationStatus', '==', 'pending'),
-      orderBy('userId'),
-      limit(10)
-    );
-
-    const unsubPending = onSnapshot(pendingQuery, (snapshot) => {
-      const suppliers: (Supplier & { userName?: string })[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        suppliers.push({
-          id: doc.id,
-          userId: data.userId || '',
-          documents: data.documents || {},
-          verificationStatus: data.verificationStatus || 'pending',
-          vehicle: data.vehicle || { type: '', capacity: 0, number: '' },
-          isOnline: data.isOnline || false,
-          currentLocation: data.currentLocation || undefined,
-          serviceArea: data.serviceArea || { center: { lat: 0, lng: 0 }, radiusKm: 10 },
-          waterTypes: data.waterTypes || [],
-          rating: data.rating || { average: 0, count: 0 },
-          bankDetails: data.bankDetails || undefined,
-          supportsSubscription: data.supportsSubscription ?? false,
-          userName: data.userName || data.name || 'Unknown',
-        });
-      });
-      setPendingSuppliers(suppliers);
-    });
-
-    // --- Listen to active suppliers count ---
-    const suppliersQuery = query(
-      collection(db, 'suppliers'),
-      where('isOnline', '==', true)
-    );
-
-    const unsubActive = onSnapshot(suppliersQuery, (snapshot) => {
-      setActiveSuppliers(snapshot.size);
-    });
-
-    // --- Listen to total users count ---
-    const usersQuery = query(collection(db, 'users'));
-    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
-      setTotalUsers(snapshot.size);
-    });
+    fetchDashboard();
+    const interval = setInterval(fetchDashboard, 5000);
 
     return () => {
-      unsubOrders();
-      unsubRecent();
-      unsubPending();
-      unsubActive();
-      unsubUsers();
+      cancelled = true;
+      clearInterval(interval);
     };
   }, []);
 
