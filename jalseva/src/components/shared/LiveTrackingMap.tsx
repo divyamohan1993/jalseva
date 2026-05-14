@@ -19,6 +19,7 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useAccessibility } from './AccessibilityProvider';
+import { loadGoogleMaps } from '@/lib/google-maps-loader';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,48 +33,14 @@ interface LatLng {
 interface LiveTrackingMapProps {
   customerLocation: LatLng;
   supplierLocation?: LatLng;
+  /** Optional road-following path from supplier start to customer. When
+   *  present the route polyline traces these points (the road geometry
+   *  returned by DirectionsService) instead of a straight diagonal. */
+  routePath?: LatLng[];
   className?: string;
   etaMinutes?: number | null;
   distanceMeters?: number | null;
   onMapReady?: () => void;
-}
-
-// ---------------------------------------------------------------------------
-// Plain script-tag loader (shared singleton across mounts)
-// ---------------------------------------------------------------------------
-
-let mapsLoadPromise: Promise<void> | null = null;
-
-function loadGoogleMaps(apiKey: string): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((window as any).google?.maps) return Promise.resolve();
-  if (mapsLoadPromise) return mapsLoadPromise;
-
-  mapsLoadPromise = new Promise((resolve, reject) => {
-    const existing = document.getElementById(
-      'jalseva-gmaps-script',
-    ) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener('load', () => resolve());
-      existing.addEventListener('error', () =>
-        reject(new Error('Maps script failed')),
-      );
-      return;
-    }
-    const s = document.createElement('script');
-    s.id = 'jalseva-gmaps-script';
-    s.async = true;
-    s.defer = true;
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&v=weekly`;
-    s.onload = () => resolve();
-    s.onerror = () => {
-      mapsLoadPromise = null; // allow retry
-      reject(new Error('Maps script failed'));
-    };
-    document.head.appendChild(s);
-  });
-  return mapsLoadPromise;
 }
 
 // ---------------------------------------------------------------------------
@@ -83,6 +50,7 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
 export function LiveTrackingMap({
   customerLocation,
   supplierLocation,
+  routePath,
   className = '',
   etaMinutes,
   onMapReady,
@@ -277,17 +245,22 @@ export function LiveTrackingMap({
 
       prevSupplierLocRef.current = supplierLocation;
 
-      // Route polyline — recreated rather than setPath()'d to avoid the
-      // internal MVCArray getting torn down between renders.
+      // Route polyline. If a road-following routePath was supplied (from
+      // a DirectionsService call upstream) we render that exact geometry;
+      // otherwise we fall back to a straight line between supplier and
+      // customer.
       if (
         customerLocation &&
         typeof customerLocation.lat === 'number' &&
         typeof customerLocation.lng === 'number'
       ) {
-        const path = [
-          { lat: supplierLocation.lat, lng: supplierLocation.lng },
-          { lat: customerLocation.lat, lng: customerLocation.lng },
-        ];
+        const path =
+          routePath && routePath.length >= 2
+            ? routePath.map((p) => ({ lat: p.lat, lng: p.lng }))
+            : [
+                { lat: supplierLocation.lat, lng: supplierLocation.lng },
+                { lat: customerLocation.lat, lng: customerLocation.lng },
+              ];
         if (polylineRef.current && typeof polylineRef.current.setPath === 'function') {
           try {
             polylineRef.current.setPath(path);
@@ -334,7 +307,7 @@ export function LiveTrackingMap({
       console.warn('[LiveTrackingMap] supplier-marker update skipped:', err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supplierLocation, customerLocation, mapLoaded]);
+  }, [supplierLocation, customerLocation, mapLoaded, routePath]);
 
   // -----------------------------------------------------------------------
   // Screen-reader ETA announcements

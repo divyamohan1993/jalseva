@@ -19,6 +19,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { LiveTrackingMap } from '@/components/shared/LiveTrackingMap';
+import { loadGoogleMaps, haversineMeters } from '@/lib/google-maps-loader';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { useOrderStore } from '@/store/orderStore';
@@ -447,6 +448,11 @@ export default function TrackingPage() {
   const [showRating, setShowRating] = useState(false);
   const [isCancelling, startCancelTransition] = useTransition();
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+  // Real road-following path fetched once per order via DirectionsService.
+  const [routePath, setRoutePath] = useState<
+    { lat: number; lng: number }[] | null
+  >(null);
+  const routeFetchedRef = useRef<string | null>(null);
 
   // --- Fetch order if not in store ---
   useEffect(() => {
@@ -558,11 +564,84 @@ export default function TrackingPage() {
     setEtaMinutes(Math.ceil(order.tracking.eta / 60));
   }, [order?.tracking?.eta]);
 
+  // --- Fetch road-following route once per order ---
+  // DirectionsService is called exactly once for the supplier→customer
+  // pair, and the resulting overview_path is what both the polyline and
+  // the movement simulator follow — so the tanker visibly drives along
+  // streets instead of cutting a straight diagonal across the map.
+  useEffect(() => {
+    if (!order) return;
+    if (routeFetchedRef.current === order.id) return;
+    const startLoc =
+      order.tracking?.supplierLocation || order.supplierLocation;
+    const endLoc = order.deliveryLocation;
+    if (!startLoc || !endLoc) return;
+    if (
+      typeof startLoc.lat !== 'number' ||
+      typeof startLoc.lng !== 'number' ||
+      typeof endLoc.lat !== 'number' ||
+      typeof endLoc.lng !== 'number'
+    )
+      return;
+
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    if (!apiKey) return;
+    routeFetchedRef.current = order.id;
+
+    let cancelled = false;
+    loadGoogleMaps(apiKey)
+      .then(() => {
+        if (cancelled) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const g = (window as any).google;
+        if (!g?.maps?.DirectionsService) return;
+        const ds = new g.maps.DirectionsService();
+        ds.route(
+          {
+            origin: { lat: startLoc.lat, lng: startLoc.lng },
+            destination: { lat: endLoc.lat, lng: endLoc.lng },
+            travelMode: g.maps.TravelMode.DRIVING,
+          },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (result: any, status: string) => {
+            if (cancelled) return;
+            if (status === 'OK' && result?.routes?.[0]?.overview_path) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const path = result.routes[0].overview_path.map((p: any) => ({
+                lat: p.lat(),
+                lng: p.lng(),
+              }));
+              if (path.length >= 2) setRoutePath(path);
+            } else {
+              console.warn(
+                '[tracking] DirectionsService route failed:',
+                status,
+              );
+            }
+          },
+        );
+      })
+      .catch((err) => {
+        console.warn('[tracking] Maps loader failed:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    order?.id,
+    order?.tracking?.supplierLocation?.lat,
+    order?.tracking?.supplierLocation?.lng,
+    order?.deliveryLocation?.lat,
+    order?.deliveryLocation?.lng,
+  ]);
+
   // --- Simulate supplier movement toward delivery (demo) ---
-  // Animates supplierLocation along a straight line from its starting point
-  // to the customer's delivery location, decrementing distance & ETA. Lets
-  // the map show the truck visibly closing in even when there's no real GPS
-  // backend wired up.
+  // Walks the tanker along the real road geometry returned by Directions
+  // (routePath). Arc-length interpolation: at time t∈[0,1] we step to the
+  // point that is t·totalLen metres into the polyline. Falls back to a
+  // straight line if directions haven't loaded yet.
   useEffect(() => {
     if (!order) return;
     if (
@@ -577,19 +656,41 @@ export default function TrackingPage() {
     const endLoc = order.deliveryLocation;
     if (!startLoc || !endLoc) return;
 
-    // Total simulated journey: 60s, 30 steps @ 2s each.
+    // Use the road-following path if available; else straight line.
+    const path =
+      routePath && routePath.length >= 2 ? routePath : [startLoc, endLoc];
+
+    // Cumulative arc-length in metres at each path vertex.
+    const cumDist: number[] = [0];
+    for (let i = 1; i < path.length; i++) {
+      cumDist.push(cumDist[i - 1] + haversineMeters(path[i - 1], path[i]));
+    }
+    const totalDist = cumDist[cumDist.length - 1] || 1;
+    const initialEta = Math.max(60, Math.round(totalDist / 8.33)); // ~30 km/h
+
+    // 60-second simulated drive, ticking every 2 s.
     const totalSteps = 30;
     const stepMs = 2000;
-    const initialDistance = order.tracking?.distance || 1500;
-    const initialEta = order.tracking?.eta || 600;
     let step = 0;
 
     const interval = setInterval(() => {
       step += 1;
       const t = Math.min(1, step / totalSteps);
-      const lat = startLoc.lat + (endLoc.lat - startLoc.lat) * t;
-      const lng = startLoc.lng + (endLoc.lng - startLoc.lng) * t;
-      const remainingDistance = Math.max(0, Math.round(initialDistance * (1 - t)));
+      const targetDist = totalDist * t;
+
+      // Find the segment containing targetDist.
+      let idx = 0;
+      while (idx < cumDist.length - 1 && cumDist[idx + 1] < targetDist) idx++;
+      const segStart = cumDist[idx];
+      const segEnd = cumDist[idx + 1] ?? totalDist;
+      const localT =
+        segEnd === segStart ? 0 : (targetDist - segStart) / (segEnd - segStart);
+      const p0 = path[idx];
+      const p1 = path[idx + 1] ?? p0;
+      const lat = p0.lat + (p1.lat - p0.lat) * localT;
+      const lng = p0.lng + (p1.lng - p0.lng) * localT;
+
+      const remainingDistance = Math.max(0, Math.round(totalDist * (1 - t)));
       const remainingEta = Math.max(0, Math.round(initialEta * (1 - t)));
 
       const newTracking: TrackingInfo = {
@@ -620,7 +721,7 @@ export default function TrackingPage() {
 
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order?.id, order?.status]);
+  }, [order?.id, order?.status, routePath]);
 
   // --- Cancel handler (React 19 useTransition + Server Action) ---
   const handleCancel = () => {
@@ -756,6 +857,7 @@ export default function TrackingPage() {
         <LiveTrackingMap
           customerLocation={order.deliveryLocation}
           supplierLocation={order.tracking?.supplierLocation}
+          routePath={routePath || undefined}
           className="w-full h-full"
           etaMinutes={etaMinutes}
           distanceMeters={order.tracking?.distance}
