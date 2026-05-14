@@ -21,6 +21,25 @@ import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useAccessibility } from './AccessibilityProvider';
 import { loadGoogleMaps } from '@/lib/google-maps-loader';
 
+// Bearing in degrees clockwise from North between two LatLng points.
+// FORWARD_CLOSED_ARROW's natural orientation points north (rotation=0),
+// so this value plugs straight into the icon's `rotation` field.
+function bearingDeg(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  const deg = (Math.atan2(y, x) * 180) / Math.PI;
+  return (deg + 360) % 360;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -223,21 +242,32 @@ export function LiveTrackingMap({
     if (!g) return;
 
     try {
+      // Rotate the arrow to face the direction of travel — bearing from
+      // the previous supplier position to the new one. Each position
+      // update on the movement simulator is a fresh segment along the
+      // road, so the icon naturally turns through corners.
+      const prev = prevSupplierLocRef.current;
+      const heading = prev ? bearingDeg(prev, supplierLocation) : 0;
+      const arrowIcon = {
+        path: g.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        scale: 5,
+        fillColor: '#0066FF',
+        fillOpacity: 1,
+        strokeColor: '#FFFFFF',
+        strokeWeight: 2,
+        rotation: heading,
+      };
+
       if (supplierMarkerRef.current) {
         animateMarkerTo(supplierMarkerRef.current, supplierLocation);
+        if (typeof supplierMarkerRef.current.setIcon === 'function' && prev) {
+          supplierMarkerRef.current.setIcon(arrowIcon);
+        }
       } else {
         supplierMarkerRef.current = new g.maps.Marker({
           map: googleMapRef.current,
           position: supplierLocation,
-          icon: {
-            path: g.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 8,
-            fillColor: '#0066FF',
-            fillOpacity: 1,
-            strokeColor: '#FFFFFF',
-            strokeWeight: 2,
-            rotation: 0,
-          },
+          icon: arrowIcon,
           title: 'Water tanker',
           zIndex: 10,
         });

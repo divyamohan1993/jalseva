@@ -526,34 +526,9 @@ export default function TrackingPage() {
     return () => clearInterval(interval);
   }, [order, updateTracking, updateOrderStatus]);
 
-  // --- Simulate tracking updates for demo ---
-  useEffect(() => {
-    if (!order || order.status === 'delivered' || order.status === 'cancelled')
-      return;
-
-    const simulateProgress = () => {
-      const statusFlow: OrderStatus[] = [
-        'accepted',
-        'en_route',
-        'arriving',
-        'delivered',
-      ];
-      const currentIdx = statusFlow.indexOf(order.status);
-
-      if (currentIdx >= 0 && currentIdx < statusFlow.length - 1) {
-        const nextStatus = statusFlow[currentIdx + 1];
-        setOrder((prev) => (prev ? { ...prev, status: nextStatus } : prev));
-
-        if (nextStatus === 'delivered') {
-          setTimeout(() => setShowRating(true), 1000);
-        }
-      }
-    };
-
-    // Auto-progress every 15s for demo
-    const timeout = setTimeout(simulateProgress, 15000);
-    return () => clearTimeout(timeout);
-  }, [order?.status, order]);
+  // (Removed) Previous 15s-tick status auto-progress timer. Status now
+  // transitions in lockstep with the movement simulator below so the
+  // rider doesn't show "Delivered" while still visibly mid-route.
 
   // --- ETA countdown ---
   useEffect(() => {
@@ -637,91 +612,153 @@ export default function TrackingPage() {
     order?.deliveryLocation?.lng,
   ]);
 
-  // --- Simulate supplier movement toward delivery (demo) ---
-  // Walks the tanker along the real road geometry returned by Directions
-  // (routePath). Arc-length interpolation: at time t∈[0,1] we step to the
-  // point that is t·totalLen metres into the polyline. Falls back to a
-  // straight line if directions haven't loaded yet.
+  // Keep a ref to the latest routePath so the movement effect, which
+  // runs once per orderId, can read it after directions resolve without
+  // restarting and snapping the rider back to the start.
+  const routePathRef = useRef<{ lat: number; lng: number }[] | null>(null);
+  useEffect(() => {
+    routePathRef.current = routePath;
+  }, [routePath]);
+
+  // --- Status transitions + supplier movement (single effect per order) ---
+  // Timeline (driven by this effect):
+  //   t = 0    : status = 'accepted' (from ONDC chain)
+  //   t = 1s   : status flips to 'en_route' (Picked Up)
+  //   t = 3s   : status flips to 'arriving' (On the Way) + movement begins
+  //              — by this point DirectionsService has had time to resolve,
+  //                so the rider walks the real road geometry from step 1.
+  //   t = 63s  : arc-length t = 1 → status flips to 'delivered' + rating.
   useEffect(() => {
     if (!order) return;
-    if (
-      order.status !== 'accepted' &&
-      order.status !== 'en_route' &&
-      order.status !== 'arriving'
-    )
-      return;
+    if (order.status === 'delivered' || order.status === 'cancelled') return;
 
     const startLoc =
       order.tracking?.supplierLocation || order.supplierLocation;
     const endLoc = order.deliveryLocation;
     if (!startLoc || !endLoc) return;
 
-    // Use the road-following path if available; else straight line.
-    const path =
-      routePath && routePath.length >= 2 ? routePath : [startLoc, endLoc];
+    let cancelled = false;
+    let interval: ReturnType<typeof setInterval> | null = null;
 
-    // Cumulative arc-length in metres at each path vertex.
-    const cumDist: number[] = [0];
-    for (let i = 1; i < path.length; i++) {
-      cumDist.push(cumDist[i - 1] + haversineMeters(path[i - 1], path[i]));
-    }
-    const totalDist = cumDist[cumDist.length - 1] || 1;
-    const initialEta = Math.max(60, Math.round(totalDist / 8.33)); // ~30 km/h
-
-    // 60-second simulated drive, ticking every 2 s.
-    const totalSteps = 30;
-    const stepMs = 2000;
-    let step = 0;
-
-    const interval = setInterval(() => {
-      step += 1;
-      const t = Math.min(1, step / totalSteps);
-      const targetDist = totalDist * t;
-
-      // Find the segment containing targetDist.
-      let idx = 0;
-      while (idx < cumDist.length - 1 && cumDist[idx + 1] < targetDist) idx++;
-      const segStart = cumDist[idx];
-      const segEnd = cumDist[idx + 1] ?? totalDist;
-      const localT =
-        segEnd === segStart ? 0 : (targetDist - segStart) / (segEnd - segStart);
-      const p0 = path[idx];
-      const p1 = path[idx + 1] ?? p0;
-      const lat = p0.lat + (p1.lat - p0.lat) * localT;
-      const lng = p0.lng + (p1.lng - p0.lng) * localT;
-
-      const remainingDistance = Math.max(0, Math.round(totalDist * (1 - t)));
-      const remainingEta = Math.max(0, Math.round(initialEta * (1 - t)));
-
-      const newTracking: TrackingInfo = {
-        supplierLocation: {
-          lat,
-          lng,
-          address: startLoc.address || '',
-        },
-        eta: remainingEta,
-        distance: remainingDistance,
-      };
-      updateTracking(newTracking);
-      setEtaMinutes(Math.ceil(remainingEta / 60));
+    // Phase 1 — quick "Picked Up" acknowledgement.
+    const enRouteTimer = setTimeout(() => {
+      if (cancelled) return;
       setOrder((prev) =>
-        prev
-          ? {
-              ...prev,
-              tracking: newTracking,
-              supplierLocation: { lat, lng },
-            }
-          : prev,
+        prev ? { ...prev, status: 'en_route' as OrderStatus } : prev,
+      );
+    }, 1000);
+
+    // Phase 2 — flip to "On the Way" and start walking the route.
+    const movementTimer = setTimeout(() => {
+      if (cancelled) return;
+      setOrder((prev) =>
+        prev ? { ...prev, status: 'arriving' as OrderStatus } : prev,
       );
 
-      if (step >= totalSteps) {
-        clearInterval(interval);
-      }
-    }, stepMs);
+      const path =
+        routePathRef.current && routePathRef.current.length >= 2
+          ? routePathRef.current
+          : [startLoc, endLoc];
 
-    return () => clearInterval(interval);
+      const cumDist: number[] = [0];
+      for (let i = 1; i < path.length; i++) {
+        cumDist.push(cumDist[i - 1] + haversineMeters(path[i - 1], path[i]));
+      }
+      const totalDist = cumDist[cumDist.length - 1] || 1;
+      const initialEta = Math.max(60, Math.round(totalDist / 8.33)); // ~30 km/h
+
+      const totalSteps = 30;
+      const stepMs = 2000;
+      let step = 0;
+
+      interval = setInterval(() => {
+        step += 1;
+        const t = Math.min(1, step / totalSteps);
+        const targetDist = totalDist * t;
+
+        // Find the segment containing targetDist.
+        let idx = 0;
+        while (idx < cumDist.length - 1 && cumDist[idx + 1] < targetDist) idx++;
+        const segStart = cumDist[idx];
+        const segEnd = cumDist[idx + 1] ?? totalDist;
+        const localT =
+          segEnd === segStart
+            ? 0
+            : (targetDist - segStart) / (segEnd - segStart);
+        const p0 = path[idx];
+        const p1 = path[idx + 1] ?? p0;
+        const lat = p0.lat + (p1.lat - p0.lat) * localT;
+        const lng = p0.lng + (p1.lng - p0.lng) * localT;
+
+        const remainingDistance = Math.max(
+          0,
+          Math.round(totalDist * (1 - t)),
+        );
+        const remainingEta = Math.max(0, Math.round(initialEta * (1 - t)));
+
+        const newTracking: TrackingInfo = {
+          supplierLocation: {
+            lat,
+            lng,
+            address: startLoc.address || '',
+          },
+          eta: remainingEta,
+          distance: remainingDistance,
+        };
+        updateTracking(newTracking);
+        setEtaMinutes(Math.ceil(remainingEta / 60));
+        setOrder((prev) =>
+          prev
+            ? {
+                ...prev,
+                tracking: newTracking,
+                supplierLocation: { lat, lng },
+              }
+            : prev,
+        );
+
+        if (step >= totalSteps) {
+          // Snap to the exact delivery point so the marker doesn't sit
+          // a few metres short, then transition to delivered.
+          const finalTracking: TrackingInfo = {
+            supplierLocation: {
+              lat: endLoc.lat,
+              lng: endLoc.lng,
+              address: startLoc.address || '',
+            },
+            eta: 0,
+            distance: 0,
+          };
+          updateTracking(finalTracking);
+          setEtaMinutes(0);
+          setOrder((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status: 'delivered' as OrderStatus,
+                  tracking: finalTracking,
+                  supplierLocation: { lat: endLoc.lat, lng: endLoc.lng },
+                  deliveredAt: new Date(),
+                }
+              : prev,
+          );
+          toast.success(
+            'Water delivered! Please rate.\nपानी पहुंच गया! कृपया रेट करें।',
+          );
+          setTimeout(() => setShowRating(true), 1000);
+          if (interval) clearInterval(interval);
+        }
+      }, stepMs);
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(enRouteTimer);
+      clearTimeout(movementTimer);
+      if (interval) clearInterval(interval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order?.id, order?.status, routePath]);
+  }, [order?.id]);
 
   // --- Cancel handler (React 19 useTransition + Server Action) ---
   const handleCancel = () => {
