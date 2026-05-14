@@ -640,9 +640,13 @@ export default function TrackingPage() {
     let cancelled = false;
     let interval: ReturnType<typeof setInterval> | null = null;
 
-    // Phase 1 — quick "Picked Up" acknowledgement.
+    // Phase 1 — quick "Picked Up" acknowledgement. Status goes through
+    // the Zustand store so the "fetch order if not in store" effect's
+    // resync of `order` from `currentOrder` doesn't stomp the value
+    // every time updateTracking() fires.
     const enRouteTimer = setTimeout(() => {
       if (cancelled) return;
+      updateOrderStatus(order.id, 'en_route');
       setOrder((prev) =>
         prev ? { ...prev, status: 'en_route' as OrderStatus } : prev,
       );
@@ -651,6 +655,7 @@ export default function TrackingPage() {
     // Phase 2 — flip to "On the Way" and start walking the route.
     const movementTimer = setTimeout(() => {
       if (cancelled) return;
+      updateOrderStatus(order.id, 'arriving');
       setOrder((prev) =>
         prev ? { ...prev, status: 'arriving' as OrderStatus } : prev,
       );
@@ -731,6 +736,7 @@ export default function TrackingPage() {
           };
           updateTracking(finalTracking);
           setEtaMinutes(0);
+          updateOrderStatus(order.id, 'delivered');
           setOrder((prev) =>
             prev
               ? {
